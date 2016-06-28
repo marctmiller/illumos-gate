@@ -91,7 +91,7 @@ boot1.efi: ${PROG}
 		-j .dynamic -j .dynsym -j .rel.dyn \
 		-j .rela.dyn -j .reloc -j .eh_frame \
 		--output-target=${EFI_TARGET} --subsystem efi-app ${PROG} $@
-	$(BTXLD) -V ${BOOT1_VERSION} -o $@ $@
+	$(BTXLD) -V ${BOOT_VERSION} -o $@ $@
 
 boot1.o: ./../../common/ufsread.c
 
