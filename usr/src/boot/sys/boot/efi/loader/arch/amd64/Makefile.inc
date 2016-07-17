@@ -1,12 +1,14 @@
 
 SRCS +=	multiboot_tramp.S \
 	start.S \
+	bootinfo64.c \
 	framebuffer.c \
 	trap.c \
 	exc.S
 
 OBJS += multiboot_tramp.o \
 	start.o \
+	bootinfo64.o \
 	framebuffer.o \
 	trap.o \
 	exc.o
