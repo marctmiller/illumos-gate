@@ -63,7 +63,7 @@ extern void boot_fb_init(int);
 extern void boot_fb_putchar(uint8_t);
 
 fb_info_t fb_info;
-static int cons_color = 0xF0;		/* black on white */
+static int cons_color = CONS_COLOR;
 static int console = CONS_SCREEN_TEXT;
 static int tty_num = 0;
 static int tty_addr[] = {0x3f8, 0x2f8, 0x3e8, 0x2e8};
@@ -111,8 +111,9 @@ clear_screen(void)
 	 */
 	vga_init();
 	vga_cursor_display();
-	vga_clear(cons_color);
-	vga_setpos(0, 0);
+	if (fb_info.cursor.pos.x == 0 && fb_info.cursor.pos.y == 0)
+		vga_clear(cons_color);
+	vga_setpos(fb_info.cursor.pos.y, fb_info.cursor.pos.x);
 
 	fb_info.terminal.x = 80;
 	fb_info.terminal.y = 25;
@@ -627,6 +628,143 @@ boot_fb(struct xboot_info *xbi, int console)
 	return (CONS_FRAMEBUFFER);
 }
 
+/*
+ * TODO.
+ * quick and dirty local atoi. Perhaps should build with strtol, but
+ * dboot & early boot mix does overcomplicate things much.
+ * Stolen from libc anyhow.
+ */
+static int
+atoi(const char *p)
+{
+	int n, c, neg = 0;
+	unsigned char *up = (unsigned char *)p;
+
+	if (!isdigit(c = *up)) {
+		while (isspace(c))
+			c = *++up;
+		switch (c) {
+		case '-':
+			neg++;
+			/* FALLTHROUGH */
+		case '+':
+			c = *++up;
+		}
+		if (!isdigit(c))
+			return (0);
+	}
+	for (n = '0' - c; isdigit(c = *++up); ) {
+		n *= 10; /* two steps to avoid unnecessary overflow */
+		n += '0' - c; /* accum neg to avoid surprises at MAX */
+	}
+	return (neg ? n : -n);
+}
+
+static int
+set_vga_color(void)
+{
+	int color;
+	uint8_t tmp;
+/* BEGIN CSTYLED */
+/*                              Bk  Rd  Gr  Br  Bl  Mg  Cy  Wh */
+	uint8_t dim_xlate[] = {  1,  5,  3,  7,  2,  6,  4,  8 };
+	uint8_t brt_xlate[] = {  9, 13, 11, 15, 10, 14, 12,  0 };
+	uint8_t solaris_color_to_pc_color[16] = {
+		15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
+	};
+/* END CSTYLED */
+
+	/*
+	 * Now we have two principal cases, black on white and white on black.
+	 * And we have possible inverse to switch them, and we want to
+	 * follow the tem logic.. to set VGA TEXT color. FB will take care
+	 * of itself in boot_fb.c
+	 */
+	if (fb_info.inverse == B_TRUE ||
+	    fb_info.inverse_screen == B_TRUE) {
+		tmp = dim_xlate[fb_info.fg_color];
+		color = solaris_color_to_pc_color[tmp] << 4;
+		tmp = brt_xlate[fb_info.bg_color];
+		color |= solaris_color_to_pc_color[tmp];
+		return (color);
+	}
+
+	/* use bright white for background */
+	if (fb_info.bg_color == 7)
+		tmp = brt_xlate[fb_info.bg_color];
+	else
+		tmp = dim_xlate[fb_info.bg_color];
+
+	color = solaris_color_to_pc_color[tmp] << 4;
+	tmp = dim_xlate[fb_info.fg_color];
+	color |= solaris_color_to_pc_color[tmp];
+	return (color);
+}
+
+static void
+bcons_init_fb(void)
+{
+	char *propval;
+	int intval;
+
+	/* initialize with explicit default values */
+	fb_info.fg_color = CONS_COLOR;
+	fb_info.bg_color = 0;
+	fb_info.inverse = B_FALSE;
+	fb_info.inverse_screen = B_FALSE;
+
+	/* color values are 0 - 7 */
+	propval = find_boot_prop("tem.fg_color");
+	if (propval != NULL) {
+		intval = atoi(propval);
+		if (intval >= 0 && intval <= 7)
+			fb_info.fg_color = intval;
+	}
+
+	/* color values are 0 - 7 */
+	propval = find_boot_prop("tem.bg_color");
+	if (propval != NULL && ISDIGIT(*propval)) {
+		intval = atoi(propval);
+		if (intval >= 0 && intval <= 7)
+			fb_info.bg_color = intval;
+	}
+
+	/* get inverses. allow 0, 1, true, false */
+	propval = find_boot_prop("tem.inverse");
+	if (propval != NULL) {
+		if (*propval == '1' || MATCHES(propval, "true"))
+			fb_info.inverse = B_TRUE;
+	}
+
+	propval = find_boot_prop("tem.inverse-screen");
+	if (propval != NULL) {
+		if (*propval == '1' || MATCHES(propval, "true"))
+			fb_info.inverse_screen = B_TRUE;
+	}
+
+#if defined(_BOOT)
+	/*
+	 * Load cursor position from bootloader only in dboot,
+	 * dboot will pass cursor position to kernel via xboot info.
+	 */
+	propval = find_boot_prop("tem.cursor.row");
+	if (propval != NULL) {
+		intval = atoi(propval);
+		if (intval >= 0 && intval <= 0xFFFF)
+			fb_info.cursor.pos.y = intval;
+	}
+
+	propval = find_boot_prop("tem.cursor.col");
+	if (propval != NULL) {
+		intval = atoi(propval);
+		if (intval >= 0 && intval <= 0xFFFF)
+			fb_info.cursor.pos.x = intval;
+	}
+#endif
+
+	cons_color = set_vga_color();
+}
+
 void
 bcons_init(struct xboot_info *xbi)
 {
@@ -643,6 +781,9 @@ bcons_init(struct xboot_info *xbi)
 	boot_line = (char *)(uintptr_t)xbi->bi_cmdline;
 	bcons_init_env(xbi);
 	console = CONS_INVALID;
+
+	/* set up initial fb_info */
+	bcons_init_fb();
 
 #if defined(__xpv)
 	bcons_init_xen(boot_line);

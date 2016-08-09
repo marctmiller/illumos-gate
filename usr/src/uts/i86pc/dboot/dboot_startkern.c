@@ -2601,8 +2601,6 @@ startup_kernel(void)
 	fb->cursor.pos.x = fb_info.cursor.pos.x;
 	fb->cursor.pos.y = fb_info.cursor.pos.y;
 	fb->cursor.visible = fb_info.cursor.visible;
-	fb->inverse = fb_info.inverse;
-	fb->inverse_screen = fb_info.inverse_screen;
 #endif
 
 	DBG_MSG("\n\n*** DBOOT DONE -- back to asm to jump to kernel\n\n");
