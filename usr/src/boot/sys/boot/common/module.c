@@ -37,6 +37,7 @@
 #include <sys/module.h>
 #include <sys/queue.h>
 #include <sys/stdint.h>
+#include <sys/tem.h>
 
 #include "bootstrap.h"
 
@@ -443,6 +444,7 @@ build_environment_module(void)
 		return;
 	}
 
+	tem_save_state();	/* Ask tem to save it's state in env. */
 	size = env_get_size();
 
 	fp = file_alloc();
