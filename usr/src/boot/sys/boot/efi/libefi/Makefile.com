@@ -20,7 +20,7 @@ CC=     $(GCC_ROOT)/bin/gcc
 install:
 
 SRCS +=	delay.c devpath.c efi_console.c efinet.c efipart.c env.c errno.c \
-	handles.c libefi.c wchar.c
+	gfx_fb.c handles.c libefi.c wchar.c
 
 OBJS=	$(SRCS:%.c=%.o)
 
@@ -38,13 +38,16 @@ CPPFLAGS += -I../../../../../lib/libstand
 
 # Pick up the bootstrap header for some interface items
 CPPFLAGS += -I../../../common
-CPPFLAGS += -DTERM_EMU -DSTAND
+CPPFLAGS += -DSTAND -DEFI
 
 # Handle FreeBSD specific %b and %D printf format specifiers
 # CFLAGS+= ${FORMAT_EXTENSIONS}
 # CFLAGS += -D__printf__=__freebsd_kprintf__
 
 include ../../Makefile.inc
+
+# For multiboot2.h, must be last, to avoid conflicts
+CPPFLAGS +=	-I$(SRC)/uts/common
 
 libefi.a: $(OBJS)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
@@ -62,4 +65,7 @@ x86:
 	$(SYMLINK) ../../../../x86/include x86
 
 %.o:	../%.c
+	$(COMPILE.c) $<
+
+%.o:	../../../common/%.c
 	$(COMPILE.c) $<

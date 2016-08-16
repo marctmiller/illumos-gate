@@ -108,6 +108,7 @@ struct console
     void	(*c_out)(struct console *, int);	/* emit c */
     int		(*c_in)(struct console *);	/* wait for and return input */
     int		(*c_ready)(struct console *);	/* return nonzer if input waiting */
+    int		(*c_ioctl)(struct console *, int, void *);
     void	*c_private;		/* private data */
 };
 extern struct console	*consoles[];

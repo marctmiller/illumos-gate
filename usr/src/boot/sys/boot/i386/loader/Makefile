@@ -17,12 +17,15 @@
 include $(SRC)/Makefile.master
 include $(SRC)/boot/Makefile.version
 
+VGATEXT_FONT	= 8x16
+VGATEXT_FONT_SRC= 8859-1
+VGATEXT_FONT_DIR= $(SRC)/uts/common/font
+
 CFLAGS=		-O2
 CPPFLAGS=	-DSTAND -nostdinc -I../../../../include -I../../..
 CPPFLAGS +=	-I$(SRC)/uts/intel/sys/acpi
 LOADER=		zfsloader
 NEWVERSWHAT=	"ZFS enabled bootstrap loader" x86
-MAN=
 
 # Set by zfsloader Makefile
 CPPFLAGS +=	-DLOADER_ZFS_SUPPORT -I../../zfs
@@ -65,6 +68,7 @@ LIBFICL=	../libficl/libficl.a
 SRCS +=	boot.c commands.c console.c devopen.c interp.c
 SRCS +=	interp_backslash.c interp_parse.c ls.c misc.c
 SRCS +=	module.c panic.c linenoise.c multiboot2.c
+SRCS += font.c 12x22.c 6x10.c 7x14.c 8x16.c list.c tem.c
 
 SRCS +=	load_elf32.c load_elf32_obj.c reloc_elf32.c
 SRCS +=	load_elf64.c load_elf64_obj.c reloc_elf64.c
@@ -91,6 +95,7 @@ CPPFLAGS +=	-I../../common
 CPPFLAGS +=	-I.
 
 CLEANFILES=	vers.c ${LOADER} ${LOADER}.sym ${LOADER}.bin loader.help
+CLEANFILES +=	8x16.c
 
 CFLAGS +=	-Wall
 LDFLAGS=	-static -Ttext 0x0
@@ -167,6 +172,17 @@ install: all $(ROOT_BOOT_DEFAULTS) $(ROOT_BOOT_FORTH) \
 
 %.o:	../../common/linenoise/%.c
 	$(COMPILE.c) -o $@ $<
+
+%.o: $(SRC)/common/list/%.c
+	$(COMPILE.c) -DNDEBUG $<
+
+%.o: $(SRC)/uts/common/font/%.c
+	$(COMPILE.c) $<
+
+$(VGATEXT_FONT).c: $(VGATEXT_FONT_DIR)/$(VGATEXT_FONT_SRC).bdf \
+	$(VGATEXT_FONT_DIR)/bdf_to_c.awk
+	$(AWK) -f $(VGATEXT_FONT_DIR)/bdf_to_c.awk      \
+		$(VGATEXT_FONT_DIR)/$(VGATEXT_FONT_SRC).bdf > $@
 
 $(ROOT_BOOT)/%: ../../forth/%
 	$(INS.file)

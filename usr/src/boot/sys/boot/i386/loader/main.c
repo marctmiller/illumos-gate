@@ -205,8 +205,6 @@ main(void)
     printf("\n%s", bootprog_info);
 
     extract_currdev();				/* set $currdev and $loaddev */
-    setenv("LINES", "24", 1);			/* optional */
-    setenv("COLUMNS", "80", 1);			/* optional */
 
     if (bi_checkcpu())
 	setenv("ISADIR", "amd64", 1);
