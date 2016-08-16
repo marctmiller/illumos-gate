@@ -11,17 +11,20 @@
 
 #
 # Copyright 2016 Toomas Soome <tsoome@me.com>
+# Copyright 2016 RackTop Systems.
 #
 
-include $(SRC)/Makefile.master
-
 MACHINE=	$(MACH)
+ASFLAGS=	-m32
 
-all install: lib
+all:		libefi.a
 
-include ../Makefile.inc
+SRCS=	time.c
+include ../Makefile.com
 
-CFLAGS += -m32 -march=i386 -mpreferred-stack-boundary=2
-CFLAGS += -fno-reorder-functions
+CPPFLAGS +=	-DLOADER_EFI=L\"loader32.efi\"
+CFLAGS +=	-m32
 
-FRC:
+CLEANFILES +=	machine x86
+
+$(OBJS): machine x86

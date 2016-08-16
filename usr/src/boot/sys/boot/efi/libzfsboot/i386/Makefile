@@ -11,20 +11,16 @@
 
 #
 # Copyright 2016 Toomas Soome <tsoome@me.com>
+# Copyright 2016 RackTop Systems.
 #
+
+MACHINE=	$(MACH)
+
+all install: libzfsboot.a
 
 include ../Makefile.com
 
-MACHINE=	$(MACH64)
+CLEANFILES +=	x86
+CFLAGS +=	-m32
 
-CFLAGS +=	-m64 -fPIC -mno-red-zone
-ASFLAGS =	-m64 -fPIC
-
-# _setjmp/_longjmp
-SRCS += $(LIBSTAND_SRC)/amd64/_setjmp.S
-OBJS += _setjmp.o
-
-$(LIBRARY): $(SRCS) $(OBJS)
-
-%.o: $(LIBSTAND_SRC)/amd64/%.S
-	$(COMPILE.S) $<
+$(OBJS): machine x86

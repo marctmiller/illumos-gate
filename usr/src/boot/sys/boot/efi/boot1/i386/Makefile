@@ -11,10 +11,23 @@
 
 #
 # Copyright 2016 Toomas Soome <tsoome@me.com>
+# Copyright 2016 RackTop Systems.
 #
+
+MACHINE=	$(MACH)
+ASFLAGS=	-m32
+EFIPROG=	bootia32.efi
+
+all:		${EFIPROG}
 
 include ../Makefile.com
 
-CFLAGS +=	-mno-red-zone -m64 -fPIC
+EFI_TARGET=	pei-i386
+LDFLAGS +=	-znocombreloc
 
-MACHINE=	$(MACH64)
+CPPFLAGS +=	-DLOADER_EFI=\"loader32.efi\"
+CFLAGS +=	-m32
+
+CLEANFILES +=	machine x86
+
+$(OBJS): machine x86

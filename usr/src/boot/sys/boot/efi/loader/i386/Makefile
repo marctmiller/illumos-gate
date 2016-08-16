@@ -10,25 +10,23 @@
 #
 
 #
-# Copyright 2015 Toomas Soome <tsoome@me.com>
+# Copyright 2016 Toomas Soome <tsoome@me.com>
+# Copyright 2016 RackTop Systems.
 #
 
-include $(SRC)/Makefile.master
+MACHINE=	$(MACH)
+ASFLAGS=	-m32
+EFIPROG=	loader32.efi
 
-SUBDIRS=	i386 amd64
+all:		${EFIPROG}
 
-all:=		TARGET= all
-install:=	TARGET= install
-clean:=		TARGET= clean
-clobber:=	TARGET= clobber
+include ../Makefile.com
 
-.KEEP_STATE:
+EFI_TARGET=	pei-i386
+LDFLAGS +=	-znocombreloc
 
-all clean clobber: $(SUBDIRS)
+CFLAGS +=	-m32
 
-install: $(SUBDIRS)
+CLEANFILES +=	machine x86 ${EFIPROG}
 
-FRC:
-
-$(SUBDIRS): FRC
-	@cd $@; pwd; $(MAKE) $(TARGET)
+$(OBJS):	machine x86

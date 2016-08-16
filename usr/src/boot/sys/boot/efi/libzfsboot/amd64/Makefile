@@ -11,24 +11,16 @@
 
 #
 # Copyright 2016 Toomas Soome <tsoome@me.com>
+# Copyright 2016 RackTop Systems.
 #
 
-.KEEP_STATE:
+MACHINE=	$(MACH64)
 
-include $(SRC)/Makefile.master
+all install: libzfsboot.a
 
-SUBDIRS = $(MACH) $(MACH64)
+include ../Makefile.com
 
-all	:=	TARGET = all
-clean	:=	TARGET = clean
-clobber	:=	TARGET = clobber
-install	:=	TARGET = install
+CLEANFILES +=	x86
+CFLAGS +=	-mno-red-zone -m64
 
-all clean clobber: $(SUBDIRS)
-
-install: all
-
-$(SUBDIRS): FRC
-	@cd $@; pwd; $(MAKE) $(MFLAGS) $(TARGET)
-
-FRC:
+$(OBJS): machine x86

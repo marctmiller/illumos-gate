@@ -11,11 +11,20 @@
 
 #
 # Copyright 2016 Toomas Soome <tsoome@me.com>
+# Copyright 2016 RackTop Systems.
 #
 
+MACHINE=	$(MACH64)
+ASFLAGS=	-m64
+
+all:		libefi.a
+
+SRCS=	time.c
 include ../Makefile.com
 
-CFLAGS +=	-march=i386 -m32 -fno-reorder-functions
-CFLAGS +=	-mpreferred-stack-boundary=2
+CPPFLAGS +=	-DLOADER_EFI=L\"loader64.efi\"
+CFLAGS +=	-m64
 
-MACHINE=	$(MACH)
+CLEANFILES +=	machine x86
+
+$(OBJS): machine x86

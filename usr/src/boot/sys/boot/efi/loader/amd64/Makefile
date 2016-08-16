@@ -11,16 +11,22 @@
 
 #
 # Copyright 2016 Toomas Soome <tsoome@me.com>
+# Copyright 2016 RackTop Systems.
 #
 
-include $(SRC)/Makefile.master
-
 MACHINE=	$(MACH64)
+ASFLAGS=	-m64
+EFIPROG=	loader64.efi
 
-all install: lib
+all:		${EFIPROG}
 
-include ../Makefile.inc
+include ../Makefile.com
 
-CFLAGS += -fPIC -m64 -mno-red-zone
+EFI_TARGET=	pei-x86-64
+LDFLAGS +=	-znocombreloc
 
-FRC:
+CFLAGS +=	-m64
+
+CLEANFILES +=	machine x86 ${EFIPROG}
+
+$(OBJS):	machine x86
