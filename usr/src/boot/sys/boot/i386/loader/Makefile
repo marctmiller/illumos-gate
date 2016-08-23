@@ -21,7 +21,7 @@ VGATEXT_FONT	= 8x16
 VGATEXT_FONT_SRC= 8859-1
 VGATEXT_FONT_DIR= $(SRC)/uts/common/font
 
-CFLAGS=		-O2
+CFLAGS=		-Os
 CPPFLAGS=	-DSTAND -nostdinc -I../../../../include -I../../..
 CPPFLAGS +=	-I$(SRC)/uts/intel/sys/acpi
 LOADER=		zfsloader
