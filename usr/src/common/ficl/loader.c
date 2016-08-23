@@ -43,6 +43,7 @@
 #include <termios.h>
 #else
 #include <stand.h>
+#include <gfx_fb.h>
 #ifdef __i386__
 #include <machine/cpufunc.h>
 #endif
@@ -71,6 +72,80 @@
  *		uuid-to-string ( addr' -- addr n | -1 )
  *		.#	    ( value -- )
  */
+
+#ifdef STAND
+void
+ficl_fb_setpixel(ficlVm *pVM)
+{
+	uint32_t x, y;
+
+	FICL_STACK_CHECK(ficlVmGetDataStack(pVM), 2, 0);
+
+	y = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	x = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	gfx_fb_setpixel(x, y);
+}
+
+void
+ficl_fb_line(ficlVm *pVM)
+{
+	uint32_t x0, y0, x1, y1;
+
+	FICL_STACK_CHECK(ficlVmGetDataStack(pVM), 4, 0);
+
+	y1 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	x1 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	y0 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	x0 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	gfx_fb_line(x0, y0, x1, y1);
+}
+
+void
+ficl_fb_bezier(ficlVm *pVM)
+{
+	uint32_t x0, y0, x1, y1, x2, y2, width;
+
+	FICL_STACK_CHECK(ficlVmGetDataStack(pVM), 7, 0);
+
+	width = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	y2 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	x2 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	y1 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	x1 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	y0 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	x0 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	gfx_fb_bezier(x0, y0, x1, y1, x2, y2, width);
+}
+
+void
+ficl_fb_drawrect(ficlVm *pVM)
+{
+	uint32_t x1, x2, y1, y2, fill;
+
+	FICL_STACK_CHECK(ficlVmGetDataStack(pVM), 5, 0);
+
+	fill = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	y2 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	x2 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	y1 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	x1 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	gfx_fb_drawrect(x1, y1, x2, y2, fill);
+}
+
+void
+ficl_term_drawrect(ficlVm *pVM)
+{
+	uint32_t x1, x2, y1, y2;
+
+	FICL_STACK_CHECK(ficlVmGetDataStack(pVM), 4, 0);
+
+	y2 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	x2 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	y1 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	x1 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
+	gfx_term_drawrect(x1, y1, x2, y2);
+}
+#endif
 
 void
 ficlSetenv(ficlVm *pVM)
@@ -954,6 +1029,16 @@ ficlSystemCompilePlatform(ficlSystem *pSys)
 	ficlDictionarySetPrimitive(dp, "uuid-to-string", ficlUuidToString,
 	    FICL_WORD_DEFAULT);
 #ifdef STAND
+	ficlDictionarySetPrimitive(dp, "fb-setpixel", ficl_fb_setpixel,
+	    FICL_WORD_DEFAULT);
+	ficlDictionarySetPrimitive(dp, "fb-line", ficl_fb_line,
+	    FICL_WORD_DEFAULT);
+	ficlDictionarySetPrimitive(dp, "fb-bezier", ficl_fb_bezier,
+	    FICL_WORD_DEFAULT);
+	ficlDictionarySetPrimitive(dp, "fb-drawrect", ficl_fb_drawrect,
+	    FICL_WORD_DEFAULT);
+	ficlDictionarySetPrimitive(dp, "term-drawrect", ficl_term_drawrect,
+	    FICL_WORD_DEFAULT);
 #if defined(__i386__) && !defined(EFI)
 	ficlDictionarySetPrimitive(dp, "outb", ficlOutb, FICL_WORD_DEFAULT);
 	ficlDictionarySetPrimitive(dp, "inb", ficlInb, FICL_WORD_DEFAULT);
