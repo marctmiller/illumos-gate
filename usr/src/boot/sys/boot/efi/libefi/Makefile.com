@@ -20,7 +20,7 @@ CC=     $(GCC_ROOT)/bin/gcc
 install:
 
 SRCS +=	delay.c devpath.c efi_console.c efinet.c efipart.c env.c errno.c \
-	gfx_fb.c handles.c libefi.c wchar.c
+	gfx_fb.c handles.c libefi.c pnglite.c wchar.c
 
 OBJS=	$(SRCS:%.c=%.o)
 
@@ -35,6 +35,7 @@ CPPFLAGS += -I$(SRC)/common/ficl -I../../libficl
 CPPFLAGS += -I../../include
 CPPFLAGS += -I../../include/${MACHINE}
 CPPFLAGS += -I../../../../../lib/libstand
+CPPFLAGS += -I../../../../../lib/libz
 
 # Pick up the bootstrap header for some interface items
 CPPFLAGS += -I../../../common
