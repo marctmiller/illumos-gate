@@ -20,6 +20,10 @@ FICLDIR=	$(SRC)/common/ficl
 CPPFLAGS= -nostdinc -DSTAND -DEFI -I. -I.. -I../../../../../include
 CPPFLAGS += -I../../../../../lib/libstand
 CPPFLAGS += -I../../../..  -I$(FICLDIR) -I../../../common
+
+# For multiboot2.h, must be last, to avoid conflicts
+CPPFLAGS +=	-I$(SRC)/uts/common
+
 CFLAGS= -Os -Wall
 
 include ../../Makefile.inc

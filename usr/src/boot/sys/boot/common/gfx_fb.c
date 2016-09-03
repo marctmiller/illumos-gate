@@ -18,6 +18,7 @@
  */
 
 #include <sys/cdefs.h>
+#include <sys/param.h>
 #include <stand.h>
 #if defined(EFI)
 #include <efi.h>
@@ -47,6 +48,8 @@ static int gfx_fb_cons_clear(struct vis_consclear *);
 static void gfx_fb_cons_copy(struct vis_conscopy *);
 static void gfx_fb_cons_display(struct vis_consdisplay *);
 
+#define	abs(x)		((x) < 0? -(x):(x))
+#define max(x, y)	((x) >= (y) ? (x) : (y))
 /*
  * Translate platform specific FB address.
  */
@@ -104,17 +107,17 @@ gfx_fb_color_map(uint8_t index)
 	c = cmap4_to_24.red[index];
 	pos = gfx_fb.u.fb2.framebuffer_red_field_position;
 	size = gfx_fb.u.fb2.framebuffer_red_mask_size;
-	color = ((c >> 8 - size) & ((1 << size) - 1)) << pos;
+	color = ((c >> (8 - size)) & ((1 << size) - 1)) << pos;
 
 	c = cmap4_to_24.green[index];
 	pos = gfx_fb.u.fb2.framebuffer_green_field_position;
 	size = gfx_fb.u.fb2.framebuffer_green_mask_size;
-	color |= ((c >> 8 - size) & ((1 << size) - 1)) << pos;
+	color |= ((c >> (8 - size)) & ((1 << size) - 1)) << pos;
 
 	c = cmap4_to_24.blue[index];
 	pos = gfx_fb.u.fb2.framebuffer_blue_field_position;
 	size = gfx_fb.u.fb2.framebuffer_blue_mask_size;
-	color |= ((c >> 8 - size) & ((1 << size) - 1)) << pos;
+	color |= ((c >> (8 - size)) & ((1 << size) - 1)) << pos;
 
 	return (color);
 }
@@ -306,10 +309,10 @@ gfx_framework_init(struct visual_ops *fb_ops)
 static int
 gfx_fb_cons_clear(struct vis_consclear *ca)
 {
-	uint8_t *fb;
+	uint8_t *fb, *fb8;
 	uint32_t data, *fb32;
 	uint16_t *fb16;
-	int i, width, height, size, pitch;
+	int i, j, width, height, pitch;
 #if defined (EFI)
 	EFI_TPL tpl;
 #endif
@@ -318,7 +321,6 @@ gfx_fb_cons_clear(struct vis_consclear *ca)
 	pitch = gfx_fb.framebuffer_common.framebuffer_pitch;
 	width = gfx_fb.framebuffer_common.framebuffer_width;
 	height = gfx_fb.framebuffer_common.framebuffer_height;
-	size = height * pitch;
 
 	data = gfx_fb_color_map(ca->bg_color);
 #if defined (EFI)
@@ -330,22 +332,30 @@ gfx_fb_cons_clear(struct vis_consclear *ca)
 			(void) memset(fb + i * pitch, ca->bg_color, pitch);
 		}
 		break;
+	case 15:
 	case 16:		/* 16 bit */
-		fb16 = (uint16_t *)fb;
-		for (i = 0; i < height * width; i++)
-			fb16[i] = (uint16_t)data;
+		for (i = 0; i < height; i++) {
+			fb16 = (uint16_t *)(fb + i * pitch);
+			for (j = 0; j < width; j++)
+				fb16[j] = (uint16_t)(data & 0xffff);
+		}
 		break;
 	case 24:		/* 24 bit */
-		for (i = 0; i < size; i += 3) {
-			fb[i] = (data >> 16) & 0xff;
-			fb[i+1] = (data >> 8) & 0xff;
-			fb[i+2] = data & 0xff;
+		for (i = 0; i < height; i++) {
+			fb8 = fb + i * pitch;
+			for (j = 0; j < pitch; j += 3) {
+				fb8[j] = (data >> 16) & 0xff;
+				fb8[j+1] = (data >> 8) & 0xff;
+				fb8[j+2] = data & 0xff;
+			}
 		}
 		break;
 	case 32:		/* 32 bit */
-		fb32 = (uint32_t *)fb;
-		for (i = 0; i < height * width; i++)
-			fb32[i] = data;
+		for (i = 0; i < height; i++) {
+			fb32 = (uint32_t *)(fb + i * pitch);
+			for (j = 0; j < width; j++)
+				fb32[j] = data;
+		}
 		break;
 	}
 #if defined (EFI)
@@ -367,7 +377,7 @@ gfx_fb_cons_copy(struct vis_conscopy *ma)
 #endif
 
 	fb = gfx_get_fb_address();
-	bpp = gfx_fb.framebuffer_common.framebuffer_bpp >> 3;
+	bpp = roundup2(gfx_fb.framebuffer_common.framebuffer_bpp, 8) >> 3;
 	pitch = gfx_fb.framebuffer_common.framebuffer_pitch;
 
 	soffset = ma->s_col * bpp + ma->s_row * pitch;
@@ -383,12 +393,12 @@ gfx_fb_cons_copy(struct vis_conscopy *ma)
 	if (toffset <= soffset) {
 		for (i = 0; i < height; i++) {
 			uint32_t increment = i * pitch;
-			(void) memmove(dst + increment, src + increment, width);
+			(void)memmove(dst + increment, src + increment, width);
 		}
 	} else {
 		for (i = height - 1; i >= 0; i--) {
 			uint32_t increment = i * pitch;
-			(void) memmove(dst + increment, src + increment, width);
+			(void)memmove(dst + increment, src + increment, width);
 		}
 	}
 #if defined (EFI)
@@ -462,7 +472,7 @@ gfx_fb_cons_display(struct vis_consdisplay *da)
 	    da->row + da->height > gfx_fb.framebuffer_common.framebuffer_height)
 		return;
 
-	bpp = gfx_fb.framebuffer_common.framebuffer_bpp >> 3;
+	bpp = roundup2(gfx_fb.framebuffer_common.framebuffer_bpp, 8) >> 3;
 	pitch = gfx_fb.framebuffer_common.framebuffer_pitch;
 
 	size = da->width * bpp;
@@ -496,7 +506,7 @@ gfx_fb_display_cursor(struct vis_conscursor *ca)
 #endif
 
 	fb = gfx_get_fb_address();
-	bpp = gfx_fb.framebuffer_common.framebuffer_bpp >> 3;
+	bpp = roundup2(gfx_fb.framebuffer_common.framebuffer_bpp, 8) >> 3;
 	pitch = gfx_fb.framebuffer_common.framebuffer_pitch;
 
 	size = ca->width * bpp;
@@ -509,8 +519,8 @@ gfx_fb_display_cursor(struct vis_conscursor *ca)
 #if defined (EFI)
 	tpl = BS->RaiseTPL(TPL_NOTIFY);
 #endif
-	switch (bpp) {
-	case 1:		/* 8 bit */
+	switch (gfx_fb.framebuffer_common.framebuffer_bpp) {
+	case 8:		/* 8 bit */
 		fg = ca->fg_color.mono;
 		bg = ca->bg_color.mono;
 		for (i = 0; i < ca->height; i++) {
@@ -520,7 +530,8 @@ gfx_fb_display_cursor(struct vis_conscursor *ca)
 			}
 		}
 		break;
-	case 2:		/* 16 bit */
+	case 15:
+	case 16:	/* 16 bit */
 		fg = ca->fg_color.sixteen[0] << 8;
 		fg |= ca->fg_color.sixteen[1];
 		bg = ca->bg_color.sixteen[0] << 8;
@@ -533,7 +544,7 @@ gfx_fb_display_cursor(struct vis_conscursor *ca)
 			}
 		}
 		break;
-	case 3:		/* 24 bit */
+	case 24:	/* 24 bit */
 		fg = ca->fg_color.twentyfour[0] << 16;
 		fg |= ca->fg_color.twentyfour[1] << 8;
 		fg |= ca->fg_color.twentyfour[2];
@@ -553,7 +564,7 @@ gfx_fb_display_cursor(struct vis_conscursor *ca)
 			}
 		}
 		break;
-	case 4:		/* 32 bit */
+	case 32:	/* 32 bit */
 		fg = ca->fg_color.twentyfour[0] << 16;
 		fg |= ca->fg_color.twentyfour[1] << 8;
 		fg |= ca->fg_color.twentyfour[2];
@@ -576,6 +587,25 @@ gfx_fb_display_cursor(struct vis_conscursor *ca)
  * Public graphics primitives.
  */
 
+static int isqrt(int num) {
+	int res = 0;
+	int bit = 1 << 30;
+
+	/* "bit" starts at the highest power of four <= the argument. */
+	while (bit > num)
+		bit >>= 2;
+
+	while (bit != 0) {
+		if (num >= res + bit) {
+			num -= res + bit;
+			res = (res >> 1) + bit;
+		} else
+			res >>= 1;
+		bit >>= 2;
+	}
+	return (res);
+}
+
 /* set pixel in framebuffer using gfx coordinates */
 void
 gfx_fb_setpixel(int x, int y)
@@ -589,19 +619,24 @@ gfx_fb_setpixel(int x, int y)
 
 	tem_get_colors((tem_vt_state_t)tems.ts_active, &fg, &bg);
 	c = gfx_fb_color_map(fg);
+
+	if (x < 0 || y < 0)
+		return;
+
 	if (x >= gfx_fb.framebuffer_common.framebuffer_width ||
 	    y >= gfx_fb.framebuffer_common.framebuffer_height)
 		return;
 
 	fb = gfx_get_fb_address();
 	pitch = gfx_fb.framebuffer_common.framebuffer_pitch;
-	bpp = gfx_fb.framebuffer_common.framebuffer_bpp >> 3;
+	bpp = roundup2(gfx_fb.framebuffer_common.framebuffer_bpp, 8) >> 3;
 
 	offset = y * pitch + x * bpp;
 	switch (gfx_fb.framebuffer_common.framebuffer_bpp) {
 	case 8:
 		fb[offset] = c & 0xff;
 		break;
+	case 15:
 	case 16:
 		*(uint16_t *)(fb + offset) = c & 0xffff;
 		break;
@@ -640,36 +675,48 @@ gfx_fb_drawrect(int x1, int y1, int x2, int y2, int fill)
 }
 
 void
-gfx_fb_line(int x0, int y0, int x1, int y1)
+gfx_fb_line(int x0, int y0, int x1, int y1, int width)
 {
 	int dx, sx, dy, sy;
-	int err, e2;
+	int err, e2, x2, y2, ed;
 
 	if (plat_stdout_is_framebuffer() == 0)
 		return;
 
 	sx = x0 < x1? 1:-1;
-	if (sx > 0)
-		dx = x1 - x0;
-	else
-		dx = -(x1 - x0);
 	sy = y0 < y1? 1:-1;
-	if (sy > 0)
-		dy = -(y1 - y0);
-	else
-		dy = y1 - y0;
+	dx = abs(x1 - x0);
+	dy = abs(y1 - y0);
 	err = dx + dy;
+	ed = dx + dy == 0 ? 1: isqrt(dx * dx + dy * dy);
 
 	for (;;) {
 		gfx_fb_setpixel(x0, y0);
-		if (x0 == x1 && y0 == y1)
-			break;
-		e2 = err << 1;
-		if (e2 >= dy) {
-			err += dy;
+		e2 = err;
+		x2 = x0;
+		if ((e2 << 1) >= -dx) {		/* x step */
+			e2 += dy;
+			y2 = y0;
+			while (e2 < ed * width && (y1 != y2 || dx > dy)) {
+				y2 += sy;
+				gfx_fb_setpixel(x0, y2);
+				e2 += dx;
+			}
+			if (x0 == x1)
+				break;
+			e2 = err;
+			err -= dy;
 			x0 += sx;
 		}
-		if (e2 <= dx) {
+		if ((e2 << 1) <= dy) {		/* y step */
+			e2 = dx-e2;
+			while (e2 < ed * width && (x1 != x2 || dx < dy)) {
+				x2 += sx;
+				gfx_fb_setpixel(x2, y0);
+				e2 += dy;
+			}
+			if (y0 == y1)
+				break;
 			err += dx;
 			y0 += sy;
 		}
@@ -743,7 +790,7 @@ gfx_fb_bezier(int x0, int y0, int x1, int y1, int x2, int y2, int width)
 			}
 		} while (dy < dx ); /* gradient negates -> algorithm fails */
 	}
-	gfx_fb_line(x0, y0, x2, y2);
+	gfx_fb_line(x0, y0, x2, y2, width);
 }
 
 /*
@@ -752,7 +799,7 @@ gfx_fb_bezier(int x0, int y0, int x1, int y1, int x2, int y2, int width)
 void
 gfx_term_drawrect(int row1, int col1, int row2, int col2)
 {
-	int x1, y1, x2, y2, xb, yb;
+	int x1, y1, x2, y2;
 	int xshift, yshift;
 	int width, i;
 
@@ -847,14 +894,16 @@ gfx_fb_putimage(png_t *png)
 		return (1);
 	}
 
-	bpp = gfx_fb.common.framebuffer_bpp >> 3;
+	bpp = roundup2(gfx_fb.framebuffer_common.framebuffer_bpp, 8) >> 3;
 	width = png->width;
 	height = png->height;
 	da.width = png->width;
 	da.height = png->height;
-	da.col = gfx_fb.common.framebuffer_width - tems.ts_p_offset.x;
+	da.col = gfx_fb.framebuffer_common.framebuffer_width -
+	    tems.ts_p_offset.x;
 	da.col -= da.width;
-	da.row = gfx_fb.common.framebuffer_height - tems.ts_p_offset.y;
+	da.row = gfx_fb.framebuffer_common.framebuffer_height -
+	    tems.ts_p_offset.y;
 	da.row -= da.height;
 
 	da.data = malloc(width * height * bpp);
@@ -878,8 +927,7 @@ gfx_fb_putimage(png_t *png)
 		color |= b >> (8 - gfx_fb.u.fb2.framebuffer_blue_mask_size)
 		    << gfx_fb.u.fb2.framebuffer_blue_field_position;
 
-		switch (gfx_fb.common.framebuffer_bpp) {
-#if !defined (EFI)
+		switch (gfx_fb.framebuffer_common.framebuffer_bpp) {
 		case 8: {
 			uint32_t best, dist, k;
 			int diff;
@@ -905,7 +953,7 @@ gfx_fb_putimage(png_t *png)
 			da.data[j] = color;
 			break;
 		}
-#endif
+		case 15:
 		case 16:
 			*(uint16_t *)(da.data+j) = color;
 			break;
