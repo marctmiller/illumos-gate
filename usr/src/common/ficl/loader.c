@@ -43,7 +43,6 @@
 #include <termios.h>
 #else
 #include <stand.h>
-#include <gfx_fb.h>
 #include <pnglite.h>
 #ifdef __i386__
 #include <machine/cpufunc.h>
@@ -56,6 +55,7 @@
 #include <uuid/uuid.h>
 #endif
 #include <string.h>
+#include <gfx_fb.h>
 #include "ficl.h"
 
 /*
@@ -74,13 +74,14 @@
  *		.#	    ( value -- )
  */
 
-#ifdef STAND
 void
 ficl_fb_putimage(ficlVm *pVM)
 {
 	char *namep, *name;
 	int names, ret = 0;
+#ifdef STAND
 	png_t png;
+#endif
 
 	FICL_STACK_CHECK(ficlVmGetDataStack(pVM), 2, 1);
 
@@ -93,6 +94,7 @@ ficl_fb_putimage(ficlVm *pVM)
 	strncpy(name, namep, names);
 	name[names] = '\0';
 
+#ifdef STAND
 	if ((ret = png_open(&png, name)) != PNG_NO_ERROR) {
 		ret = 0;
 		ficlFree(name);
@@ -102,8 +104,9 @@ ficl_fb_putimage(ficlVm *pVM)
 
 	if (gfx_fb_putimage(&png) == 0)
 		ret = -1;	/* success */
-	ficlFree(name);
 	png_close(&png);
+#endif
+	ficlFree(name);
 	ficlStackPushInteger(ficlVmGetDataStack(pVM), ret);
 }
 
@@ -122,15 +125,16 @@ ficl_fb_setpixel(ficlVm *pVM)
 void
 ficl_fb_line(ficlVm *pVM)
 {
-	uint32_t x0, y0, x1, y1;
+	uint32_t x0, y0, x1, y1, wd;
 
-	FICL_STACK_CHECK(ficlVmGetDataStack(pVM), 4, 0);
+	FICL_STACK_CHECK(ficlVmGetDataStack(pVM), 5, 0);
 
+	wd = ficlStackPopInteger(ficlVmGetDataStack(pVM));
 	y1 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
 	x1 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
 	y0 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
 	x0 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
-	gfx_fb_line(x0, y0, x1, y1);
+	gfx_fb_line(x0, y0, x1, y1, wd);
 }
 
 void
@@ -178,7 +182,6 @@ ficl_term_drawrect(ficlVm *pVM)
 	x1 = ficlStackPopInteger(ficlVmGetDataStack(pVM));
 	gfx_term_drawrect(x1, y1, x2, y2);
 }
-#endif
 
 void
 ficlSetenv(ficlVm *pVM)
@@ -1061,7 +1064,6 @@ ficlSystemCompilePlatform(ficlSystem *pSys)
 	    FICL_WORD_DEFAULT);
 	ficlDictionarySetPrimitive(dp, "uuid-to-string", ficlUuidToString,
 	    FICL_WORD_DEFAULT);
-#ifdef STAND
 	ficlDictionarySetPrimitive(dp, "fb-setpixel", ficl_fb_setpixel,
 	    FICL_WORD_DEFAULT);
 	ficlDictionarySetPrimitive(dp, "fb-line", ficl_fb_line,
@@ -1074,6 +1076,7 @@ ficlSystemCompilePlatform(ficlSystem *pSys)
 	    FICL_WORD_DEFAULT);
 	ficlDictionarySetPrimitive(dp, "term-drawrect", ficl_term_drawrect,
 	    FICL_WORD_DEFAULT);
+#ifdef STAND
 #if defined(__i386__) && !defined(EFI)
 	ficlDictionarySetPrimitive(dp, "outb", ficlOutb, FICL_WORD_DEFAULT);
 	ficlDictionarySetPrimitive(dp, "inb", ficlInb, FICL_WORD_DEFAULT);
