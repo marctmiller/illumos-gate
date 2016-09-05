@@ -24,12 +24,13 @@ clobber	:=	TARGET = clobber
 MACHINE=	$(MACH)
 CC=		$(GCC_ROOT)/bin/gcc
 FICLDIR=	$(SRC)/common/ficl
+PNGLITE=	$(SRC)/common/pnglite
 
 all install: $(SUBDIRS) libficl.a
 
 CPPFLAGS=	-DSTAND -I. -I../../../../include
 CPPFLAGS +=	-I../../../../lib/libstand
-CPPFLAGS +=	-I../../..  -I$(FICLDIR) -I../../common
+CPPFLAGS +=	-I../../..  -I$(FICLDIR) -I../../common -I$(PNGLITE)
 
 # For multiboot2.h, must be last, to avoid conflicts
 CPPFLAGS +=	-I$(SRC)/uts/common

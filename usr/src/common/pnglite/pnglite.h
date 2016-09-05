@@ -165,4 +165,5 @@ int png_close(png_t *png);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif /* _PNGLITE_H_ */

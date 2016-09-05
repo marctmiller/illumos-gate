@@ -27,6 +27,8 @@ VGATEXT_FONT	= 8x16
 VGATEXT_FONT_SRC= 8859-1
 VGATEXT_FONT_DIR= $(SRC)/uts/common/font
 
+PNGLITE=	$(SRC)/common/pnglite
+
 # architecture-specific loader code
 SRCS=	autoload.c bootinfo.c conf.c copy.c devicename.c main.c self_reloc.c \
 	smbios.c acpi.c vers.c memmap.c multiboot2.c font.c 12x22.c 6x10.c \
@@ -55,6 +57,7 @@ CPPFLAGS +=	-I../../../zfs
 CPPFLAGS +=	-I../../../../cddl/boot/zfs
 CPPFLAGS +=	-I$(SRC)/uts/intel/sys/acpi
 CPPFLAGS +=	-DEFI_ZFS_BOOT
+CPPFLAGS +=	-I$(PNGLITE)
 CPPFLAGS +=	-DNO_PCI -DEFI
 
 # Export serial numbers, UUID, and asset tag from loader.
