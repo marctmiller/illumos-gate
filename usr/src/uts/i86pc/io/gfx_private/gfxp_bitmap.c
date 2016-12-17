@@ -104,11 +104,11 @@ gfxp_bm_getfb_info(gfxp_fb_softc_ptr_t ptr, struct gfxp_bm_fb_info *fbip)
 
 	switch (softc->fb_type) {
 	case GFXP_BITMAP:
-		fbip->xres = softc->console.fb.screen.x;
-		fbip->yres = softc->console.fb.screen.y;
+		fbip->xres = softc->console->fb.screen.x;
+		fbip->yres = softc->console->fb.screen.y;
 		fbip->bpp =
-		    softc->console.fb.pitch / softc->console.fb.screen.x * 8;
-		fbip->depth = softc->console.fb.depth;
+		    softc->console->fb.pitch / softc->console->fb.screen.x * 8;
+		fbip->depth = softc->console->fb.depth;
 		break;
 	case GFXP_VGATEXT:
 		/* Hardwired values for vgatext */
@@ -138,13 +138,16 @@ int gfxp_bm_attach(dev_info_t *devi, ddi_attach_cmd_t cmd,
 int gfxp_bm_detach(dev_info_t *devi, ddi_detach_cmd_t cmd,
     struct gfxp_fb_softc *softc)
 {
-	if (softc->console.fb.fb_size != 0) {
-		gfxp_unmap_kernel_space((gfxp_kva_t)softc->console.fb.fb,
-		    softc->console.fb.fb_size);
+	if (softc == NULL || softc->console == NULL)
+		return (DDI_SUCCESS);
+
+	if (softc->console->fb.fb_size != 0) {
+		gfxp_unmap_kernel_space((gfxp_kva_t)softc->console->fb.fb,
+		    softc->console->fb.fb_size);
 		fb_info.fb = NULL;
-		kmem_free(softc->console.fb.shadow_fb,
-		    softc->console.fb.fb_size);
-		softc->console.fb.shadow_fb = NULL;
+		kmem_free(softc->console->fb.shadow_fb,
+		    softc->console->fb.fb_size);
+		softc->console->fb.shadow_fb = NULL;
 	}
 	return (DDI_SUCCESS);
 }
@@ -152,8 +155,8 @@ int gfxp_bm_detach(dev_info_t *devi, ddi_detach_cmd_t cmd,
 static void
 bitmap_kdsettext(struct gfxp_fb_softc *softc)
 {
-	bitmap_copy_fb(softc, softc->console.fb.shadow_fb,
-	    softc->console.fb.fb);
+	bitmap_copy_fb(softc, softc->console->fb.shadow_fb,
+	    softc->console->fb.fb);
 }
 
 /*ARGSUSED*/
@@ -217,35 +220,15 @@ bitmap_setup_fb(struct gfxp_fb_softc *softc)
 	size_t size;
 	struct gfxfb_info *gfxfb_info;
 
-	softc->console.fb.paddr = fb_info.paddr;
-	softc->console.fb.pitch = fb_info.pitch;
-	softc->console.fb.bpp = fb_info.bpp;
-	softc->console.fb.depth = fb_info.depth;
-	softc->console.fb.rgb = fb_info.rgb;
-	softc->console.fb.screen.x = fb_info.screen.x;
-	softc->console.fb.screen.y = fb_info.screen.y;
-	softc->console.fb.terminal_origin.x = fb_info.terminal_origin.x;
-	softc->console.fb.terminal_origin.y = fb_info.terminal_origin.y;
-	softc->console.fb.terminal.x = fb_info.terminal.x;
-	softc->console.fb.terminal.y = fb_info.terminal.y;
-	softc->console.fb.cursor.visible = fb_info.cursor.visible;
-	softc->console.fb.cursor.origin.x = fb_info.cursor.origin.x;
-	softc->console.fb.cursor.origin.y = fb_info.cursor.origin.y;
-	softc->console.fb.cursor.pos.x = fb_info.cursor.pos.x;
-	softc->console.fb.cursor.pos.y = fb_info.cursor.pos.y;
-	softc->console.fb.font_width = fb_info.font_width;
-	softc->console.fb.font_height = fb_info.font_height;
-
-	softc->console.fb.fb_size = ptob(btopr(fb_info.fb_size));
-	size = softc->console.fb.fb_size;
-	softc->console.fb.fb = (uint8_t *)gfxp_map_kernel_space(fb_info.paddr,
-	    softc->console.fb.fb_size, GFXP_MEMORY_WRITECOMBINED);
-	if (softc->console.fb.fb == NULL) {
-		softc->console.fb.fb_size = 0;
+	softc->console = (union gfx_console *)&fb_info;
+	size = ptob(btopr(fb_info.fb_size));
+	softc->console->fb.fb_size = size;
+	softc->console->fb.fb = (uint8_t *)gfxp_map_kernel_space(fb_info.paddr,
+	    size, GFXP_MEMORY_WRITECOMBINED);
+	if (softc->console->fb.fb == NULL)
 		return (DDI_FAILURE);
-	}
-	softc->console.fb.shadow_fb = kmem_zalloc(softc->console.fb.fb_size,
-	    KM_SLEEP);
+
+	softc->console->fb.shadow_fb = kmem_zalloc(size, KM_SLEEP);
 
 	bitmap_attr.fbtype.fb_height = fb_info.screen.y;
 	bitmap_attr.fbtype.fb_width = fb_info.screen.x;
@@ -302,20 +285,23 @@ bitmap_color_map(uint8_t index)
 static int
 bitmap_devinit(struct gfxp_fb_softc *softc, struct vis_devinit *data)
 {
+	union gfx_console *console;
+
 	if (bitmap_setup_fb(softc) == DDI_FAILURE)
 		return (1);
 
+	console = softc->console;
+
 	/* make sure we have current state of the screen */
-	bitmap_copy_fb(softc, softc->console.fb.fb,
-	    softc->console.fb.shadow_fb);
+	bitmap_copy_fb(softc, console->fb.fb, console->fb.shadow_fb);
 
 	/* initialize console instance */
 	data->version = VIS_CONS_REV;
-	data->width = softc->console.fb.screen.x;
-	data->height = softc->console.fb.screen.y;
-	data->linebytes = softc->console.fb.pitch;
+	data->width = console->fb.screen.x;
+	data->height = console->fb.screen.y;
+	data->linebytes = console->fb.pitch;
 	data->color_map = bitmap_color_map;
-	data->depth = softc->console.fb.depth;
+	data->depth = console->fb.depth;
 	data->mode = VIS_PIXEL;
 	data->polledio = &softc->polledio;
 #if 0
@@ -331,8 +317,8 @@ bitmap_copy_fb(struct gfxp_fb_softc *softc, uint8_t *src, uint8_t *dst)
 {
 	uint32_t i, pitch, height;
 
-	pitch = softc->console.fb.pitch;
-	height = softc->console.fb.screen.y;
+	pitch = softc->console->fb.pitch;
+	height = softc->console->fb.screen.y;
 
 	for (i = 0; i < height; i++) {
 		(void) memmove(dst + i * pitch, src + i * pitch, pitch);
@@ -342,21 +328,21 @@ bitmap_copy_fb(struct gfxp_fb_softc *softc, uint8_t *src, uint8_t *dst)
 static void
 bitmap_cons_copy(struct gfxp_fb_softc *softc, struct vis_conscopy *ma)
 {
+	union gfx_console *console;
 	uint32_t soffset, toffset;
 	uint32_t width, height, pitch;
 	uint8_t *src, *dst, *sdst;
 	int i;
 
-	soffset = ma->s_col * softc->console.fb.bpp +
-	    ma->s_row * softc->console.fb.pitch;
-	toffset = ma->t_col * softc->console.fb.bpp +
-	    ma->t_row * softc->console.fb.pitch;
-	src = softc->console.fb.shadow_fb + soffset;
-	dst = softc->console.fb.fb + toffset;
-	sdst = softc->console.fb.shadow_fb + toffset;
-	width = (ma->e_col - ma->s_col + 1) * softc->console.fb.bpp;
+	console = softc->console;
+	soffset = ma->s_col * console->fb.bpp + ma->s_row * console->fb.pitch;
+	toffset = ma->t_col * console->fb.bpp + ma->t_row * console->fb.pitch;
+	src = console->fb.shadow_fb + soffset;
+	dst = console->fb.fb + toffset;
+	sdst = console->fb.shadow_fb + toffset;
+	width = (ma->e_col - ma->s_col + 1) * console->fb.bpp;
 	height = ma->e_row - ma->s_row + 1;
-	pitch = softc->console.fb.pitch;
+	pitch = console->fb.pitch;
 
 	if (toffset <= soffset) {
 		for (i = 0; i < height; i++) {
@@ -433,30 +419,32 @@ bitmap_cpy(uint8_t *dst, uint8_t *src, uint32_t len, int bpp)
 static void
 bitmap_cons_display(struct gfxp_fb_softc *softc, struct vis_consdisplay *da)
 {
+	union gfx_console *console;
 	uint32_t size;		/* write size per scanline */
 	uint8_t *fbp, *sfbp;	/* fb + calculated offset */
 	int i;
 
+	console = softc->console;
 	/* make sure we will not write past FB */
-	if (da->col >= softc->console.fb.screen.x ||
-	    da->row >= softc->console.fb.screen.y ||
-	    da->col + da->width > softc->console.fb.screen.x ||
-	    da->row + da->height > softc->console.fb.screen.y)
+	if (da->col >= console->fb.screen.x ||
+	    da->row >= console->fb.screen.y ||
+	    da->col + da->width > console->fb.screen.x ||
+	    da->row + da->height > console->fb.screen.y)
 		return;
 
-	size = da->width * softc->console.fb.bpp;
-	fbp = softc->console.fb.fb + da->col * softc->console.fb.bpp +
-	    da->row * softc->console.fb.pitch;
-	sfbp = softc->console.fb.shadow_fb + da->col * softc->console.fb.bpp +
-	    da->row * softc->console.fb.pitch;
+	size = da->width * console->fb.bpp;
+	fbp = console->fb.fb + da->col * console->fb.bpp +
+	    da->row * console->fb.pitch;
+	sfbp = console->fb.shadow_fb + da->col * console->fb.bpp +
+	    da->row * console->fb.pitch;
 
 	/* write all scanlines in rectangle */
 	for (i = 0; i < da->height; i++) {
-		uint8_t *dest = fbp + i * softc->console.fb.pitch;
+		uint8_t *dest = fbp + i * console->fb.pitch;
 		uint8_t *src = da->data + i * size;
 		if (softc->mode == KD_TEXT)
-			bitmap_cpy(dest, src, size, softc->console.fb.bpp);
-		dest = sfbp + i * softc->console.fb.pitch;
+			bitmap_cpy(dest, src, size, console->fb.bpp);
+		dest = sfbp + i * console->fb.pitch;
 		(void) memcpy(dest, src, size);
 	}
 }
@@ -464,29 +452,31 @@ bitmap_cons_display(struct gfxp_fb_softc *softc, struct vis_consdisplay *da)
 static int
 bitmap_cons_clear(struct gfxp_fb_softc *softc, struct vis_consclear *ca)
 {
+	union gfx_console *console;
 	uint8_t *fb, *sfb;
 	uint16_t *fb16, *sfb16;
 	uint32_t data, *fb32, *sfb32, size;
 	int i, pitch;
 
-	pitch = softc->console.fb.pitch;
+	console = softc->console;
+	pitch = console->fb.pitch;
 	data = bitmap_color_map(ca->bg_color);
-	size = softc->console.fb.screen.x * softc->console.fb.screen.y;
-	switch (softc->console.fb.depth) {
+	size = console->fb.screen.x * console->fb.screen.y;
+	switch (console->fb.depth) {
 	case 8:
-		for (i = 0; i < softc->console.fb.screen.y; i++) {
+		for (i = 0; i < console->fb.screen.y; i++) {
 			if (softc->mode == KD_TEXT) {
-				fb = softc->console.fb.fb + i * pitch;
+				fb = console->fb.fb + i * pitch;
 				(void) memset(fb, ca->bg_color, pitch);
 			}
-			fb = softc->console.fb.shadow_fb + i * pitch;
+			fb = console->fb.shadow_fb + i * pitch;
 			(void) memset(fb, ca->bg_color, pitch);
 		}
 		break;
 	case 15:
 	case 16:
-		fb16 = (uint16_t *)softc->console.fb.fb;
-		sfb16 = (uint16_t *)softc->console.fb.shadow_fb;
+		fb16 = (uint16_t *)console->fb.fb;
+		sfb16 = (uint16_t *)console->fb.shadow_fb;
 		for (i = 0; i < size; i++) {
 			if (softc->mode == KD_TEXT)
 				fb16[i] = (uint16_t)data;
@@ -494,9 +484,9 @@ bitmap_cons_clear(struct gfxp_fb_softc *softc, struct vis_consclear *ca)
 		}
 		break;
 	case 24:
-		fb = softc->console.fb.fb;
-		sfb = softc->console.fb.shadow_fb;
-		for (i = 0; i < softc->console.fb.fb_size; i += 3) {
+		fb = console->fb.fb;
+		sfb = console->fb.shadow_fb;
+		for (i = 0; i < console->fb.fb_size; i += 3) {
 			if (softc->mode == KD_TEXT) {
 				fb[i] = (data >> 16) & 0xff;
 				fb[i+1] = (data >> 8) & 0xff;
@@ -509,8 +499,8 @@ bitmap_cons_clear(struct gfxp_fb_softc *softc, struct vis_consclear *ca)
 		}
 		break;
 	case 32:
-		fb32 = (uint32_t *)softc->console.fb.fb;
-		sfb32 = (uint32_t *)softc->console.fb.shadow_fb;
+		fb32 = (uint32_t *)console->fb.fb;
+		sfb32 = (uint32_t *)console->fb.shadow_fb;
 		for (i = 0; i < size; i++) {
 			if (softc->mode == KD_TEXT)
 				fb32[i] = data;
@@ -525,14 +515,16 @@ bitmap_cons_clear(struct gfxp_fb_softc *softc, struct vis_consclear *ca)
 static void
 bitmap_display_cursor(struct gfxp_fb_softc *softc, struct vis_conscursor *ca)
 {
+	union gfx_console *console;
 	uint32_t fg, bg, offset, size;
 	uint32_t *fb32, *sfb32;
 	uint16_t *fb16, *sfb16;
 	uint8_t *fb8, *sfb8;
 	int i, j, bpp, pitch;
 
-	pitch = softc->console.fb.pitch;
-	bpp = softc->console.fb.bpp;
+	console = softc->console;
+	pitch = console->fb.pitch;
+	bpp = console->fb.bpp;
 	size = ca->width * bpp;
 
 	/*
@@ -540,13 +532,13 @@ bitmap_display_cursor(struct gfxp_fb_softc *softc, struct vis_conscursor *ca)
 	 * frame buffer by (D xor FG) xor BG.
 	 */
 	offset = ca->col * bpp + ca->row * pitch;
-	switch (softc->console.fb.depth) {
+	switch (console->fb.depth) {
 	case 8:
 		fg = ca->fg_color.mono;
 		bg = ca->bg_color.mono;
 		for (i = 0; i < ca->height; i++) {
-			fb8 = softc->console.fb.fb + offset + i * pitch;
-			sfb8 = softc->console.fb.shadow_fb + offset + i * pitch;
+			fb8 = console->fb.fb + offset + i * pitch;
+			sfb8 = console->fb.shadow_fb + offset + i * pitch;
 			for (j = 0; j < size; j += 1) {
 				if (softc->mode == KD_TEXT) {
 					fb8[j] = (fb8[j] ^ (fg & 0xff)) ^
@@ -564,9 +556,9 @@ bitmap_display_cursor(struct gfxp_fb_softc *softc, struct vis_conscursor *ca)
 		bg |= ca->bg_color.sixteen[1];
 		for (i = 0; i < ca->height; i++) {
 			fb16 = (uint16_t *)
-			    (softc->console.fb.fb + offset + i * pitch);
+			    (console->fb.fb + offset + i * pitch);
 			sfb16 = (uint16_t *)
-			    (softc->console.fb.shadow_fb + offset + i * pitch);
+			    (console->fb.shadow_fb + offset + i * pitch);
 			for (j = 0; j < ca->width; j++) {
 				if (softc->mode == KD_TEXT) {
 					fb16[j] = (fb16[j] ^ (fg & 0xffff)) ^
@@ -578,21 +570,15 @@ bitmap_display_cursor(struct gfxp_fb_softc *softc, struct vis_conscursor *ca)
 		}
 		break;
 	case 24:
-		fg = ca->fg_color.twentyfour[0] <<
-		    softc->console.fb.rgb.red.pos;
-		fg |= ca->fg_color.twentyfour[1] <<
-		    softc->console.fb.rgb.green.pos;
-		fg |= ca->fg_color.twentyfour[2] <<
-		    softc->console.fb.rgb.blue.pos;
-		bg = ca->bg_color.twentyfour[0] <<
-		    softc->console.fb.rgb.red.pos;
-		bg |= ca->bg_color.twentyfour[1] <<
-		    softc->console.fb.rgb.green.pos;
-		bg |= ca->bg_color.twentyfour[2] <<
-		    softc->console.fb.rgb.blue.pos;
+		fg = ca->fg_color.twentyfour[0] << console->fb.rgb.red.pos;
+		fg |= ca->fg_color.twentyfour[1] << console->fb.rgb.green.pos;
+		fg |= ca->fg_color.twentyfour[2] << console->fb.rgb.blue.pos;
+		bg = ca->bg_color.twentyfour[0] << console->fb.rgb.red.pos;
+		bg |= ca->bg_color.twentyfour[1] << console->fb.rgb.green.pos;
+		bg |= ca->bg_color.twentyfour[2] << console->fb.rgb.blue.pos;
 		for (i = 0; i < ca->height; i++) {
-			fb8 = softc->console.fb.fb + offset + i * pitch;
-			sfb8 = softc->console.fb.shadow_fb + offset + i * pitch;
+			fb8 = console->fb.fb + offset + i * pitch;
+			sfb8 = console->fb.shadow_fb + offset + i * pitch;
 			for (j = 0; j < size; j += 3) {
 				if (softc->mode == KD_TEXT) {
 					fb8[j] = (fb8[j] ^ ((fg >> 16) & 0xff))
@@ -614,23 +600,17 @@ bitmap_display_cursor(struct gfxp_fb_softc *softc, struct vis_conscursor *ca)
 		}
 		break;
 	case 32:
-		fg = ca->fg_color.twentyfour[0] <<
-		    softc->console.fb.rgb.red.pos;
-		fg |= ca->fg_color.twentyfour[1] <<
-		    softc->console.fb.rgb.green.pos;
-		fg |= ca->fg_color.twentyfour[2] <<
-		    softc->console.fb.rgb.blue.pos;
-		bg = ca->bg_color.twentyfour[0] <<
-		    softc->console.fb.rgb.red.pos;
-		bg |= ca->bg_color.twentyfour[1] <<
-		    softc->console.fb.rgb.green.pos;
-		bg |= ca->bg_color.twentyfour[2] <<
-		    softc->console.fb.rgb.blue.pos;
+		fg = ca->fg_color.twentyfour[0] << console->fb.rgb.red.pos;
+		fg |= ca->fg_color.twentyfour[1] << console->fb.rgb.green.pos;
+		fg |= ca->fg_color.twentyfour[2] << console->fb.rgb.blue.pos;
+		bg = ca->bg_color.twentyfour[0] << console->fb.rgb.red.pos;
+		bg |= ca->bg_color.twentyfour[1] << console->fb.rgb.green.pos;
+		bg |= ca->bg_color.twentyfour[2] << console->fb.rgb.blue.pos;
 		for (i = 0; i < ca->height; i++) {
 			fb32 = (uint32_t *)
-			    (softc->console.fb.fb + offset + i * pitch);
+			    (console->fb.fb + offset + i * pitch);
 			sfb32 = (uint32_t *)
-			    (softc->console.fb.shadow_fb + offset + i * pitch);
+			    (console->fb.shadow_fb + offset + i * pitch);
 			for (j = 0; j < ca->width; j++) {
 				if (softc->mode == KD_TEXT)
 					fb32[j] = (fb32[j] ^ fg) ^ bg;
@@ -644,28 +624,30 @@ bitmap_display_cursor(struct gfxp_fb_softc *softc, struct vis_conscursor *ca)
 static void
 bitmap_cons_cursor(struct gfxp_fb_softc *softc, struct vis_conscursor *ca)
 {
+	union gfx_console *console = softc->console;
+
 	switch (ca->action) {
 	case VIS_HIDE_CURSOR:
 		bitmap_display_cursor(softc, ca);
-		softc->console.fb.cursor.visible = B_FALSE;
+		console->fb.cursor.visible = B_FALSE;
 		break;
 	case VIS_DISPLAY_CURSOR:
 		/* keep track of cursor position for polled mode */
-		softc->console.fb.cursor.pos.x =
-		    (ca->col - softc->console.fb.terminal_origin.x) /
-		    softc->console.fb.font_width;
-		softc->console.fb.cursor.pos.y =
-		    (ca->row - softc->console.fb.terminal_origin.y) /
-		    softc->console.fb.font_height;
-		softc->console.fb.cursor.origin.x = ca->col;
-		softc->console.fb.cursor.origin.y = ca->row;
+		console->fb.cursor.pos.x =
+		    (ca->col - console->fb.terminal_origin.x) /
+		    console->fb.font_width;
+		console->fb.cursor.pos.y =
+		    (ca->row - console->fb.terminal_origin.y) /
+		    console->fb.font_height;
+		console->fb.cursor.origin.x = ca->col;
+		console->fb.cursor.origin.y = ca->row;
 
 		bitmap_display_cursor(softc, ca);
-		softc->console.fb.cursor.visible = B_TRUE;
+		console->fb.cursor.visible = B_TRUE;
 		break;
 	case VIS_GET_CURSOR:
-		ca->row = softc->console.fb.cursor.origin.y;
-		ca->col = softc->console.fb.cursor.origin.x;
+		ca->row = console->fb.cursor.origin.y;
+		ca->col = console->fb.cursor.origin.x;
 		break;
 	}
 }
@@ -701,6 +683,7 @@ bitmap_devmap(dev_t dev, devmap_cookie_t dhp, offset_t off,
     size_t len, size_t *maplen, uint_t model, void *ptr)
 {
 	struct gfxp_fb_softc *softc = (struct gfxp_fb_softc *)ptr;
+	union gfx_console *console = softc->console;
 	size_t length;
 
 	if (softc == NULL) {
@@ -708,17 +691,17 @@ bitmap_devmap(dev_t dev, devmap_cookie_t dhp, offset_t off,
 		return (ENXIO);
 	}
 
-	if (off >= softc->console.fb.fb_size) {
+	if (off >= console->fb.fb_size) {
 		cmn_err(CE_WARN, "bitmap: Can't map offset 0x%llx", off);
 		return (ENXIO);
 	}
 
-	if (off + len > softc->console.fb.fb_size)
-		length = softc->console.fb.fb_size - off;
+	if (off + len > console->fb.fb_size)
+		length = console->fb.fb_size - off;
 	else
 		length = len;
 
-	gfxp_map_devmem(dhp, softc->console.fb.paddr, length, &dev_attr);
+	gfxp_map_devmem(dhp, console->fb.paddr, length, &dev_attr);
 
 	*maplen = length;
 

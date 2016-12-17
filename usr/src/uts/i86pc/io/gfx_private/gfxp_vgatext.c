@@ -174,6 +174,8 @@ static struct gfxp_ops gfxp_ops = {
 	.devmap = vgatext_devmap
 };
 
+static struct gfx_vga vga;
+
 #define	STREQ(a, b)	(strcmp((a), (b)) == 0)
 
 /*ARGSUSED*/
@@ -194,6 +196,7 @@ gfxp_vga_attach(dev_info_t *devi, ddi_attach_cmd_t cmd,
 	softc->polledio.cursor = vgatext_polled_cursor;
 	softc->gfxp_ops = &gfxp_ops;
 	softc->fbgattr = &vgatext_attr;
+	softc->console = (union gfx_console *)&vga;
 
 	error = ddi_prop_lookup_string(DDI_DEV_T_ANY, ddi_get_parent(devi),
 	    DDI_PROP_DONTPASS, "device_type", &parent_type);
@@ -213,12 +216,11 @@ gfxp_vga_attach(dev_info_t *devi, ddi_attach_cmd_t cmd,
 			error = DDI_FAILURE;
 			goto fail;
 		}
-		softc->console.vga.fb_regno = vgatext_get_isa_reg_index(devi, 0,
+		vga.fb_regno = vgatext_get_isa_reg_index(devi, 0,
 		    VGA_MEM_ADDR, &mem_offset);
-		if (softc->console.vga.fb_regno < 0) {
+		if (vga.fb_regno < 0) {
 			cmn_err(CE_WARN,
-			    MYNAME
-			    ": can't find reg entry for memory");
+			    MYNAME ": can't find reg entry for memory");
 			error = DDI_FAILURE;
 			goto fail;
 		}
@@ -229,19 +231,17 @@ gfxp_vga_attach(dev_info_t *devi, ddi_attach_cmd_t cmd,
 		    &reg_offset);
 		if (reg_rnumber < 0) {
 			cmn_err(CE_WARN,
-			    MYNAME
-			    ": can't find reg entry for registers");
+			    MYNAME ": can't find reg entry for registers");
 			error = DDI_FAILURE;
 			goto fail;
 		}
-		softc->console.vga.fb_regno = vgatext_get_pci_reg_index(devi,
+		vga.fb_regno = vgatext_get_pci_reg_index(devi,
 		    PCI_REG_ADDR_M|PCI_REG_REL_M,
 		    PCI_ADDR_MEM32|PCI_RELOCAT_B, VGA_MEM_ADDR,
 		    &mem_offset);
-		if (softc->console.vga.fb_regno < 0) {
+		if (vga.fb_regno < 0) {
 			cmn_err(CE_WARN,
-			    MYNAME
-			    ": can't find reg entry for memory");
+			    MYNAME ": can't find reg entry for memory");
 			error = DDI_FAILURE;
 			goto fail;
 		}
@@ -255,44 +255,38 @@ gfxp_vga_attach(dev_info_t *devi, ddi_attach_cmd_t cmd,
 	parent_type = NULL;
 
 	error = ddi_regs_map_setup(devi, reg_rnumber,
-	    (caddr_t *)&softc->console.vga.regs.addr, reg_offset, VGA_REG_SIZE,
-	    &dev_attr, &softc->console.vga.regs.handle);
+	    (caddr_t *)&vga.regs.addr, reg_offset, VGA_REG_SIZE,
+	    &dev_attr, &vga.regs.handle);
 	if (error != DDI_SUCCESS)
 		goto fail;
-	softc->console.vga.regs.mapped = B_TRUE;
+	vga.regs.mapped = B_TRUE;
 
-	softc->console.vga.fb_size = VGA_MEM_SIZE;
+	vga.fb_size = VGA_MEM_SIZE;
 
-	error = ddi_regs_map_setup(devi, softc->console.vga.fb_regno,
-	    (caddr_t *)&softc->console.vga.fb.addr,
-	    mem_offset, softc->console.vga.fb_size,
-	    &dev_attr, &softc->console.vga.fb.handle);
+	error = ddi_regs_map_setup(devi, vga.fb_regno, (caddr_t *)&vga.fb.addr,
+	    mem_offset, vga.fb_size, &dev_attr, &vga.fb.handle);
 	if (error != DDI_SUCCESS)
 		goto fail;
-	softc->console.vga.fb.mapped = B_TRUE;
+	vga.fb.mapped = B_TRUE;
 
-	if (ddi_get8(softc->console.vga.regs.handle,
-	    softc->console.vga.regs.addr + VGA_MISC_R) & VGA_MISC_IOA_SEL)
-		softc->console.vga.text_base =
-		    (caddr_t)softc->console.vga.fb.addr + VGA_COLOR_BASE;
+	if (ddi_get8(vga.regs.handle,
+	    vga.regs.addr + VGA_MISC_R) & VGA_MISC_IOA_SEL)
+		vga.text_base = (caddr_t)vga.fb.addr + VGA_COLOR_BASE;
 	else
-		softc->console.vga.text_base =
-		    (caddr_t)softc->console.vga.fb.addr + VGA_MONO_BASE;
+		vga.text_base = (caddr_t)vga.fb.addr + VGA_MONO_BASE;
 
 	if (ddi_prop_lookup_string(DDI_DEV_T_ANY, ddi_root_node(),
 	    DDI_PROP_DONTPASS, "console", &cons) == DDI_SUCCESS) {
 		if (strcmp(cons, "graphics") == 0) {
 			softc->happyface_boot = 1;
 			softc->silent = 1;
-			softc->console.vga.current_base =
-			    softc->console.vga.shadow;
+			vga.current_base = vga.shadow;
 		} else {
-			softc->console.vga.current_base =
-			    softc->console.vga.text_base;
+			vga.current_base = vga.text_base;
 		}
 		ddi_prop_free(cons);
 	} else {
-		softc->console.vga.current_base = softc->console.vga.text_base;
+		vga.current_base = vga.text_base;
 	}
 
 	error = ddi_prop_create(makedevice(DDI_MAJOR_T_UNKNOWN, unit),
@@ -319,10 +313,10 @@ int
 gfxp_vga_detach(dev_info_t *devi, ddi_detach_cmd_t cmd,
     struct gfxp_fb_softc *softc)
 {
-	if (softc->console.vga.fb.mapped)
-		ddi_regs_map_free(&softc->console.vga.fb.handle);
-	if (softc->console.vga.regs.mapped)
-		ddi_regs_map_free(&softc->console.vga.regs.handle);
+	if (softc->console->vga.fb.mapped)
+		ddi_regs_map_free(&softc->console->vga.fb.handle);
+	if (softc->console->vga.regs.mapped)
+		ddi_regs_map_free(&softc->console->vga.regs.handle);
 	return (DDI_SUCCESS);
 }
 
@@ -341,26 +335,27 @@ gfxp_vga_detach(dev_info_t *devi, ddi_detach_cmd_t cmd,
 static void
 vgatext_save_text(struct gfxp_fb_softc *softc)
 {
-	unsigned	i;
+	union gfx_console *console = softc->console;
+	unsigned i;
 
-	for (i = 0; i < sizeof (softc->console.vga.shadow); i++)
-		softc->console.vga.shadow[i] =
-		    softc->console.vga.current_base[i];
+	for (i = 0; i < sizeof (console->vga.shadow); i++)
+		console->vga.shadow[i] = console->vga.current_base[i];
 }
 
 static void
 vgatext_restore_textmode(struct gfxp_fb_softc *softc)
 {
-	unsigned	i;
+	union gfx_console *console = softc->console;
+	unsigned i;
 
 	vgatext_init(softc);
-	for (i = 0; i < sizeof (softc->console.vga.shadow); i++) {
-		softc->console.vga.text_base[i] = softc->console.vga.shadow[i];
+	for (i = 0; i < sizeof (console->vga.shadow); i++) {
+		console->vga.text_base[i] = console->vga.shadow[i];
 	}
-	if (softc->console.vga.cursor.visible) {
+	if (console->vga.cursor.visible) {
 		vgatext_set_cursor(softc,
-		    softc->console.vga.cursor.row,
-		    softc->console.vga.cursor.col);
+		    console->vga.cursor.row,
+		    console->vga.cursor.col);
 	}
 	vgatext_restore_colormap(softc);
 }
@@ -428,17 +423,18 @@ vgatext_progressbar_stop(struct gfxp_fb_softc *softc)
 static void
 vgatext_kdsettext(struct gfxp_fb_softc *softc)
 {
+	union gfx_console *console = softc->console;
 	int i;
 
 	vgatext_init(softc);
-	for (i = 0; i < sizeof (softc->console.vga.shadow); i++) {
-		softc->console.vga.text_base[i] = softc->console.vga.shadow[i];
+	for (i = 0; i < sizeof (console->vga.shadow); i++) {
+		console->vga.text_base[i] = console->vga.shadow[i];
 	}
-	softc->console.vga.current_base = softc->console.vga.text_base;
-	if (softc->console.vga.cursor.visible) {
+	console->vga.current_base = console->vga.text_base;
+	if (console->vga.cursor.visible) {
 		vgatext_set_cursor(softc,
-		    softc->console.vga.cursor.row,
-		    softc->console.vga.cursor.col);
+		    console->vga.cursor.row,
+		    console->vga.cursor.col);
 	}
 	vgatext_restore_colormap(softc);
 }
@@ -448,7 +444,7 @@ vgatext_kdsetgraphics(struct gfxp_fb_softc *softc)
 {
 	vgatext_progressbar_stop(softc);
 	vgatext_save_text(softc);
-	softc->console.vga.current_base = softc->console.vga.shadow;
+	softc->console->vga.current_base = softc->console->vga.shadow;
 #if	defined(USE_BORDERS)
 	vgatext_init_graphics(softc);
 #endif
@@ -495,6 +491,7 @@ vgatext_devmap(dev_t dev, devmap_cookie_t dhp, offset_t off, size_t len,
     size_t *maplen, uint_t model, void *ptr)
 {
 	struct gfxp_fb_softc *softc = (struct gfxp_fb_softc *)ptr;
+	union gfx_console *console;
 	int err;
 	size_t length;
 
@@ -503,20 +500,21 @@ vgatext_devmap(dev_t dev, devmap_cookie_t dhp, offset_t off, size_t len,
 		cmn_err(CE_WARN, "vgatext: Can't find softstate");
 		return (-1);
 	}
+	console = softc->console;
 
 	if (!(off >= VGA_MMAP_FB_BASE &&
-	    off < VGA_MMAP_FB_BASE + softc->console.vga.fb_size)) {
+	    off < VGA_MMAP_FB_BASE + console->vga.fb_size)) {
 		cmn_err(CE_WARN, "vgatext: Can't map offset 0x%llx", off);
 		return (-1);
 	}
 
-	if (off + len > VGA_MMAP_FB_BASE + softc->console.vga.fb_size)
-		length = VGA_MMAP_FB_BASE + softc->console.vga.fb_size - off;
+	if (off + len > VGA_MMAP_FB_BASE + console->vga.fb_size)
+		length = VGA_MMAP_FB_BASE + console->vga.fb_size - off;
 	else
 		length = len;
 
 	if ((err = devmap_devmem_setup(dhp, softc->devi,
-	    NULL, softc->console.vga.fb_regno, off - VGA_MMAP_FB_BASE,
+	    NULL, console->vga.fb_regno, off - VGA_MMAP_FB_BASE,
 	    length, PROT_ALL, 0, &dev_attr)) < 0) {
 		return (err);
 	}
@@ -580,7 +578,7 @@ vgatext_cons_display(struct gfxp_fb_softc *softc, struct vis_consdisplay *da)
 	attr = (solaris_color_to_pc_color[da->bg_color & 0xf] << 4)
 	    | solaris_color_to_pc_color[da->fg_color & 0xf];
 	string = da->data;
-	addr = (struct cgatext *)softc->console.vga.current_base
+	addr = (struct cgatext *)softc->console->vga.current_base
 	    +  (da->row * TEXT_COLS + da->col);
 	for (i = 0; i < da->width; i++) {
 		addr->ch = string[i];
@@ -639,7 +637,7 @@ vgatext_cons_copy(struct gfxp_fb_softc *softc, struct vis_conscopy *ma)
 	    ma->t_col + chars_per_row > TEXT_COLS)
 		return;
 
-	base = (unsigned short *)softc->console.vga.current_base;
+	base = (unsigned short *)softc->console->vga.current_base;
 
 	to_row_start = base + ((ma->t_row * TEXT_COLS) + ma->t_col);
 	from_row_start = base + ((ma->s_row * TEXT_COLS) + ma->s_col);
@@ -696,7 +694,7 @@ vgatext_cons_clear(struct gfxp_fb_softc *softc, struct vis_consclear *ca)
 	    solaris_color_to_pc_color[fg];
 	val = (val << 8) | ' ';
 
-	base = (uint16_t *)softc->console.vga.current_base;
+	base = (uint16_t *)softc->console->vga.current_base;
 	for (i = 0; i < TEXT_ROWS * TEXT_COLS; i++)
 		base[i] = val;
 
@@ -711,9 +709,9 @@ vgatext_cons_cursor(struct gfxp_fb_softc *softc, struct vis_conscursor *ca)
 
 	switch (ca->action) {
 	case VIS_HIDE_CURSOR:
-		softc->console.vga.cursor.visible = B_FALSE;
-		if (softc->console.vga.current_base ==
-		    softc->console.vga.text_base)
+		softc->console->vga.cursor.visible = B_FALSE;
+		if (softc->console->vga.current_base ==
+		    softc->console->vga.text_base)
 			vgatext_hide_cursor(softc);
 		break;
 	case VIS_DISPLAY_CURSOR:
@@ -725,16 +723,16 @@ vgatext_cons_cursor(struct gfxp_fb_softc *softc, struct vis_conscursor *ca)
 		    ca->row < 0 || ca->row >= TEXT_ROWS)
 			return;
 
-		softc->console.vga.cursor.visible = B_TRUE;
-		softc->console.vga.cursor.col = ca->col;
-		softc->console.vga.cursor.row = ca->row;
-		if (softc->console.vga.current_base ==
-		    softc->console.vga.text_base)
+		softc->console->vga.cursor.visible = B_TRUE;
+		softc->console->vga.cursor.col = ca->col;
+		softc->console->vga.cursor.row = ca->row;
+		if (softc->console->vga.current_base ==
+		    softc->console->vga.text_base)
 			vgatext_set_cursor(softc, ca->row, ca->col);
 		break;
 	case VIS_GET_CURSOR:
-		if (softc->console.vga.current_base ==
-		    softc->console.vga.text_base) {
+		if (softc->console->vga.current_base ==
+		    softc->console->vga.text_base) {
 			vgatext_get_cursor(softc, &ca->row, &ca->col);
 		}
 		break;
@@ -752,50 +750,53 @@ vgatext_polled_cursor(
 static void
 vgatext_hide_cursor(struct gfxp_fb_softc *softc)
 {
+	union gfx_console *console = softc->console;
 	uint8_t msl, s;
 
 	if (softc->silent)
 		return;
 
-	msl = vga_get_crtc(&softc->console.vga.regs, VGA_CRTC_MAX_S_LN) & 0x1f;
-	s = vga_get_crtc(&softc->console.vga.regs, VGA_CRTC_CSSL) & 0xc0;
+	msl = vga_get_crtc(&console->vga.regs, VGA_CRTC_MAX_S_LN) & 0x1f;
+	s = vga_get_crtc(&console->vga.regs, VGA_CRTC_CSSL) & 0xc0;
 	s |= (1<<5);
 
 	/* disable cursor */
-	vga_set_crtc(&softc->console.vga.regs, VGA_CRTC_CSSL, s);
-	vga_set_crtc(&softc->console.vga.regs, VGA_CRTC_CESL, msl);
+	vga_set_crtc(&console->vga.regs, VGA_CRTC_CSSL, s);
+	vga_set_crtc(&console->vga.regs, VGA_CRTC_CESL, msl);
 }
 
 static void
 vgatext_set_cursor(struct gfxp_fb_softc *softc, int row, int col)
 {
+	union gfx_console *console = softc->console;
 	short	addr;
 	uint8_t msl, s;
 
 	if (softc->silent)
 		return;
 
-	msl = vga_get_crtc(&softc->console.vga.regs, VGA_CRTC_MAX_S_LN) & 0x1f;
-	s = vga_get_crtc(&softc->console.vga.regs, VGA_CRTC_CSSL) & 0xc0;
+	msl = vga_get_crtc(&console->vga.regs, VGA_CRTC_MAX_S_LN) & 0x1f;
+	s = vga_get_crtc(&console->vga.regs, VGA_CRTC_CSSL) & 0xc0;
 
 	addr = row * TEXT_COLS + col;
 
-	vga_set_crtc(&softc->console.vga.regs, VGA_CRTC_CLAH, addr >> 8);
-	vga_set_crtc(&softc->console.vga.regs, VGA_CRTC_CLAL, addr & 0xff);
+	vga_set_crtc(&console->vga.regs, VGA_CRTC_CLAH, addr >> 8);
+	vga_set_crtc(&console->vga.regs, VGA_CRTC_CLAL, addr & 0xff);
 
 	/* enable cursor */
-	vga_set_crtc(&softc->console.vga.regs, VGA_CRTC_CSSL, s);
-	vga_set_crtc(&softc->console.vga.regs, VGA_CRTC_CESL, msl);
+	vga_set_crtc(&console->vga.regs, VGA_CRTC_CSSL, s);
+	vga_set_crtc(&console->vga.regs, VGA_CRTC_CESL, msl);
 }
 
 static void
 vgatext_get_cursor(struct gfxp_fb_softc *softc,
     screen_pos_t *row, screen_pos_t *col)
 {
+	union gfx_console *console = softc->console;
 	short   addr;
 
-	addr = (vga_get_crtc(&softc->console.vga.regs, VGA_CRTC_CLAH) << 8) +
-	    vga_get_crtc(&softc->console.vga.regs, VGA_CRTC_CLAL);
+	addr = (vga_get_crtc(&console->vga.regs, VGA_CRTC_CLAH) << 8) +
+	    vga_get_crtc(&console->vga.regs, VGA_CRTC_CLAL);
 
 	*row = addr / TEXT_COLS;
 	*col = addr % TEXT_COLS;
@@ -808,6 +809,7 @@ vgatext_get_cursor(struct gfxp_fb_softc *softc,
 static void
 vgatext_set_text(struct gfxp_fb_softc *softc)
 {
+	union gfx_console *console = softc->console;
 	int i;
 
 	if (softc->happyface_boot == 0)
@@ -816,47 +818,47 @@ vgatext_set_text(struct gfxp_fb_softc *softc)
 	/* we are in graphics mode, set to text 80X25 mode */
 
 	/* set misc registers */
-	vga_set_reg(&softc->console.vga.regs, VGA_MISC_W, VGA_MISC_TEXT);
+	vga_set_reg(&console->vga.regs, VGA_MISC_W, VGA_MISC_TEXT);
 
 	/* set sequencer registers */
-	vga_set_seq(&softc->console.vga.regs, VGA_SEQ_RST_SYN,
-	    (vga_get_seq(&softc->console.vga.regs, VGA_SEQ_RST_SYN) &
+	vga_set_seq(&console->vga.regs, VGA_SEQ_RST_SYN,
+	    (vga_get_seq(&console->vga.regs, VGA_SEQ_RST_SYN) &
 	    ~VGA_SEQ_RST_SYN_NO_SYNC_RESET));
 	for (i = 1; i < NUM_SEQ_REG; i++) {
-		vga_set_seq(&softc->console.vga.regs, i, VGA_SEQ_TEXT[i]);
+		vga_set_seq(&console->vga.regs, i, VGA_SEQ_TEXT[i]);
 	}
-	vga_set_seq(&softc->console.vga.regs, VGA_SEQ_RST_SYN,
-	    (vga_get_seq(&softc->console.vga.regs, VGA_SEQ_RST_SYN) |
+	vga_set_seq(&console->vga.regs, VGA_SEQ_RST_SYN,
+	    (vga_get_seq(&console->vga.regs, VGA_SEQ_RST_SYN) |
 	    VGA_SEQ_RST_SYN_NO_ASYNC_RESET |
 	    VGA_SEQ_RST_SYN_NO_SYNC_RESET));
 
 	/* set crt controller registers */
-	vga_set_crtc(&softc->console.vga.regs, VGA_CRTC_VRE,
-	    (vga_get_crtc(&softc->console.vga.regs, VGA_CRTC_VRE) &
+	vga_set_crtc(&console->vga.regs, VGA_CRTC_VRE,
+	    (vga_get_crtc(&console->vga.regs, VGA_CRTC_VRE) &
 	    ~VGA_CRTC_VRE_LOCK));
 	for (i = 0; i < NUM_CRTC_REG; i++) {
-		vga_set_crtc(&softc->console.vga.regs, i, VGA_CRTC_TEXT[i]);
+		vga_set_crtc(&console->vga.regs, i, VGA_CRTC_TEXT[i]);
 	}
 
 	/* set graphics controller registers */
 	for (i = 0; i < NUM_GRC_REG; i++) {
-		vga_set_grc(&softc->console.vga.regs, i, VGA_GRC_TEXT[i]);
+		vga_set_grc(&console->vga.regs, i, VGA_GRC_TEXT[i]);
 	}
 
 	/* set attribute registers */
 	for (i = 0; i < NUM_ATR_REG; i++) {
-		vga_set_atr(&softc->console.vga.regs, i, VGA_ATR_TEXT[i]);
+		vga_set_atr(&console->vga.regs, i, VGA_ATR_TEXT[i]);
 	}
 
 	/* set palette */
 	for (i = 0; i < VGA_TEXT_CMAP_ENTRIES; i++) {
-		vga_put_cmap(&softc->console.vga.regs, i,
+		vga_put_cmap(&console->vga.regs, i,
 		    VGA_TEXT_PALETTES[i][0] << 2,
 		    VGA_TEXT_PALETTES[i][1] << 2,
 		    VGA_TEXT_PALETTES[i][2] << 2);
 	}
 	for (i = VGA_TEXT_CMAP_ENTRIES; i < VGA8_CMAP_ENTRIES; i++) {
-		vga_put_cmap(&softc->console.vga.regs, i, 0, 0, 0);
+		vga_put_cmap(&console->vga.regs, i, 0, 0, 0);
 	}
 
 	vgatext_save_colormap(softc);
@@ -865,21 +867,22 @@ vgatext_set_text(struct gfxp_fb_softc *softc)
 static void
 vgatext_init(struct gfxp_fb_softc *softc)
 {
+	union gfx_console *console = softc->console;
 	unsigned char atr_mode;
 
-	atr_mode = vga_get_atr(&softc->console.vga.regs, VGA_ATR_MODE);
+	atr_mode = vga_get_atr(&console->vga.regs, VGA_ATR_MODE);
 	if (atr_mode & VGA_ATR_MODE_GRAPH)
 		vgatext_set_text(softc);
-	atr_mode = vga_get_atr(&softc->console.vga.regs, VGA_ATR_MODE);
+	atr_mode = vga_get_atr(&console->vga.regs, VGA_ATR_MODE);
 	atr_mode &= ~VGA_ATR_MODE_BLINK;
 	atr_mode &= ~VGA_ATR_MODE_9WIDE;
-	vga_set_atr(&softc->console.vga.regs, VGA_ATR_MODE, atr_mode);
+	vga_set_atr(&console->vga.regs, VGA_ATR_MODE, atr_mode);
 #if	defined(USE_BORDERS)
-	vga_set_atr(&softc->console.vga.regs, VGA_ATR_BDR_CLR,
-	    vga_get_atr(&softc->console.vga.regs, VGA_BRIGHT_WHITE));
+	vga_set_atr(&console->vga.regs, VGA_ATR_BDR_CLR,
+	    vga_get_atr(&console->vga.regs, VGA_BRIGHT_WHITE));
 #else
-	vga_set_atr(&softc->console.vga.regs, VGA_ATR_BDR_CLR,
-	    vga_get_atr(&softc->console.vga.regs, VGA_BLACK));
+	vga_set_atr(&console->vga.regs, VGA_ATR_BDR_CLR,
+	    vga_get_atr(&console->vga.regs, VGA_BLACK));
 #endif
 	vgatext_setfont(softc);	/* need selectable font? */
 }
@@ -888,14 +891,15 @@ vgatext_init(struct gfxp_fb_softc *softc)
 static void
 vgatext_init_graphics(struct gfxp_fb_softc *softc)
 {
-	vga_set_atr(&softc->console.vga.regs, VGA_ATR_BDR_CLR,
-	    vga_get_atr(&softc->console.vga.regs, VGA_BLACK));
+	vga_set_atr(&softc->console->vga.regs, VGA_ATR_BDR_CLR,
+	    vga_get_atr(&softc->console->vga.regs, VGA_BLACK));
 }
 #endif
 
 static void
 vgatext_setfont(struct gfxp_fb_softc *softc)
 {
+	union gfx_console *console = softc->console;
 	static uchar_t fsreg[8] = {0x0, 0x30, 0x5, 0x35, 0xa, 0x3a, 0xf, 0x3f};
 
 	uchar_t *from;
@@ -904,113 +908,115 @@ vgatext_setfont(struct gfxp_fb_softc *softc)
 	int	bpc, f_offset;
 
 	/* Sync-reset the sequencer registers */
-	vga_set_seq(&softc->console.vga.regs, 0x00, 0x01);
+	vga_set_seq(&console->vga.regs, 0x00, 0x01);
 	/*
 	 *  enable write to plane2, since fonts
 	 * could only be loaded into plane2
 	 */
-	vga_set_seq(&softc->console.vga.regs, 0x02, 0x04);
+	vga_set_seq(&console->vga.regs, 0x02, 0x04);
 	/*
 	 *  sequentially access data in the bit map being
 	 * selected by MapMask register (index 0x02)
 	 */
-	vga_set_seq(&softc->console.vga.regs, 0x04, 0x07);
+	vga_set_seq(&console->vga.regs, 0x04, 0x07);
 	/* Sync-reset ended, and allow the sequencer to operate */
-	vga_set_seq(&softc->console.vga.regs, 0x00, 0x03);
+	vga_set_seq(&console->vga.regs, 0x00, 0x03);
 
 	/*
 	 *  select plane 2 on Read Mode 0
 	 */
-	vga_set_grc(&softc->console.vga.regs, 0x04, 0x02);
+	vga_set_grc(&console->vga.regs, 0x04, 0x02);
 	/*
 	 *  system addresses sequentially access data, follow
 	 * Memory Mode register bit 2 in the sequencer
 	 */
-	vga_set_grc(&softc->console.vga.regs, 0x05, 0x00);
+	vga_set_grc(&console->vga.regs, 0x05, 0x00);
 	/*
 	 * set range of host memory addresses decoded by VGA
 	 * hardware -- A0000h-BFFFFh (128K region)
 	 */
-	vga_set_grc(&softc->console.vga.regs, 0x06, 0x00);
+	vga_set_grc(&console->vga.regs, 0x06, 0x00);
 
 	/*
 	 * This assumes 8x16 characters, which yield the traditional 80x25
 	 * screen.  It really should support other character heights.
 	 */
 	bpc = 16;
-	s = softc->console.vga.vga_fontslot;
+	s = console->vga.vga_fontslot;
 	f_offset = s * 8 * 1024;
 	for (i = 0; i < 256; i++) {
 		from = font_data_8x16.encoding[i];
-		to = (unsigned char *)softc->console.vga.fb.addr + f_offset +
+		to = (unsigned char *)console->vga.fb.addr + f_offset +
 		    i * 0x20;
 		for (j = 0; j < bpc; j++)
 			*to++ = *from++;
 	}
 
 	/* Sync-reset the sequencer registers */
-	vga_set_seq(&softc->console.vga.regs, 0x00, 0x01);
+	vga_set_seq(&console->vga.regs, 0x00, 0x01);
 	/* enable write to plane 0 and 1 */
-	vga_set_seq(&softc->console.vga.regs, 0x02, 0x03);
+	vga_set_seq(&console->vga.regs, 0x02, 0x03);
 	/*
 	 * enable character map selection
 	 * and odd/even addressing
 	 */
-	vga_set_seq(&softc->console.vga.regs, 0x04, 0x03);
+	vga_set_seq(&console->vga.regs, 0x04, 0x03);
 	/*
 	 * select font map
 	 */
-	vga_set_seq(&softc->console.vga.regs, 0x03, fsreg[s]);
+	vga_set_seq(&console->vga.regs, 0x03, fsreg[s]);
 	/* Sync-reset ended, and allow the sequencer to operate */
-	vga_set_seq(&softc->console.vga.regs, 0x00, 0x03);
+	vga_set_seq(&console->vga.regs, 0x00, 0x03);
 
 	/* restore graphic registers */
 
 	/* select plane 0 */
-	vga_set_grc(&softc->console.vga.regs, 0x04, 0x00);
+	vga_set_grc(&console->vga.regs, 0x04, 0x00);
 	/* enable odd/even addressing mode */
-	vga_set_grc(&softc->console.vga.regs, 0x05, 0x10);
+	vga_set_grc(&console->vga.regs, 0x05, 0x10);
 	/*
 	 * range of host memory addresses decoded by VGA
 	 * hardware -- B8000h-BFFFFh (32K region)
 	 */
-	vga_set_grc(&softc->console.vga.regs, 0x06, 0x0e);
+	vga_set_grc(&console->vga.regs, 0x06, 0x0e);
 	/* enable all color plane */
-	vga_set_atr(&softc->console.vga.regs, 0x12, 0x0f);
+	vga_set_atr(&console->vga.regs, 0x12, 0x0f);
 
 }
 
 static void
 vgatext_save_colormap(struct gfxp_fb_softc *softc)
 {
+	union gfx_console *console = softc->console;
 	int i;
 
 	for (i = 0; i < VGA_ATR_NUM_PLT; i++) {
-		softc->console.vga.attrib_palette[i] =
-		    vga_get_atr(&softc->console.vga.regs, i);
+		console->vga.attrib_palette[i] =
+		    vga_get_atr(&console->vga.regs, i);
 	}
 	for (i = 0; i < VGA8_CMAP_ENTRIES; i++) {
-		vga_get_cmap(&softc->console.vga.regs, i,
-		    &softc->console.vga.colormap[i].red,
-		    &softc->console.vga.colormap[i].green,
-		    &softc->console.vga.colormap[i].blue);
+		vga_get_cmap(&console->vga.regs, i,
+		    &console->vga.colormap[i].red,
+		    &console->vga.colormap[i].green,
+		    &console->vga.colormap[i].blue);
 	}
 }
 
 static void
 vgatext_restore_colormap(struct gfxp_fb_softc *softc)
 {
+	union gfx_console *console = softc->console;
 	int i;
 
 	for (i = 0; i < VGA_ATR_NUM_PLT; i++) {
-		vga_set_atr(&softc->console.vga.regs, i,
-		    softc->console.vga.attrib_palette[i]);
+		vga_set_atr(&console->vga.regs, i,
+		    console->vga.attrib_palette[i]);
 	}
 	for (i = 0; i < VGA8_CMAP_ENTRIES; i++) {
-		vga_put_cmap(&softc->console.vga.regs, i,
-		    softc->console.vga.colormap[i].red,
-		    softc->console.vga.colormap[i].green,
-		    softc->console.vga.colormap[i].blue);
+		vga_put_cmap(&console->vga.regs, i,
+		    console->vga.colormap[i].red,
+		    console->vga.colormap[i].green,
+		    console->vga.colormap[i].blue);
 	}
 }
 
@@ -1135,10 +1141,10 @@ vgatext_return_pointers(struct gfxp_fb_softc *softc, struct vgaregmap *fbs,
     struct vgaregmap *regss)
 {
 
-	fbs->addr	= softc->console.vga.fb.addr;
-	fbs->handle	= softc->console.vga.fb.handle;
-	fbs->mapped	= softc->console.vga.fb.mapped;
-	regss->addr	= softc->console.vga.regs.addr;
-	regss->handle	= softc->console.vga.regs.handle;
-	regss->mapped	= softc->console.vga.regs.mapped;
+	fbs->addr	= softc->console->vga.fb.addr;
+	fbs->handle	= softc->console->vga.fb.handle;
+	fbs->mapped	= softc->console->vga.fb.mapped;
+	regss->addr	= softc->console->vga.regs.addr;
+	regss->handle	= softc->console->vga.regs.handle;
+	regss->mapped	= softc->console->vga.regs.mapped;
 }

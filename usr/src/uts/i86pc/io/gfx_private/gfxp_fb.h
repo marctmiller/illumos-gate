@@ -59,6 +59,33 @@ struct gfxp_ops {
 	    uint_t, void *);
 };
 
+struct gfx_vga {
+	struct vgaregmap regs;
+	struct vgaregmap fb;
+	off_t fb_size;
+	int fb_regno;
+	caddr_t	 text_base;	/* hardware text base */
+	char shadow[TEXT_ROWS*TEXT_COLS*2];
+	caddr_t current_base;	/* hardware or shadow */
+	char vga_fontslot;
+	struct {
+		boolean_t visible;
+		int row;
+		int col;
+	} cursor;
+	struct {
+		unsigned char red;
+		unsigned char green;
+		unsigned char blue;
+	} colormap[VGA8_CMAP_ENTRIES];
+	unsigned char attrib_palette[VGA_ATR_NUM_PLT];
+};
+
+union gfx_console {
+	struct fb_info fb;
+	struct gfx_vga vga;
+};
+
 struct gfxp_fb_softc {
 	dev_info_t		*devi;
 	int mode;		/* KD_TEXT or KD_GRAPHICS */
@@ -70,31 +97,7 @@ struct gfxp_fb_softc {
 	struct vis_polledio	polledio;
 	struct gfxp_ops		*gfxp_ops;
 	struct fbgattr		*fbgattr;
-
-	union {
-		struct fb_info fb;
-		struct {
-			struct vgaregmap regs;
-			struct vgaregmap fb;
-			off_t fb_size;
-			int fb_regno;
-			caddr_t	 text_base;	/* hardware text base */
-			char shadow[TEXT_ROWS*TEXT_COLS*2];
-			caddr_t current_base;	/* hardware or shadow */
-			char vga_fontslot;
-			struct {
-				boolean_t visible;
-				int row;
-				int col;
-			} cursor;
-			struct {
-				unsigned char red;
-				unsigned char green;
-				unsigned char blue;
-			} colormap[VGA8_CMAP_ENTRIES];
-			unsigned char attrib_palette[VGA_ATR_NUM_PLT];
-		} vga;
-	} console;
+	union gfx_console	*console;
 };
 
 /* function definitions */
