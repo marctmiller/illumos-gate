@@ -42,14 +42,6 @@ extern "C" {
 #define	VGA_TEXT_COLS		80
 #define	VGA_TEXT_ROWS		25
 
-extern void vga_setpos(int, int);
-extern void vga_getpos(int *, int *);
-extern void vga_clear(int);
-extern void vga_scroll(int);
-extern void vga_drawc(int, int);
-extern void vga_cursor_display(void);
-extern void vga_init(void);
-
 #ifdef __cplusplus
 }
 #endif
