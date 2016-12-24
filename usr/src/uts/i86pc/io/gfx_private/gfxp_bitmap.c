@@ -106,8 +106,7 @@ gfxp_bm_getfb_info(gfxp_fb_softc_ptr_t ptr, struct gfxp_bm_fb_info *fbip)
 	case GFXP_BITMAP:
 		fbip->xres = softc->console->fb.screen.x;
 		fbip->yres = softc->console->fb.screen.y;
-		fbip->bpp =
-		    softc->console->fb.pitch / softc->console->fb.screen.x * 8;
+		fbip->bpp = softc->console->fb.bpp;
 		fbip->depth = softc->console->fb.depth;
 		break;
 	case GFXP_VGATEXT:
@@ -348,21 +347,19 @@ bitmap_cons_copy(struct gfxp_fb_softc *softc, struct vis_conscopy *ma)
 		for (i = 0; i < height; i++) {
 			uint32_t increment = i * pitch;
 			if (softc->mode == KD_TEXT) {
-				(void) memmove(dst + increment,
+				(void)memmove(dst + increment,
 				    src + increment, width);
 			}
-			(void) memmove(sdst + increment, src + increment,
-			    width);
+			(void)memmove(sdst + increment, src + increment, width);
 		}
 	} else {
 		for (i = height - 1; i >= 0; i--) {
 			uint32_t increment = i * pitch;
 			if (softc->mode == KD_TEXT) {
-				(void) memmove(dst + increment,
+				(void)memmove(dst + increment,
 				    src + increment, width);
 			}
-			(void) memmove(sdst + increment, src + increment,
-			    width);
+			(void)memmove(sdst + increment, src + increment, width);
 		}
 	}
 }
@@ -455,13 +452,12 @@ bitmap_cons_clear(struct gfxp_fb_softc *softc, struct vis_consclear *ca)
 	union gfx_console *console;
 	uint8_t *fb, *sfb;
 	uint16_t *fb16, *sfb16;
-	uint32_t data, *fb32, *sfb32, size;
-	int i, pitch;
+	uint32_t data, *fb32, *sfb32;
+	int i, j, pitch;
 
 	console = softc->console;
 	pitch = console->fb.pitch;
 	data = bitmap_color_map(ca->bg_color);
-	size = console->fb.screen.x * console->fb.screen.y;
 	switch (console->fb.depth) {
 	case 8:
 		for (i = 0; i < console->fb.screen.y; i++) {
@@ -475,36 +471,42 @@ bitmap_cons_clear(struct gfxp_fb_softc *softc, struct vis_consclear *ca)
 		break;
 	case 15:
 	case 16:
-		fb16 = (uint16_t *)console->fb.fb;
-		sfb16 = (uint16_t *)console->fb.shadow_fb;
-		for (i = 0; i < size; i++) {
-			if (softc->mode == KD_TEXT)
-				fb16[i] = (uint16_t)data;
-			sfb16[i] = (uint16_t)data;
+		for (i = 0; i < console->fb.screen.y; i++) {
+			fb16 = (uint16_t *)(console->fb.fb + i * pitch);
+			sfb16 = (uint16_t *)(console->fb.shadow_fb + i * pitch);
+			for (j = 0; j < console->fb.screen.x; j++) {
+				if (softc->mode == KD_TEXT)
+					fb16[j] = (uint16_t)data & 0xffff;
+				sfb16[j] = (uint16_t)data & 0xffff;
+			}
 		}
 		break;
 	case 24:
-		fb = console->fb.fb;
-		sfb = console->fb.shadow_fb;
-		for (i = 0; i < console->fb.fb_size; i += 3) {
-			if (softc->mode == KD_TEXT) {
-				fb[i] = (data >> 16) & 0xff;
-				fb[i+1] = (data >> 8) & 0xff;
-				fb[i+2] = data & 0xff;
-			}
+		for (i = 0; i < console->fb.screen.y; i++) {
+			fb = console->fb.fb + i * pitch;
+			sfb = console->fb.shadow_fb + i * pitch;
+			for (j = 0; j < pitch; j += 3) {
+				if (softc->mode == KD_TEXT) {
+					fb[j] = (data >> 16) & 0xff;
+					fb[j+1] = (data >> 8) & 0xff;
+					fb[j+2] = data & 0xff;
+				}
 
-			sfb[i] = (data >> 16) & 0xff;
-			sfb[i+1] = (data >> 8) & 0xff;
-			sfb[i+2] = data & 0xff;
+				sfb[j] = (data >> 16) & 0xff;
+				sfb[j+1] = (data >> 8) & 0xff;
+				sfb[j+2] = data & 0xff;
+			}
 		}
 		break;
 	case 32:
-		fb32 = (uint32_t *)console->fb.fb;
-		sfb32 = (uint32_t *)console->fb.shadow_fb;
-		for (i = 0; i < size; i++) {
-			if (softc->mode == KD_TEXT)
-				fb32[i] = data;
-			sfb32[i] = data;
+		for (i = 0; i < console->fb.screen.y; i++) {
+			fb32 = (uint32_t *)(console->fb.fb + i * pitch);
+			sfb32 = (uint32_t *)(console->fb.shadow_fb + i * pitch);
+			for (j = 0; j < console->fb.screen.x; j++) {
+				if (softc->mode == KD_TEXT)
+					fb32[j] = data;
+				sfb32[j] = data;
+			}
 		}
 		break;
 	}
