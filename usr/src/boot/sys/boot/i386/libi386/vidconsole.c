@@ -175,7 +175,7 @@ plat_tem_get_prom_size(size_t *height, size_t *width)
 }
 
 void
-plat_cons_update_mode(void)
+plat_cons_update_mode(int mode __unused)
 {
 	struct vis_devinit devinit;
 

@@ -40,9 +40,6 @@
 #include <sys/vgareg.h>
 #include <sys/vgasubr.h>
 
-struct vesa_edid_info vbe_edid;
-static int vbe_edid_valid = 0;
-
 multiboot_tag_vbe_t vbestate;
 static struct vbeinfoblock *vbe =
     (struct vbeinfoblock *) &vbestate.vbe_control_info;
@@ -413,14 +410,14 @@ vbe_parse_mode_str(char *str, int *x, int *y, int *depth)
 	p = str;
 	*x = strtoul(p, NULL, 0);
 	if (*x == 0)
-		return 0;
+		return (0);
 	p = strchr(p, 'x');
 	if (!p)
-		return 0;
+		return (0);
 	++p;
 	*y = strtoul(p, NULL, 0);
 	if (*y == 0)
-		return 0;
+		return (0);
 	p = strchr(p, 'x');
 	if (!p)
 		*depth = -1;	/* auto select */
@@ -428,10 +425,10 @@ vbe_parse_mode_str(char *str, int *x, int *y, int *depth)
 		++p;
 		*depth = strtoul(p, NULL, 0);
 		if (*depth == 0)
-			return 0;
+			return (0);
 	}
 
-	return 1;
+	return (1);
 }
 
 /*
@@ -519,6 +516,7 @@ vbe_dump_mode(int modenum, struct modeinfoblock *mi)
 static int
 vbe_get_edid(int *pwidth, int *pheight)
 {
+	struct vesa_edid_info edid_info;
 	const uint8_t magic[] = EDID_MAGIC;
 	int ddc_caps, ret, i;
 
@@ -527,27 +525,23 @@ vbe_get_edid(int *pwidth, int *pheight)
 		return (1);
 	}
 
-	if (vbe_edid_valid == 0) {
-		ret = biosvbe_ddc_read_edid(0, &vbe_edid);
-		if (VBE_ERROR(ret))
-			return (1);
+	ret = biosvbe_ddc_read_edid(0, &edid_info);
+	if (VBE_ERROR(ret))
+		return (1);
 
-		if (memcmp(&vbe_edid, magic, sizeof(magic)) != 0)
-			return (1);
+	if (memcmp(&edid_info, magic, sizeof(magic)) != 0)
+		return (1);
 
-		if (vbe_edid.header.version == 1 &&
-		    (vbe_edid.display.supported_features
-		    & EDID_FEATURE_PREFERRED_TIMING_MODE) &&
-		    vbe_edid.detailed_timings[0].pixel_clock)
-			vbe_edid_valid = 1;
-		else
-			return (1);
-	}
+	if (!(edid_info.header.version == 1 &&
+	    (edid_info.display.supported_features
+	    & EDID_FEATURE_PREFERRED_TIMING_MODE) &&
+	    edid_info.detailed_timings[0].pixel_clock))
+		return (1);
 
-	*pwidth = vbe_edid.detailed_timings[0].horizontal_active_lo |
-	    (((int)vbe_edid.detailed_timings[0].horizontal_hi & 0xf0) << 4);
-	*pheight = vbe_edid.detailed_timings[0].vertical_active_lo |
-	    (((int)vbe_edid.detailed_timings[0].vertical_hi & 0xf0) << 4);
+	*pwidth = edid_info.detailed_timings[0].horizontal_active_lo |
+	    (((int)edid_info.detailed_timings[0].horizontal_hi & 0xf0) << 4);
+	*pheight = edid_info.detailed_timings[0].vertical_active_lo |
+	    (((int)edid_info.detailed_timings[0].vertical_hi & 0xf0) << 4);
 
 	return (0);
 }
@@ -678,7 +672,7 @@ vbe_print_mode(void)
 	}
 
 	if (biosvbe_get_mode_info(mode, vbe_mode) != VBE_SUCCESS) {
-		printf("Error reading VBE mode (0x%x) info\n", mode);
+		printf("VBE mode (0x%x) is not framebuffer mode\n", mode);
 		return;
 	}
 
@@ -736,39 +730,65 @@ vbe_default_mode(void)
 	return (modenum);
 }
 
-COMMAND_SET(vesa, "vesa", "vesa mode management", command_vesa);
+COMMAND_SET(framebuffer, "framebuffer", "framebuffer mode management",
+    command_vesa);
 
 int
 command_vesa(int argc, char *argv[])
 {
-	int modenum = -1, depth;
+	char *arg, *cp;
+	int modenum = -1, n;
 
 	if (!vbe_check())
 		return (CMD_OK);
 
+	if (argc < 2)
+		goto usage;
+
 	if (strcmp(argv[1], "list") == 0) {
-		depth = -1;
-		if (argc == 3)
-			depth = strtoul(argv[2], NULL, 0);
-		vbe_modelist(depth);
+		n = -1;
+		if (argc != 2 && argc != 3)
+			goto usage;
+
+		if (argc == 3) {
+			arg = argv[2];
+			errno = 0;
+			n = strtoul(arg, &cp, 0);
+			if (errno != 0 || *arg == '\0' || cp[0] != '\0') {
+				snprintf(command_errbuf,
+				    sizeof (command_errbuf),
+				    "depth should be an integer");
+				return (CMD_ERROR);
+			}
+		}
+		vbe_modelist(n);
 		return (CMD_OK);
 	}
 
 	if (strcmp(argv[1], "get") == 0) {
+		if (argc != 2)
+			goto usage;
+
 		vbe_print_mode();
 		return (CMD_OK);
 	}
 
-	if (strcmp(argv[1], "disable") == 0 || strcmp(argv[1], "off") == 0) {
+	if (strcmp(argv[1], "off") == 0) {
+		if (argc != 2)
+			goto usage;
+
 		if (vbestate.vbe_mode == 0)
 			return (CMD_OK);
 
 		bios_set_text_mode(3);		/* set VGA text mode 3 */
-		plat_cons_update_mode();
+		plat_cons_update_mode(0);
 		return (CMD_OK);
 	}
 
-	if (strcmp(argv[1], "enable") == 0 || strcmp(argv[1], "on") == 0) {
+	if (strcmp(argv[1], "on") == 0) {
+		if (argc != 2)
+			goto usage;
+
 		modenum = vbe_default_mode();
 		if (modenum == 0) {
 			sprintf(command_errbuf,
@@ -776,9 +796,20 @@ command_vesa(int argc, char *argv[])
 			return (CMD_ERROR);
 		}
 	} else if (strcmp(argv[1], "set") == 0) {
+		if (argc != 3)
+			goto usage;
+
 		if (strncmp(argv[2], "0x", 2) == 0) {
-			modenum = vbe_find_mode_xydm(0, 0, 0,
-			    strtoul(argv[2], NULL, 0));
+			arg = argv[2];
+			errno = 0;
+			n = strtoul(arg, &cp, 0);
+			if (errno != 0 || *arg == '\0' || cp[0] != '\0') {
+				snprintf(command_errbuf,
+				    sizeof (command_errbuf),
+				    "mode should be an integer");
+				return (CMD_ERROR);
+			}
+			modenum = vbe_find_mode_xydm(0, 0, 0, n);
 		} else if (strchr(argv[2], 'x') != NULL) {
 			modenum = vbe_find_mode(argv[2]);
 		}
@@ -793,12 +824,13 @@ command_vesa(int argc, char *argv[])
 	if (modenum >= 0x100) {
 		if (vbestate.vbe_mode != modenum) {
 			vbe_set_mode(modenum);
-			plat_cons_update_mode();
+			plat_cons_update_mode(1);
 		}
 		return (CMD_OK);
 	}
 
-	sprintf(command_errbuf, "usage: %s [on | off | get | list [depth] | "
+usage:
+	sprintf(command_errbuf, "usage: %s on | off | get | list [depth] | "
 	    "set <display or VBE mode number>", argv[0]);
 	return (CMD_ERROR);
 }

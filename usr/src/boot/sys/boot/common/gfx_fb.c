@@ -196,7 +196,7 @@ gfx_set_colors(struct env_var *ev, int flags, const void *value)
 		gfx_bg = val;
 	}
 	env_setenv(ev->ev_name, flags | EV_NOHOOK, evalue, NULL, NULL);
-	plat_cons_update_mode();
+	plat_cons_update_mode(-1);
 	return (CMD_OK);
 }
 
@@ -229,7 +229,7 @@ gfx_set_inverses(struct env_var *ev, int flags, const void *value)
 		gfx_inverse_screen = (t == 0);
 	}
 	env_setenv(ev->ev_name, flags | EV_NOHOOK, value, NULL, NULL);
-	plat_cons_update_mode();
+	plat_cons_update_mode(-1);
 	return (CMD_OK);
 }
 

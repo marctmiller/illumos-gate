@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/boot.h>
+#include <sys/consplat.h>
 #include <stand.h>
 #include <inttypes.h>
 #include <string.h>
@@ -628,6 +629,12 @@ command_mode(int argc, char *argv[])
 	char *cp;
 	EFI_STATUS status;
 	SIMPLE_TEXT_OUTPUT_INTERFACE *conout;
+	EFI_CONSOLE_CONTROL_SCREEN_MODE sm;
+
+	if (plat_stdout_is_framebuffer())
+		sm = EfiConsoleControlScreenGraphics;
+	else
+		sm = EfiConsoleControlScreenText;
 
 	conout = ST->ConOut;
 
@@ -647,7 +654,7 @@ command_mode(int argc, char *argv[])
 			printf("couldn't set mode %d\n", mode);
 			return (CMD_ERROR);
 		}
-		plat_cons_update_mode();
+		plat_cons_update_mode(sm);
 		return (CMD_OK);
 	}
 

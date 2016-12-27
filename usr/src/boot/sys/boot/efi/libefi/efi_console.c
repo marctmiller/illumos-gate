@@ -38,7 +38,6 @@
 struct efi_fb		efifb;
 EFI_GRAPHICS_OUTPUT	*gop;
 EFI_UGA_DRAW_PROTOCOL	*uga;
-struct vesa_edid_info	edid_info;
 
 static EFI_GUID ccontrol_protocol_guid = EFI_CONSOLE_CONTROL_PROTOCOL_GUID;
 static EFI_CONSOLE_CONTROL_PROTOCOL	*console_control;
@@ -182,14 +181,26 @@ plat_tem_get_prom_size(size_t *height, size_t *width)
 	}
 }
 
+/*
+ * Callback to notify about console mode change.
+ * mode is value from enum EFI_CONSOLE_CONTROL_SCREEN_MODE.
+ */
 void
-plat_cons_update_mode(void)
+plat_cons_update_mode(int mode)
 {
 	EFI_STATUS status;
 	UINTN cols, rows;
 	struct vis_devinit devinit;
 
-	efi_framebuffer_setup();
+	/* Make sure we have usable console. */
+	if (efi_find_framebuffer(&efifb)) {
+		console_mode = EfiConsoleControlScreenText;
+	} else {
+		efi_framebuffer_setup();
+		if (mode != -1 && console_mode != mode)
+			console_mode = mode;
+	}
+
 	if (console_control != NULL)
 		(void)console_control->SetMode(console_control, console_mode);
 
@@ -468,12 +479,6 @@ efi_cons_probe(struct console *cp)
 		console_mode = EfiConsoleControlScreenGraphics;
 		cp->c_private = &fb_ops;
 	}
-
-#if 0
-	/* force text mode */
-	console_mode = EfiConsoleControlScreenText;
-	cp->c_private = &text_ops;
-#endif
 
 	if (console_control != NULL)
 		(void)console_control->SetMode(console_control, console_mode);
