@@ -238,15 +238,25 @@ gfxp_fb_attach(dev_info_t *devi, ddi_attach_cmd_t cmd, gfxp_fb_softc_ptr_t ptr)
 		    "property for driver", value ? "set" : "clear");
 	}
 
-	switch (boot_console_type(NULL)) {
-	case CONS_FRAMEBUFFER:
-		softc->fb_type = GFXP_BITMAP;
-		error = gfxp_bm_attach(devi, cmd, softc);
-		break;
-	default:
+	switch (fb_info.fb_type) {
+	case FB_TYPE_UNINITIALIZED:
+		/*
+		 * While booting from MB1, we do not have FB.
+		 * Fall through.
+		 */
+	case FB_TYPE_EGA_TEXT:
 		softc->fb_type = GFXP_VGATEXT;
 		error = gfxp_vga_attach(devi, cmd, softc);
 		break;
+
+	case FB_TYPE_INDEXED:	/* FB types */
+	case FB_TYPE_RGB:
+		softc->fb_type = GFXP_BITMAP;
+		error = gfxp_bm_attach(devi, cmd, softc);
+		break;
+
+	default:
+		error = DDI_FAILURE;
 	}
 
 	if (error == DDI_SUCCESS)

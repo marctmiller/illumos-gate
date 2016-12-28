@@ -51,7 +51,16 @@ typedef struct boot_framebuffer {
 	fb_cursor_t cursor;
 } __attribute__((packed)) boot_framebuffer_t;
 
+enum fb_type {
+	FB_TYPE_UNINITIALIZED = 0,	/* FB not set up, use vga text mode */
+	FB_TYPE_EGA_TEXT,		/* vga text mode */
+	FB_TYPE_INDEXED,		/* FB mode */
+	FB_TYPE_RGB,			/* FB mode */
+	FB_TYPE_UNKNOWN
+};
+
 typedef struct fb_info {
+	enum fb_type fb_type;	/* Marker from xbi_fb_init */
 	uint64_t paddr;		/* FB address from bootloader */
 	uint8_t *fb;		/* kernel mapped frame buffer */
 	uint8_t *shadow_fb;

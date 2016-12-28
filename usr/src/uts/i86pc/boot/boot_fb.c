@@ -137,13 +137,24 @@ xbi_fb_init(struct xboot_info *xbi, bcons_dev_t *bcons_dev)
 	bcons_dev->bd_setpos = boot_fb_setpos;
 	bcons_dev->bd_shift = boot_fb_shiftline;
 
+	if (fb_info.paddr == 0)
+		fb_info.fb_type = FB_TYPE_UNKNOWN;
+
 	switch (tag->framebuffer_common.framebuffer_type) {
 	case MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT:
+		fb_info.fb_type = FB_TYPE_EGA_TEXT;
 		return (B_FALSE);
+
 	case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
+		if (fb_info.paddr != 0)
+			fb_info.fb_type = FB_TYPE_INDEXED;
 		return (B_TRUE);
+
 	case MULTIBOOT_FRAMEBUFFER_TYPE_RGB:
+		if (fb_info.paddr != 0)
+			fb_info.fb_type = FB_TYPE_RGB;
 		break;
+
 	default:
 		return (B_FALSE);
 	}
@@ -265,7 +276,7 @@ boot_fb_cpy(uint8_t *dst, uint8_t *src, uint32_t len)
 void
 boot_fb_shadow_init(bootops_t *bops)
 {
-	if (fb_info.fb == NULL)
+	if (boot_console_type(NULL) != CONS_FRAMEBUFFER)
 		return;			/* nothing to do */
 
 	fb_info.shadow_fb = (uint8_t *)bops->bsys_alloc(NULL, NULL,
