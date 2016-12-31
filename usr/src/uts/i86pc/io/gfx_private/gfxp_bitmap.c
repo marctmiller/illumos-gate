@@ -92,9 +92,16 @@ static struct gfxp_ops gfxp_ops = {
 
 /* ARGSUSED */
 void
-gfxp_bm_register_fbops(gfxp_fb_softc_ptr_t softc,
-    struct gfxp_blt_ops *ops)
+gfxp_bm_register_fbops(gfxp_fb_softc_ptr_t ptr, struct gfxp_blt_ops *ops)
 {
+	struct gfxp_fb_softc *softc = (struct gfxp_fb_softc *)ptr;
+
+	if (softc != NULL) {
+		softc->blt_ops.blt = ops->blt;
+		softc->blt_ops.copy = ops->copy;
+		softc->blt_ops.clear = ops->clear;
+		softc->blt_ops.setmode = ops->setmode;
+	}
 }
 
 void
@@ -110,11 +117,14 @@ gfxp_bm_getfb_info(gfxp_fb_softc_ptr_t ptr, struct gfxp_bm_fb_info *fbip)
 		fbip->depth = softc->console->fb.depth;
 		break;
 	case GFXP_VGATEXT:
-		/* Hardwired values for vgatext */
-		fbip->xres = 80;
-		fbip->yres = 25;
-		fbip->bpp = 0;
-		fbip->depth = 0;
+		/*
+		 * Hardwired values for vgatext. The resolution is based
+		 * on grub graphics mode activated by int 10H AX=0x12.
+		 */
+		fbip->xres = 640;
+		fbip->yres = 480;
+		fbip->bpp = 1;
+		fbip->depth = 4;
 		break;
 	}
 }
@@ -187,6 +197,8 @@ bitmap_kdsetmode(struct gfxp_fb_softc *softc, int mode)
 
 	switch (mode) {
 	case KD_TEXT:
+		if (softc->blt_ops.setmode != NULL)
+			softc->blt_ops.setmode(0);
 		bitmap_kdsettext(softc);
 		break;
 	case KD_GRAPHICS:

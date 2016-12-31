@@ -59,6 +59,14 @@ struct gfxp_ops {
 	    uint_t, void *);
 };
 
+struct vgareg {
+	unsigned char vga_misc;		/* Misc out reg */
+	unsigned char *vga_crtc;	/* Crtc controller */
+	unsigned char *vga_seq;		/* Video Sequencer */
+	unsigned char *vga_grc;		/* Video Graphics */
+	unsigned char *vga_atr;		/* Video Atribute */
+};
+
 struct gfx_vga {
 	struct vgaregmap regs;
 	struct vgaregmap fb;
@@ -68,6 +76,7 @@ struct gfx_vga {
 	char shadow[TEXT_ROWS*TEXT_COLS*2];
 	caddr_t current_base;	/* hardware or shadow */
 	char vga_fontslot;
+	struct vgareg vga_reg;
 	struct {
 		boolean_t visible;
 		int row;
@@ -96,6 +105,7 @@ struct gfxp_fb_softc {
 	char			happyface_boot;
 	struct vis_polledio	polledio;
 	struct gfxp_ops		*gfxp_ops;
+	struct gfxp_blt_ops	blt_ops;
 	struct fbgattr		*fbgattr;
 	union gfx_console	*console;
 };
