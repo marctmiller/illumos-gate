@@ -334,7 +334,10 @@ do_gfx_ioctl(int cmd, intptr_t data, int mode, struct gfxp_fb_softc *softc)
 
 	switch (cmd) {
 	case KDSETMODE:
-		return (softc->gfxp_ops->kdsetmode(softc, (int)data));
+		kd_mode = (int)data;
+		if ((kd_mode == softc->mode) || (!GFXP_IS_CONSOLE(softc)))
+			break;
+		return (softc->gfxp_ops->kdsetmode(softc, kd_mode));
 
 	case KDGETMODE:
 		kd_mode = softc->mode;

@@ -60,11 +60,11 @@ struct gfxp_ops {
 };
 
 struct vgareg {
-	unsigned char vga_misc;		/* Misc out reg */
-	unsigned char *vga_crtc;	/* Crtc controller */
-	unsigned char *vga_seq;		/* Video Sequencer */
-	unsigned char *vga_grc;		/* Video Graphics */
-	unsigned char *vga_atr;		/* Video Atribute */
+	unsigned char vga_misc;			/* Misc out reg */
+	unsigned char vga_crtc[NUM_CRTC_REG];	/* Crtc controller */
+	unsigned char vga_seq[NUM_SEQ_REG];	/* Video Sequencer */
+	unsigned char vga_grc[NUM_GRC_REG];	/* Video Graphics */
+	unsigned char vga_atr[NUM_ATR_REG];	/* Video Atribute */
 };
 
 struct gfx_vga {

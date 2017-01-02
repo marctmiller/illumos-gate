@@ -118,13 +118,15 @@ gfxp_bm_getfb_info(gfxp_fb_softc_ptr_t ptr, struct gfxp_bm_fb_info *fbip)
 		break;
 	case GFXP_VGATEXT:
 		/*
-		 * Hardwired values for vgatext. The resolution is based
-		 * on grub graphics mode activated by int 10H AX=0x12.
+		 * By current knowledge, DRM can not cope with text mode
+		 * and the VGA is disabled. The proper approach here
+		 * is to set all values to 0. See the drm_getfb_size() and
+		 * the i915_gem_init() how the size is used.
 		 */
-		fbip->xres = 640;
-		fbip->yres = 480;
-		fbip->bpp = 1;
-		fbip->depth = 4;
+		fbip->xres = 0;
+		fbip->yres = 0;
+		fbip->bpp = 0;
+		fbip->depth = 0;
 		break;
 	}
 }
@@ -192,17 +194,16 @@ bitmap_resume(struct gfxp_fb_softc *softc)
 static int
 bitmap_kdsetmode(struct gfxp_fb_softc *softc, int mode)
 {
-	if ((mode == softc->mode) || (!GFXP_IS_CONSOLE(softc)))
-		return (0);
-
 	switch (mode) {
 	case KD_TEXT:
 		if (softc->blt_ops.setmode != NULL)
-			softc->blt_ops.setmode(0);
+			softc->blt_ops.setmode(KD_TEXT);
 		bitmap_kdsettext(softc);
 		break;
 	case KD_GRAPHICS:
 		bitmap_kdsetgraphics(softc);
+		if (softc->blt_ops.setmode != NULL)
+			softc->blt_ops.setmode(KD_GRAPHICS);
 		break;
 	case KD_RESETTEXT:
 		/*
