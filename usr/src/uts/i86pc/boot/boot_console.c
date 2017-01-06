@@ -170,12 +170,14 @@ serial_init(void)
 	serial_adjust_prop();
 
 #if defined(_BOOT)
+#if 0
 	/*
 	 * Do a full reset to match console behavior.
 	 * 0x1B + c - reset everything
 	 */
 	serial_putchar(0x1B);
 	serial_putchar('c');
+#endif
 #endif
 }
 
