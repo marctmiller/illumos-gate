@@ -112,6 +112,7 @@ information_request_tag_start:
 	.long	MULTIBOOT_TAG_TYPE_MODULE
 	.long	MULTIBOOT_TAG_TYPE_BOOTDEV
 	.long	MULTIBOOT_TAG_TYPE_MMAP
+	.long	MULTIBOOT_TAG_TYPE_FRAMEBUFFER
 	.long	MULTIBOOT_TAG_TYPE_BASIC_MEMINFO
 information_request_tag_end:
 	.long	0		/* padding */
@@ -156,6 +157,19 @@ console_tag_start:
 	.long	MULTIBOOT_CONSOLE_FLAGS_EGA_TEXT_SUPPORTED
 console_tag_end:
 	.long	0		/* padding */
+
+	/*
+	 * MB header framebuffer tag
+	 */
+	.align	MULTIBOOT_TAG_ALIGN
+framebuffer_tag_start:
+	.word	MULTIBOOT_HEADER_TAG_FRAMEBUFFER
+	.word	0
+	.long	framebuffer_tag_end - framebuffer_tag_start
+	.long	0		/* width - no preference */
+	.long	0		/* height - no preference */
+	.long	0		/* depth - no preference */
+framebuffer_tag_end:
 
 	/*
 	 * Tell the bootloader to load the modules page aligned to
