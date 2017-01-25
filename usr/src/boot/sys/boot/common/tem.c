@@ -34,9 +34,7 @@
  * Every virtual terminal is associated with a tem_vt_state structure
  * and maintains a virtual screen buffer in tvs_screen_buf, which contains
  * all the characters which should be shown on the physical screen when
- * the terminal is activated.  There are also two other buffers, tvs_fg_buf
- * and tvs_bg_buf, which track the foreground and background colors of the
- * on screen characters
+ * the terminal is activated.
  *
  * Data written to a virtual terminal is composed of characters which
  * should be displayed on the screen when this virtual terminal is
@@ -45,12 +43,11 @@
  *
  * When data is passed to a virtual terminal it first is parsed for
  * control information by tem_parse().  Subsequently the character
- * and color data are written to tvs_screen_buf, tvs_fg_buf, and
- * tvs_bg_buf.  They are saved in these buffers in order to refresh
- * the screen when this terminal is activated.  If the terminal is
- * currently active, the data (characters and colors) are also written
- * to the physical screen by invoking a callback function,
- * tem_text_callbacks() or tem_pix_callbacks().
+ * and color data are written to tvs_screen_buf.
+ * They are saved in buffer in order to refresh the screen when this
+ * terminal is activated.  If the terminal is currently active, the data
+ * (characters and colors) are also written to the physical screen by
+ * invoking a callback function, tem_text_callbacks() or tem_pix_callbacks().
  *
  * When rendering data to the framebuffer, if the framebuffer is in
  * VIS_PIXEL mode, the character data will first be converted to pixel
@@ -87,8 +84,8 @@ static void	tem_setparam(struct tem_vt_state *, int, int);
 static void	tem_selgraph(struct tem_vt_state *);
 static void	tem_chkparam(struct tem_vt_state *, uint8_t);
 static void	tem_getparams(struct tem_vt_state *, uint8_t);
-static void	tem_outch(struct tem_vt_state *, uint8_t);
-static void	tem_parse(struct tem_vt_state *, uint8_t);
+static void	tem_outch(struct tem_vt_state *, tem_char_t);
+static void	tem_parse(struct tem_vt_state *, tem_char_t);
 
 static void	tem_new_line(struct tem_vt_state *);
 static void	tem_cr(struct tem_vt_state *);
@@ -118,8 +115,7 @@ static void	tem_pix_clear_prom_output(struct tem_vt_state *tem);
 static void	tem_virtual_cls(struct tem_vt_state *, int, screen_pos_t,
 		    screen_pos_t);
 static void	tem_virtual_display(struct tem_vt_state *,
-		    unsigned char *, int, screen_pos_t, screen_pos_t,
-		    text_color_t, text_color_t);
+		    tem_char_t *, int, screen_pos_t, screen_pos_t);
 static void	tem_virtual_copy(struct tem_vt_state *, screen_pos_t,
 		    screen_pos_t, screen_pos_t, screen_pos_t,
 		    screen_pos_t, screen_pos_t);
@@ -131,41 +127,41 @@ static void	tem_terminal_emulate(struct tem_vt_state *, uint8_t *, int);
 static void	tem_text_cursor(struct tem_vt_state *, short);
 static void	tem_text_cls(struct tem_vt_state *,
 		    int count, screen_pos_t row, screen_pos_t col);
-static void	tem_pix_display(struct tem_vt_state *, uint8_t *,
-		    int, screen_pos_t, screen_pos_t,
-		    text_color_t, text_color_t);
+static void	tem_pix_display(struct tem_vt_state *, tem_char_t *,
+		    int, screen_pos_t, screen_pos_t);
 static void	tem_pix_copy(struct tem_vt_state *,
 		    screen_pos_t, screen_pos_t,
 		    screen_pos_t, screen_pos_t,
 		    screen_pos_t, screen_pos_t);
 static void	tem_pix_cursor(struct tem_vt_state *, short);
 static void	tem_pix_clear_entire_screen(struct tem_vt_state *);
+static void	tem_get_attr(struct tem_vt_state *, text_color_t *,
+		    text_color_t *, uint16_t *, uint8_t);
 static void	tem_get_color(struct tem_vt_state *, text_color_t *,
-		    text_color_t *, uint8_t);
+		    text_color_t *, tem_char_t);
 static void	tem_blank_screen(struct tem_vt_state *);
 static void	tem_unblank_screen(struct tem_vt_state *);
 static void	tem_pix_align(struct tem_vt_state *);
-static void	tem_text_display(struct tem_vt_state *, uint8_t *, int,
-		    screen_pos_t, screen_pos_t, text_color_t, text_color_t);
+static void	tem_text_display(struct tem_vt_state *, tem_char_t *, int,
+		    screen_pos_t, screen_pos_t);
 static void	tem_text_copy(struct tem_vt_state *,
 		    screen_pos_t, screen_pos_t, screen_pos_t, screen_pos_t,
 		    screen_pos_t, screen_pos_t);
-static void	tem_pix_bit2pix(struct tem_vt_state *, unsigned char,
-		    unsigned char, unsigned char);
+static void	tem_pix_bit2pix(struct tem_vt_state *, tem_char_t);
 static void	tem_pix_cls_range(struct tem_vt_state *, screen_pos_t, int,
 		    int, screen_pos_t, int, int, boolean_t);
 static void	tem_pix_cls(struct tem_vt_state *, int,
 		    screen_pos_t, screen_pos_t);
 
-static void	bit_to_pix4(struct tem_vt_state *tem, uint8_t c,
+static void	bit_to_pix4(struct tem_vt_state *tem, tem_char_t c,
 		    text_color_t fg_color, text_color_t bg_color);
-static void	bit_to_pix8(struct tem_vt_state *tem, uint8_t c,
+static void	bit_to_pix8(struct tem_vt_state *tem, tem_char_t c,
 		    text_color_t fg_color, text_color_t bg_color);
-static void	bit_to_pix16(struct tem_vt_state *tem, uint8_t c,
+static void	bit_to_pix16(struct tem_vt_state *tem, tem_char_t c,
 		    text_color_t fg_color, text_color_t bg_color);
-static void	bit_to_pix24(struct tem_vt_state *tem, uint8_t c,
+static void	bit_to_pix24(struct tem_vt_state *tem, tem_char_t c,
 		    text_color_t fg_color, text_color_t bg_color);
-static void	bit_to_pix32(struct tem_vt_state *tem, uint8_t c,
+static void	bit_to_pix32(struct tem_vt_state *tem, tem_char_t c,
 		    text_color_t fg_color, text_color_t bg_color);
 
 /*
@@ -245,42 +241,40 @@ tem_internal_init(struct tem_vt_state *ptem,
 {
 	int i, j;
 	int width, height;
-	int total;
+	uint16_t attr;
 	text_color_t fg;
 	text_color_t bg;
-	size_t	tc_size = sizeof (text_color_t);
+	tem_char_t c;
+	size_t	size;
 
 	if (tems.ts_display_mode == VIS_PIXEL) {
 		ptem->tvs_pix_data_size = tems.ts_pix_data_size;
 		ptem->tvs_pix_data = malloc(ptem->tvs_pix_data_size);
 	}
 
-	ptem->tvs_outbuf_size = tems.ts_c_dimension.width;
-	ptem->tvs_outbuf = malloc(ptem->tvs_outbuf_size);
+	size = tems.ts_c_dimension.width * sizeof (tem_char_t);
+	ptem->tvs_outbuf = malloc(size);
 
 	width = tems.ts_c_dimension.width;
 	height = tems.ts_c_dimension.height;
-	ptem->tvs_screen_buf_size = width * height;
-	ptem->tvs_screen_buf = malloc(width * height);
-
-	total = width * height * tc_size;
-	ptem->tvs_fg_buf = malloc(total);
-	ptem->tvs_bg_buf = malloc(total);
-	ptem->tvs_color_buf_size = total;
+	size = width * height * sizeof (tem_char_t);
+	ptem->tvs_screen_buf = malloc(size);
 
 	tem_reset_display(ptem, clear_screen, init_color);
 
 	ptem->tvs_utf8_left = 0;
 	ptem->tvs_utf8_partial = 0;
 
-	tem_get_color(ptem, &fg, &bg, TEM_ATTR_SCREEN_REVERSE);
+	tem_get_attr(ptem, &fg, &bg, &attr, TEM_ATTR_SCREEN_REVERSE);
+	c = TEM_BG_COLOR(bg) | TEM_FG_COLOR(fg) | TEM_ATTR(attr) | ' ';
+
 	for (i = 0; i < height; i++)
 		for (j = 0; j < width; j++) {
-			ptem->tvs_screen_buf[i * width + j] = ' ';
-			ptem->tvs_fg_buf[(i * width +j) * tc_size] = fg;
-			ptem->tvs_bg_buf[(i * width +j) * tc_size] = bg;
-
+			ptem->tvs_screen_buf[i * width + j] = c;
 		}
+
+	for (i = 0; i < tems.ts_c_dimension.width; i++)
+		tems.ts_blank_line[i] = c;
 
 	ptem->tvs_initialized  = 1;
 }
@@ -353,14 +347,6 @@ tem_free_buf(struct tem_vt_state *tem)
 	if (tem->tvs_screen_buf != NULL) {
 		free(tem->tvs_screen_buf);
 		tem->tvs_screen_buf = NULL;
-	}
-	if (tem->tvs_fg_buf != NULL) {
-		free(tem->tvs_fg_buf);
-		tem->tvs_fg_buf = NULL;
-	}
-	if (tem->tvs_bg_buf != NULL) {
-		free(tem->tvs_bg_buf);
-		tem->tvs_bg_buf = NULL;
 	}
 }
 
@@ -507,7 +493,6 @@ env_screen_nounset(struct env_var *ev __unused)
 static void
 tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 {
-	int i;
 	char env[8];
 
 	tems.ts_pdepth = tp->depth;
@@ -597,9 +582,8 @@ tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 	/* Now virtual cls also uses the blank_line buffer */
 	free(tems.ts_blank_line);
 
-	tems.ts_blank_line = malloc(tems.ts_c_dimension.width);
-	for (i = 0; i < tems.ts_c_dimension.width; i++)
-		tems.ts_blank_line[i] = ' ';
+	tems.ts_blank_line = malloc(tems.ts_c_dimension.width *
+	    sizeof (tem_char_t));
 }
 
 /*
@@ -1040,7 +1024,7 @@ static void
 tem_input_partial(struct tem_vt_state *tem)
 {
 	int i;
-	uint8_t c;
+	tem_char_t c;
 
 	if (tem->tvs_utf8_left == 0)
 		return;
@@ -1133,9 +1117,6 @@ tem_input_byte(struct tem_vt_state *tem, uint8_t c)
 				v = (v << 6) | (b & 0x3f);
 			}
 
-			/* Use '?' as replacement if needed. */
-			if (v > 0xff)
-				v = '?';
 			tem_parse(tem, v);
 			tem->tvs_utf8_partial = 0;
 		}
@@ -1662,11 +1643,16 @@ tem_getparams(struct tem_vt_state *tem, uint8_t ch)
  * When its full, send it to the next layer.
  */
 static void
-tem_outch(struct tem_vt_state *tem, uint8_t ch)
+tem_outch(struct tem_vt_state *tem, tem_char_t ch)
 {
-	/* buffer up the character until later */
+	text_color_t fg;
+	text_color_t bg;
+	uint16_t attr;
 
-	tem->tvs_outbuf[tem->tvs_outindex++] = ch;
+	/* buffer up the character until later */
+	tem_get_attr(tem, &fg, &bg, &attr, TEM_ATTR_REVERSE);
+	tem->tvs_outbuf[tem->tvs_outindex++] = ch | TEM_ATTR(attr) |
+	    TEM_BG_COLOR(bg) | TEM_FG_COLOR(fg);
 	tem->tvs_c_cursor.col++;
 	if (tem->tvs_c_cursor.col >= tems.ts_c_dimension.width) {
 		tem_send_data(tem);
@@ -1736,19 +1722,14 @@ tem_lf(struct tem_vt_state *tem)
 static void
 tem_send_data(struct tem_vt_state *tem)
 {
-	text_color_t fg_color;
-	text_color_t bg_color;
-
 	if (tem->tvs_outindex == 0) {
 		tem_align_cursor(tem);
 		return;
 	}
 
-	tem_get_color(tem, &fg_color, &bg_color, TEM_ATTR_REVERSE);
 	tem_virtual_display(tem,
 	    tem->tvs_outbuf, tem->tvs_outindex,
-	    tem->tvs_s_cursor.row, tem->tvs_s_cursor.col,
-	    fg_color, bg_color);
+	    tem->tvs_s_cursor.row, tem->tvs_s_cursor.col);
 
 	if (tem->tvs_isactive) {
 		/*
@@ -1756,8 +1737,7 @@ tem_send_data(struct tem_vt_state *tem)
 		 */
 		tem_callback_display(tem,
 		    tem->tvs_outbuf, tem->tvs_outindex,
-		    tem->tvs_s_cursor.row, tem->tvs_s_cursor.col,
-		    fg_color, bg_color);
+		    tem->tvs_s_cursor.row, tem->tvs_s_cursor.col);
 	}
 
 	tem->tvs_outindex = 0;
@@ -1784,7 +1764,7 @@ tem_align_cursor(struct tem_vt_state *tem)
  */
 
 static void
-tem_parse(struct tem_vt_state *tem, uint8_t ch)
+tem_parse(struct tem_vt_state *tem, tem_char_t ch)
 {
 	int	i;
 
@@ -2047,23 +2027,29 @@ tem_clear_chars(struct tem_vt_state *tem, int count, screen_pos_t row,
 	tem_callback_cls(tem, count, row, col);
 }
 
-/*ARGSUSED*/
 static void
-tem_text_display(struct tem_vt_state *tem, uint8_t *string,
-    int count, screen_pos_t row, screen_pos_t col,
-    text_color_t fg_color, text_color_t bg_color)
+tem_text_display(struct tem_vt_state *tem, tem_char_t *string,
+    int count, screen_pos_t row, screen_pos_t col)
 {
 	struct vis_consdisplay da;
+	tem_char_t c;
+	int i;
 
-	da.data = string;
-	da.width = (screen_size_t)count;
+	if (count == 0)
+		return;
+
+	da.data = (unsigned char *)&c;
+	da.width = 1;
 	da.row = row;
 	da.col = col;
 
-	da.fg_color = fg_color;
-	da.bg_color = bg_color;
-
-	tems_display(&da);
+	for (i = 0; i < count; i++) {
+		c = string[i];
+		tem_get_color(tem, &da.fg_color, &da.bg_color, c);
+		c = TEM_CHAR(c);
+		tems_display(&da);
+		da.col++;
+	}
 }
 
 #if 0
@@ -2116,22 +2102,13 @@ static void
 tem_text_cls(struct tem_vt_state *tem,
     int count, screen_pos_t row, screen_pos_t col)
 {
-	struct vis_consdisplay da;
-
-	da.data = tems.ts_blank_line;
-	da.width = (screen_size_t)count;
-	da.row = row;
-	da.col = col;
-
-	tem_get_color(tem, &da.fg_color, &da.bg_color, TEM_ATTR_SCREEN_REVERSE);
-	tems_display(&da);
+	tem_text_display(tem, tems.ts_blank_line, count, row, col);
 }
 
 static void
 tem_pix_display(struct tem_vt_state *tem,
-    uint8_t *string, int count,
-    screen_pos_t row, screen_pos_t col,
-    text_color_t fg_color, text_color_t bg_color)
+    tem_char_t *string, int count,
+    screen_pos_t row, screen_pos_t col)
 {
 	struct vis_consdisplay da;
 	int	i;
@@ -2143,7 +2120,7 @@ tem_pix_display(struct tem_vt_state *tem,
 	da.col = (col * da.width) + tems.ts_p_offset.x;
 
 	for (i = 0; i < count; i++) {
-		tem_callback_bit2pix(tem, string[i], fg_color, bg_color);
+		tem_callback_bit2pix(tem, string[i]);
 		tems_display(&da);
 		da.col += da.width;
 	}
@@ -2209,12 +2186,13 @@ tem_pix_copy(struct tem_vt_state *tem,
 }
 
 static void
-tem_pix_bit2pix(struct tem_vt_state *tem, unsigned char c,
-    unsigned char fg, unsigned char bg)
+tem_pix_bit2pix(struct tem_vt_state *tem, tem_char_t c)
 {
-	void (*fp)(struct tem_vt_state *, unsigned char,
+	text_color_t fg, bg;
+	void (*fp)(struct tem_vt_state *, tem_char_t,
 	    unsigned char, unsigned char);
 
+	tem_get_color(tem, &fg, &bg, c);
 	switch (tems.ts_pdepth) {
 	case 4:
 		fp = bit_to_pix4;
@@ -2236,7 +2214,7 @@ tem_pix_bit2pix(struct tem_vt_state *tem, unsigned char c,
 		return;
 	}
 
-	fp(tem, c, fg, bg);
+	fp(tem, TEM_CHAR(c), fg, bg);
 }
 
 
@@ -2301,10 +2279,13 @@ tem_pix_clear_entire_screen(struct tem_vt_state *tem)
 	struct vis_consclear cl;
 	text_color_t fg_color;
 	text_color_t bg_color;
+	uint16_t attr;
 	int	nrows, ncols, width, height;
 
 	/* call driver first, if error, clear terminal area */
-	tem_get_color(tem, &fg_color, &bg_color, TEM_ATTR_SCREEN_REVERSE);
+	tem_get_attr(tem, &fg_color, &bg_color, &attr, TEM_ATTR_SCREEN_REVERSE);
+	tem_get_color(tem, &fg_color, &bg_color,
+	    TEM_BG_COLOR(bg_color) | TEM_FG_COLOR(fg_color) | TEM_ATTR(attr));
 	cl.bg_color = bg_color;
 	if (tems_cls(&cl) == 0)
 		return;
@@ -2337,8 +2318,11 @@ tem_cls(struct tem_vt_state *tem)
 	struct vis_consclear cl;
 	text_color_t fg_color;
 	text_color_t bg_color;
+	uint16_t attr;
 
-	tem_get_color(tem, &fg_color, &bg_color, TEM_ATTR_SCREEN_REVERSE);
+	tem_get_attr(tem, &fg_color, &bg_color, &attr, TEM_ATTR_SCREEN_REVERSE);
+	tem_get_color(tem, &fg_color, &bg_color,
+	    TEM_FG_COLOR(fg_color) | TEM_BG_COLOR(bg_color) | TEM_ATTR(attr));
 	cl.bg_color = bg_color;
 
 	for (row = 0; row < tems.ts_c_dimension.height; row++) {
@@ -2584,6 +2568,7 @@ tem_pix_cursor(struct tem_vt_state *tem, short action)
 	struct vis_conscursor	ca;
 	uint32_t color;
 	text_color_t fg, bg;
+	uint16_t attr;
 
 	ca.row = tem->tvs_c_cursor.row * tems.ts_font.height +
 	    tems.ts_p_offset.y;
@@ -2592,7 +2577,9 @@ tem_pix_cursor(struct tem_vt_state *tem, short action)
 	ca.width = tems.ts_font.width;
 	ca.height = tems.ts_font.height;
 
-	tem_get_color(tem, &fg, &bg, TEM_ATTR_REVERSE);
+	tem_get_attr(tem, &fg, &bg, &attr, TEM_ATTR_REVERSE);
+	tem_get_color(tem, &fg, &bg,
+	    TEM_BG_COLOR(bg) | TEM_FG_COLOR(fg) | TEM_ATTR(attr));
 
 	switch (tems.ts_pdepth) {
 	case 4:
@@ -2643,7 +2630,7 @@ tem_pix_cursor(struct tem_vt_state *tem, short action)
 
 static void
 bit_to_pix4(struct tem_vt_state *tem,
-    uint8_t c,
+    tem_char_t c,
     text_color_t fg_color,
     text_color_t bg_color)
 {
@@ -2653,7 +2640,7 @@ bit_to_pix4(struct tem_vt_state *tem,
 
 static void
 bit_to_pix8(struct tem_vt_state *tem,
-    uint8_t c,
+    tem_char_t c,
     text_color_t fg_color,
     text_color_t bg_color)
 {
@@ -2663,7 +2650,7 @@ bit_to_pix8(struct tem_vt_state *tem,
 
 static void
 bit_to_pix16(struct tem_vt_state *tem,
-    uint8_t c,
+    tem_char_t c,
     text_color_t fg_color4,
     text_color_t bg_color4)
 {
@@ -2679,7 +2666,7 @@ bit_to_pix16(struct tem_vt_state *tem,
 
 static void
 bit_to_pix24(struct tem_vt_state *tem,
-    uint8_t c,
+    tem_char_t c,
     text_color_t fg_color4,
     text_color_t bg_color4)
 {
@@ -2695,7 +2682,7 @@ bit_to_pix24(struct tem_vt_state *tem,
 
 static void
 bit_to_pix32(struct tem_vt_state *tem,
-    uint8_t c,
+    tem_char_t c,
     text_color_t fg_color4,
     text_color_t bg_color4)
 {
@@ -2708,52 +2695,57 @@ bit_to_pix32(struct tem_vt_state *tem,
 	font_bit_to_pix32(&tems.ts_font, dest, c, fg_color32, bg_color32);
 }
 
-static text_color_t
-ansi_bg_to_solaris(struct tem_vt_state *tem, int ansi)
-{
-	if (tem->tvs_flags & TEM_ATTR_BRIGHT_BG)
-		return (brt_xlate[ansi]);
-	else
-		return (dim_xlate[ansi]);
-}
-
-static text_color_t
-ansi_fg_to_solaris(struct tem_vt_state *tem, int ansi)
-{
-	if (tem->tvs_flags & TEM_ATTR_BRIGHT_FG ||
-	    tem->tvs_flags & TEM_ATTR_BOLD) {
-		return (brt_xlate[ansi]);
-	} else {
-		return (dim_xlate[ansi]);
-	}
-}
-
 /*
  * flag: TEM_ATTR_SCREEN_REVERSE or TEM_ATTR_REVERSE
  */
 static void
-tem_get_color(struct tem_vt_state *tem, text_color_t *fg,
-    text_color_t *bg, uint8_t flag)
+tem_get_attr(struct tem_vt_state *tem, text_color_t *fg,
+    text_color_t *bg, uint16_t *attr, uint8_t flag)
 {
 	if (tem->tvs_flags & flag) {
-		*fg = ansi_fg_to_solaris(tem,
-		    tem->tvs_bg_color);
-		*bg = ansi_bg_to_solaris(tem,
-		    tem->tvs_fg_color);
+		*fg = tem->tvs_bg_color;
+		*bg = tem->tvs_fg_color;
 	} else {
-		*fg = ansi_fg_to_solaris(tem,
-		    tem->tvs_fg_color);
-		*bg = ansi_bg_to_solaris(tem,
-		    tem->tvs_bg_color);
+		*fg = tem->tvs_fg_color;
+		*bg = tem->tvs_bg_color;
 	}
+
+	if (attr == NULL)
+		return;
+
+	*attr = TF_NORMAL;
+	if (tem->tvs_flags & TEM_ATTR_BOLD)
+		*attr |= TF_BOLD;
+	if (tem->tvs_flags & TEM_ATTR_BRIGHT_FG)
+		*attr |= TF_BRIGHT_FG;
+	if (tem->tvs_flags & TEM_ATTR_BRIGHT_BG)
+		*attr |= TF_BRIGHT_BG;
+}
+
+static void
+tem_get_color(struct tem_vt_state *tem, text_color_t *fg,
+    text_color_t *bg, tem_char_t c)
+{
+	if (TEM_CHAR_ATTR(c) & (TF_BRIGHT_FG | TF_BOLD))
+		*fg = brt_xlate[TEM_CHAR_FGCOLOR(c)];
+	else
+		*fg = dim_xlate[TEM_CHAR_FGCOLOR(c)];
+
+	if (TEM_CHAR_ATTR(c) & TF_BRIGHT_BG)
+		*bg = brt_xlate[TEM_CHAR_BGCOLOR(c)];
+	else
+		*bg = dim_xlate[TEM_CHAR_BGCOLOR(c)];
 }
 
 void
 tem_get_colors(tem_vt_state_t tem_arg, text_color_t *fg, text_color_t *bg)
 {
 	struct tem_vt_state *tem = (struct tem_vt_state *)tem_arg;
+	uint16_t attr;
 
-	tem_get_color(tem, fg, bg, TEM_ATTR_REVERSE);
+	tem_get_attr(tem, fg, bg, &attr, TEM_ATTR_REVERSE);
+	tem_get_color(tem, fg, bg,
+	    TEM_BG_COLOR(*bg) | TEM_FG_COLOR(*fg) | TEM_ATTR(attr));
 }
 
 /*
@@ -2778,8 +2770,10 @@ tem_pix_cls_range(struct tem_vt_state *tem,
 	struct vis_consdisplay da;
 	int	i, j;
 	int	row_add = 0;
-	text_color_t fg_color;
-	text_color_t bg_color;
+	tem_char_t c;
+	text_color_t fg;
+	text_color_t bg;
+	uint16_t attr;
 
 	if (sroll_up)
 		row_add = tems.ts_c_dimension.height - 1;
@@ -2787,9 +2781,12 @@ tem_pix_cls_range(struct tem_vt_state *tem,
 	da.width = tems.ts_font.width;
 	da.height = tems.ts_font.height;
 
-	tem_get_color(tem, &fg_color, &bg_color, TEM_ATTR_SCREEN_REVERSE);
+	tem_get_attr(tem, &fg, &bg, &attr, TEM_ATTR_SCREEN_REVERSE);
+	c = TEM_BG_COLOR(bg) | TEM_FG_COLOR(fg) | TEM_ATTR(attr) | ' ';
 
-	tem_callback_bit2pix(tem, ' ', fg_color, bg_color);
+	da.data = (uint8_t *)tem->tvs_pix_data;
+
+	tem_callback_bit2pix(tem, c);
 	da.data = (uint8_t *)tem->tvs_pix_data;
 
 	for (i = 0; i < nrows; i++, row++) {
@@ -2806,14 +2803,11 @@ tem_pix_cls_range(struct tem_vt_state *tem,
  * virtual screen operations
  */
 static void
-tem_virtual_display(struct tem_vt_state *tem, unsigned char *string,
-    int count, screen_pos_t row, screen_pos_t col,
-    text_color_t fg_color, text_color_t bg_color)
+tem_virtual_display(struct tem_vt_state *tem, tem_char_t *string,
+    int count, screen_pos_t row, screen_pos_t col)
 {
 	int i, width;
-	unsigned char *addr;
-	text_color_t *pfgcolor;
-	text_color_t *pbgcolor;
+	tem_char_t *addr;
 
 	if (row < 0 || row >= tems.ts_c_dimension.height ||
 	    col < 0 || col >= tems.ts_c_dimension.width ||
@@ -2822,28 +2816,24 @@ tem_virtual_display(struct tem_vt_state *tem, unsigned char *string,
 
 	width = tems.ts_c_dimension.width;
 	addr = tem->tvs_screen_buf +  (row * width + col);
-	pfgcolor = tem->tvs_fg_buf + (row * width + col);
-	pbgcolor = tem->tvs_bg_buf + (row * width + col);
 	for (i = 0; i < count; i++) {
 		*addr++ = string[i];
-		*pfgcolor++ = fg_color;
-		*pbgcolor++ = bg_color;
 	}
 }
 
 static void
-i_virtual_copy(unsigned char *base,
+i_virtual_copy(tem_char_t *base,
     screen_pos_t s_col, screen_pos_t s_row,
     screen_pos_t e_col, screen_pos_t e_row,
     screen_pos_t t_col, screen_pos_t t_row)
 {
-	unsigned char   *from;
-	unsigned char   *to;
+	tem_char_t	*from;
+	tem_char_t	*to;
 	int		cnt;
-	screen_size_t chars_per_row;
-	unsigned char   *to_row_start;
-	unsigned char   *from_row_start;
-	screen_size_t   rows_to_move;
+	screen_size_t	chars_per_row;
+	tem_char_t	*to_row_start;
+	tem_char_t	*from_row_start;
+	screen_size_t	rows_to_move;
 	int		cols = tems.ts_c_dimension.width;
 
 	chars_per_row = e_col - s_col + 1;
@@ -2913,23 +2903,19 @@ tem_virtual_copy(struct tem_vt_state *tem,
 	    e_col, e_row, t_col, t_row);
 
 	/* text_color_t is the same size as char */
+#if 0
 	i_virtual_copy((unsigned char *)tem->tvs_fg_buf,
 	    s_col, s_row, e_col, e_row, t_col, t_row);
 	i_virtual_copy((unsigned char *)tem->tvs_bg_buf,
 	    s_col, s_row, e_col, e_row, t_col, t_row);
-
+#endif
 }
 
 static void
 tem_virtual_cls(struct tem_vt_state *tem,
     int count, screen_pos_t row, screen_pos_t col)
 {
-	text_color_t fg_color;
-	text_color_t bg_color;
-
-	tem_get_color(tem, &fg_color, &bg_color, TEM_ATTR_SCREEN_REVERSE);
-	tem_virtual_display(tem, tems.ts_blank_line, count, row, col,
-	    fg_color, bg_color);
+	tem_virtual_display(tem, tems.ts_blank_line, count, row, col);
 }
 
 /*
@@ -2958,10 +2944,9 @@ tem_unblank_screen(struct tem_vt_state *tem)
 {
 	text_color_t fg_color, fg_last = 0;
 	text_color_t bg_color, bg_last = 0;
-	size_t	tc_size = sizeof (text_color_t);
 	int	row, col, count, col_start;
 	int	width;
-	unsigned char *buf;
+	tem_char_t *buf;
 
 	if (tems.ts_display_mode == VIS_PIXEL)
 		tem_pix_clear_entire_screen(tem);
@@ -2980,10 +2965,8 @@ tem_unblank_screen(struct tem_vt_state *tem)
 		buf = tem->tvs_screen_buf + (row * width);
 		count = col_start = 0;
 		for (col = 0; col < width; col++) {
-			fg_color =
-			    tem->tvs_fg_buf[(row * width + col) * tc_size];
-			bg_color =
-			    tem->tvs_bg_buf[(row * width + col) * tc_size];
+			fg_color = TEM_CHAR_FGCOLOR(buf[row * width + col]);
+			bg_color = TEM_CHAR_BGCOLOR(buf[row * width + col]);
 			if (col == 0) {
 				fg_last = fg_color;
 				bg_last = bg_color;
@@ -2994,8 +2977,7 @@ tem_unblank_screen(struct tem_vt_state *tem)
 				 * Call the primitive to render this data.
 				 */
 				tem_callback_display(tem,
-				    buf, count, row, col_start,
-				    fg_last, bg_last);
+				    buf, count, row, col_start);
 				buf += count;
 				count = 1;
 				col_start = col;
@@ -3012,9 +2994,7 @@ tem_unblank_screen(struct tem_vt_state *tem)
 		/*
 		 * Call the primitive to render this data.
 		 */
-		tem_callback_display(tem,
-		    buf, count, row, col_start,
-		    fg_last, bg_last);
+		tem_callback_display(tem, buf, count, row, col_start);
 	}
 
 	tem_callback_cursor(tem, VIS_DISPLAY_CURSOR);

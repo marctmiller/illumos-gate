@@ -309,6 +309,7 @@ efi_text_cons_display(struct vis_consdisplay *da)
 	EFI_STATUS st;
 	UINTN attr;
 	UINTN row, col;
+	tem_char_t *data;
 	int i;
 
 	(void)conout->QueryMode(conout, conout->Mode->Mode, &col, &row);
@@ -317,6 +318,7 @@ efi_text_cons_display(struct vis_consdisplay *da)
 	if (row - 1 == da->row && da->col == 0 && da->width == col)
 		da->width--;
 
+	data = (tem_char_t *)da->data;
 	attr = EFI_TEXT_ATTR(solaris_color_to_efi_color[da->fg_color & 0xf],
 	    solaris_color_to_efi_color[da->bg_color & 0xf]);
 	st = conout->SetAttribute(conout, attr);
@@ -326,7 +328,7 @@ efi_text_cons_display(struct vis_consdisplay *da)
 	col = da->col;
 	conout->SetCursorPosition(conout, col, row);
 	for (i = 0; i < da->width; i++)
-		efi_cons_efiputchar(da->data[i]);
+		efi_cons_efiputchar(data[i]);
 }
 
 static void efi_cons_cursor(struct vis_conscursor *cc)
@@ -613,31 +615,13 @@ void
 efi_cons_efiputchar(int c)
 {
 	CHAR16 buf[2];
+	EFI_STATUS status;
 
-	/*
-	 * translate box chars to unicode
-	 */
-	switch (c) {
-	/* single frame */
-	case 0xb3: buf[0] = BOXDRAW_VERTICAL; break;
-	case 0xbf: buf[0] = BOXDRAW_DOWN_LEFT; break;
-	case 0xc0: buf[0] = BOXDRAW_UP_RIGHT; break;
-	case 0xc4: buf[0] = BOXDRAW_HORIZONTAL; break;
-	case 0xda: buf[0] = BOXDRAW_DOWN_RIGHT; break;
-	case 0xd9: buf[0] = BOXDRAW_UP_LEFT; break;
-
-	/* double frame */
-	case 0xba: buf[0] = BOXDRAW_DOUBLE_VERTICAL; break;
-	case 0xbb: buf[0] = BOXDRAW_DOUBLE_DOWN_LEFT; break;
-	case 0xbc: buf[0] = BOXDRAW_DOUBLE_UP_LEFT; break;
-	case 0xc8: buf[0] = BOXDRAW_DOUBLE_UP_RIGHT; break;
-	case 0xc9: buf[0] = BOXDRAW_DOUBLE_DOWN_RIGHT; break;
-	case 0xcd: buf[0] = BOXDRAW_DOUBLE_HORIZONTAL; break;
-
-	default:
-		buf[0] = c;
-	}
+	buf[0] = c;
         buf[1] = 0;     /* terminate string */
 
+	status = conout->TestString(conout, buf);
+	if (EFI_ERROR(status))
+		buf[0] = '?';
 	conout->OutputString(conout, buf);
 }
