@@ -31,26 +31,36 @@
 extern "C" {
 #endif
 
-/*
- * Number of chars encoded in font data. Bundled fonts are generated
- * from bdf files and this constant depends on the data in the bdf file.
- * If more entries are added to the bdf files, then this number must be
- * increased.
- */
-#define	ENCODED_CHARS	256
+enum vfnt_map {
+	VFNT_MAP_NORMAL = 0,	/* Normal font. */
+	VFNT_MAP_NORMAL_RH,	/* Normal font right hand. */
+	VFNT_MAP_BOLD,		/* Bold font. */
+	VFNT_MAP_BOLD_RH,	/* Bold font right hand. */
+	VFNT_MAPS		/* Number of maps. */
+};
 
+struct font_map {
+	uint32_t font_src;	/* Source glyph. */
+	uint16_t font_dst;	/* Target glyph. */
+	uint16_t font_len;	/* The number of glyphs in sequence. */
+};
+
+/* Any unknown glyph is mapped as first (offset 0) glyph in bitmap. */
 struct font {
-	short	width;
-	short	height;
-	uint8_t	*char_ptr[ENCODED_CHARS];
-	void	*image_data;
+	struct font_map	*vf_map[VFNT_MAPS];	/* Mapping tables. */
+	uint8_t		*vf_bytes;		/* Font bitmap data. */
+	uint32_t	vf_width;		/* Glyph width. */
+	uint32_t	vf_height;		/* Glyph height. */
+	uint32_t	vf_map_count[VFNT_MAPS];	/* Entries in map */
 };
 
 typedef	struct  bitmap_data {
 	short		width;
 	short		height;
-	unsigned char	*image;
-	unsigned char	**encoding;
+	uint32_t	compressed_size;
+	uint32_t	uncompressed_size;
+	uint8_t		*compressed_data;
+	struct font	*font;
 } bitmap_data_t;
 
 typedef	bitmap_data_t   *font_load_cb_t(char *);
@@ -59,19 +69,30 @@ struct fontlist {
 	font_load_cb_t	*fontload;
 };
 
+#define	FONT_HEADER_MAGIC	"VFNT0002"
+struct font_header {
+	uint8_t		fh_magic[8];
+	uint8_t		fh_width;
+	uint8_t		fh_height;
+	uint16_t	fh_pad;
+	uint32_t	fh_glyph_count;
+	uint32_t	fh_map_count[4];
+} __attribute__((__packed__));
+
 extern struct fontlist fonts[];
 
-#define	DEFAULT_FONT_DATA	font_data_12x22
+#define	DEFAULT_FONT_DATA	font_data_10x18
 #define	BORDER_PIXELS		10	/* space from screen border */
 /*
  * Built in fonts.
- */
 extern bitmap_data_t font_data_12x22;
 extern bitmap_data_t font_data_8x16;
 extern bitmap_data_t font_data_7x14;
 extern bitmap_data_t font_data_6x10;
+ */
+extern bitmap_data_t font_data_10x18;
 
-void set_font(struct font *, short *, short *, short, short);
+bitmap_data_t *set_font(short *, short *, short, short);
 void font_bit_to_pix4(struct font *, uint8_t *, uint32_t, uint8_t, uint8_t);
 void font_bit_to_pix8(struct font *, uint8_t *, uint32_t, uint8_t, uint8_t);
 void font_bit_to_pix16(struct font *, uint16_t *, uint32_t, uint16_t, uint16_t);

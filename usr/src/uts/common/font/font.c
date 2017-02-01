@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/font.h>
+#include <sys/tem_impl.h>
 #include <sys/sysmacros.h>
 
 /*
@@ -50,19 +51,22 @@
  * Must be sorted by font size in descending order
  */
 struct fontlist fonts[] = {
+<<<<<<< HEAD
+	{  &font_data_10x18, (font_load_cb_t *)NULL },
+/*
 	{  &font_data_12x22, (font_load_cb_t *)NULL },
 	{  &font_data_8x16, (font_load_cb_t *)NULL },
 	{  &font_data_7x14, (font_load_cb_t *)NULL },
 	{  &font_data_6x10, (font_load_cb_t *)NULL },
+*/
 	{  NULL, (font_load_cb_t *)NULL }
 };
 
-void
-set_font(struct font *f, short *rows, short *cols, short height, short width)
+bitmap_data_t *
+set_font(short *rows, short *cols, short height, short width)
 {
 	bitmap_data_t *default_font = NULL, *font_selected = NULL;
 	struct fontlist	*fl;
-	int i;
 
 	/*
 	 * Find best font for these dimensions, or use default
@@ -102,14 +106,71 @@ set_font(struct font *f, short *rows, short *cols, short height, short width)
 		font_selected = default_font;
 	}
 
-	f->width = font_selected->width;
-	f->height = font_selected->height;
+	return (font_selected);
+}
 
-	for (i = 0; i < ENCODED_CHARS; i++)
-		f->char_ptr[i] = font_selected->encoding[i];
+/* Binary search for the glyph. Return 0 if not found. */
+static uint16_t
+font_bisearch(const struct font_map *map, uint32_t len, uint32_t src)
+{
+	int min, mid, max;
 
-	f->image_data = font_selected->image;
+	min = 0;
+	max = len - 1;
 
+	/* Empty font map. */
+	if (len == 0)
+		return (0);
+	/* Character below minimal entry. */
+	if (src < map[0].font_src)
+		return (0);
+	/* Optimization: ASCII characters occur very often. */
+	if (src <= map[0].font_src + map[0].font_len)
+		return (src - map[0].font_src + map[0].font_dst);
+	/* Character above maximum entry. */
+	if (src > map[max].font_src + map[max].font_len)
+		return (0);
+
+	/* Binary search. */
+        while (max >= min) {
+		mid = (min + max) / 2;
+		if (src < map[mid].font_src)
+			max = mid - 1;
+		else if (src > map[mid].font_src + map[mid].font_len)
+			min = mid + 1;
+		else
+			return (src - map[mid].font_src + map[mid].font_dst);
+	}
+
+	return (0);
+}
+
+/*
+ * Return glyph bitmap. If glyph is not found, we will return bitmap
+ * for the first (offset 0) glyph.
+ */
+static const uint8_t *
+font_lookup(const struct font *vf, tem_char_t c)
+{
+	uint32_t src;
+	uint16_t dst;
+	size_t stride;
+
+	src = TEM_CHAR(c);
+
+	/* Substitute bold with normal if not found. */
+	if (TEM_CHAR_ATTR(c) & TF_BOLD) {
+		dst = font_bisearch(vf->vf_map[VFNT_MAP_BOLD],
+		    vf->vf_map_count[VFNT_MAP_BOLD], src);
+		if (dst != 0)
+			goto found;
+	}
+	dst = font_bisearch(vf->vf_map[VFNT_MAP_NORMAL],
+	    vf->vf_map_count[VFNT_MAP_NORMAL], src);
+
+found:
+	stride = howmany(vf->vf_width, 8) * vf->vf_height;
+	return (&vf->vf_bytes[dst * stride]);
 }
 
 /*
@@ -133,18 +194,15 @@ font_bit_to_pix4(
 	int	row;
 	int	byte;
 	int	i;
-	uint8_t	*cp;
+	const uint8_t *cp;
 	uint8_t	data;
 	uint8_t	nibblett;
 	int	bytes_wide;
 
-	if (c >= ENCODED_CHARS)
-		c = '?';
+	cp = font_lookup(f, c);
+	bytes_wide = (f->vf_width + 7) / 8;
 
-	cp = f->char_ptr[c];
-	bytes_wide = (f->width + 7) / 8;
-
-	for (row = 0; row < f->height; row++) {
+	for (row = 0; row < f->vf_height; row++) {
 		for (byte = 0; byte < bytes_wide; byte++) {
 			data = *cp++;
 			for (i = 0; i < 4; i++) {
@@ -189,20 +247,17 @@ font_bit_to_pix8(
 	int	row;
 	int	byte;
 	int	i;
-	uint8_t	*cp;
+	const uint8_t *cp;
 	uint8_t	data;
 	int	bytes_wide;
 	uint8_t	mask;
 	int	bitsleft, nbits;
 
-	if (c >= ENCODED_CHARS)
-		c = '?';
+	cp = font_lookup(f, c);
+	bytes_wide = (f->vf_width + 7) / 8;
 
-	cp = f->char_ptr[c];
-	bytes_wide = (f->width + 7) / 8;
-
-	for (row = 0; row < f->height; row++) {
-		bitsleft = f->width;
+	for (row = 0; row < f->vf_height; row++) {
+		bitsleft = f->vf_width;
 		for (byte = 0; byte < bytes_wide; byte++) {
 			data = *cp++;
 			mask = 0x80;
@@ -247,19 +302,16 @@ font_bit_to_pix16(
 	int	row;
 	int	byte;
 	int	i;
-	uint8_t	*cp;
+	const uint8_t	*cp;
 	uint16_t data, d;
 	int	bytes_wide;
 	int	bitsleft, nbits;
 
-	if (c >= ENCODED_CHARS)
-		c = '?';
+	cp = font_lookup(f, c);
+	bytes_wide = (f->vf_width + 7) / 8;
 
-	cp = f->char_ptr[c];
-	bytes_wide = (f->width + 7) / 8;
-
-	for (row = 0; row < f->height; row++) {
-		bitsleft = f->width;
+	for (row = 0; row < f->vf_height; row++) {
+		bitsleft = f->vf_width;
 		for (byte = 0; byte < bytes_wide; byte++) {
 			data = *cp++;
 			nbits = MIN(8, bitsleft);
@@ -304,19 +356,16 @@ font_bit_to_pix24(
 	int	row;
 	int	byte;
 	int	i;
-	uint8_t	*cp;
+	const uint8_t	*cp;
 	uint32_t data, d;
 	int	bytes_wide;
 	int	bitsleft, nbits;
 
-	if (c >= ENCODED_CHARS)
-		c = '?';
+	cp = font_lookup(f, c);
+	bytes_wide = (f->vf_width + 7) / 8;
 
-	cp = f->char_ptr[c];
-	bytes_wide = (f->width + 7) / 8;
-
-	for (row = 0; row < f->height; row++) {
-		bitsleft = f->width;
+	for (row = 0; row < f->vf_height; row++) {
+		bitsleft = f->vf_width;
 		for (byte = 0; byte < bytes_wide; byte++) {
 			data = *cp++;
 			nbits = MIN(8, bitsleft);
@@ -365,19 +414,16 @@ font_bit_to_pix32(
 	int	row;
 	int	byte;
 	int	i;
-	uint8_t	*cp;
+	const uint8_t *cp;
 	uint32_t data;
 	int	bytes_wide;
 	int	bitsleft, nbits;
 
-	if (c >= ENCODED_CHARS)
-		c = '?';
+	cp = font_lookup(f, c);
+	bytes_wide = (f->vf_width + 7) / 8;
 
-	cp = f->char_ptr[c];
-	bytes_wide = (f->width + 7) / 8;
-
-	for (row = 0; row < f->height; row++) {
-		bitsleft = f->width;
+	for (row = 0; row < f->vf_height; row++) {
+		bitsleft = f->vf_width;
 		for (byte = 0; byte < bytes_wide; byte++) {
 			data = *cp++;
 			nbits = MIN(8, bitsleft);
