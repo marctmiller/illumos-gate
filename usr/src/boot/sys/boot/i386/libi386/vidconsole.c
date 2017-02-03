@@ -31,7 +31,7 @@
 
 #include <stand.h>
 #include <bootstrap.h>
-#include <sys/tem.h>
+#include <sys/tem_impl.h>
 #include <sys/visual_io.h>
 #include <sys/multiboot2.h>
 #include <btxv86.h>
@@ -39,7 +39,6 @@
 #include <machine/metadata.h>
 #include "libi386.h"
 #include "vbe.h"
-#include <sys/tem.h>
 #include <gfx_fb.h>
 #include <sys/vgareg.h>
 #include <sys/vgasubr.h>

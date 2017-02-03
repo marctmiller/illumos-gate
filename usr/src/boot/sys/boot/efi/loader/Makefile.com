@@ -23,20 +23,24 @@ OBJDUMP=	$(GNU_ROOT)/bin/gobjdump
 
 PROG=		loader.sym
 
-VGATEXT_FONT	= 8x16
-VGATEXT_FONT_SRC= 8859-1
-VGATEXT_FONT_DIR= $(SRC)/uts/common/font
+#
+# We build compressed, stripped down version of the default font, so we have
+# bare minimum for case we can not load font from the OS root.
+#
+FONT	= 10x18
+FONT_SRC= ter-u18n.bdf
+FONT_DIR= $(SRC)/cmd/vtfontcvt/fonts
 
 PNGLITE=	$(SRC)/common/pnglite
 
 # architecture-specific loader code
 SRCS=	autoload.c bootinfo.c conf.c copy.c devicename.c main.c self_reloc.c \
-	smbios.c acpi.c vers.c memmap.c multiboot2.c font.c 12x22.c 6x10.c \
-	7x14.c 8x16.c list.c tem.c
+	smbios.c acpi.c vers.c memmap.c multiboot2.c font.c $(FONT).c list.c \
+	tem.c
 
 OBJS= autoload.o bootinfo.o conf.o copy.o devicename.o main.o self_reloc.o \
-	smbios.o acpi.o vers.o memmap.o multiboot2.o font.o 12x22.o 6x10.o \
-	7x14.o 8x16.o list.o tem.o
+	smbios.o acpi.o vers.o memmap.o multiboot2.o font.o $(FONT).o list.o \
+	tem.o
 
 CFLAGS=	-Os
 CPPFLAGS= -nostdinc -I../../../../../include -I../../..../
@@ -104,7 +108,7 @@ LDFLAGS =	-nostdlib --eh-frame-hdr
 LDFLAGS +=	-shared --hash-style=both --enable-new-dtags
 LDFLAGS +=	-T${LDSCRIPT} -Bsymbolic
 
-CLEANFILES=	8x16.c vers.c
+CLEANFILES=	$(FONT).c vers.c
 
 NEWVERSWHAT=	"EFI loader" ${MACHINE}
 
@@ -177,10 +181,8 @@ clean clobber:
 %.o: $(SRC)/uts/common/font/%.c
 	$(COMPILE.c) $<
 
-$(VGATEXT_FONT).c: $(VGATEXT_FONT_DIR)/$(VGATEXT_FONT_SRC).bdf \
-	$(VGATEXT_FONT_DIR)/bdf_to_c.awk
-	$(AWK) -f $(VGATEXT_FONT_DIR)/bdf_to_c.awk	\
-		$(VGATEXT_FONT_DIR)/$(VGATEXT_FONT_SRC).bdf > $@
+$(FONT).c: $(FONT_DIR)/$(FONT_SRC)
+	$(VTFONTCVT) -f compressed-source -o $@ $(FONT_DIR)/$(FONT_SRC)
 
 $(ROOT_BOOT)/%: %
 	$(INS.file)

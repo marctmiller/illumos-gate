@@ -28,7 +28,7 @@
 
 #include <efi.h>
 #include <efilib.h>
-#include <sys/tem.h>
+#include <sys/tem_impl.h>
 #include <sys/multiboot2.h>
 #include <machine/metadata.h>
 #include <gfx_fb.h>

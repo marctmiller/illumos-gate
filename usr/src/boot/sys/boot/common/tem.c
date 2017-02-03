@@ -61,12 +61,14 @@
 #include <stand.h>
 #include <sys/ascii.h>
 #include <sys/errno.h>
-#include <sys/tem.h>
+#include <sys/tem_impl.h>
 #ifdef _HAVE_TEM_FIRMWARE
 #include <sys/promif.h>
 #endif /* _HAVE_TEM_FIRMWARE */
 #include <sys/consplat.h>
 #include <sys/kd.h>
+
+extern int lz4_decompress(void *, void *, size_t, size_t, int);
 
 /* Terminal emulator internal helper functions */
 static void	tems_setup_terminal(struct vis_devinit *, size_t, size_t);
@@ -477,6 +479,8 @@ tems_check_videomode(struct vis_devinit *tp)
 		    tems.ts_p_dimension.height != tp->height)
 			result |= TEMS_DIMENSION_DIFF;
 	}
+	if (tems.update_font == true)
+		result |= TEMS_DIMENSION_DIFF;
 
 	return (result);
 }
@@ -493,6 +497,8 @@ env_screen_nounset(struct env_var *ev __unused)
 static void
 tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 {
+	bitmap_data_t *font_data;
+	int i;
 	char env[8];
 
 	tems.ts_pdepth = tp->depth;
@@ -544,11 +550,51 @@ tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 		 * default builtin font and adjust the rows and columns
 		 * to fit on the screen.
 		 */
-		set_font(&tems.ts_font,
-		    &tems.ts_c_dimension.height,
+		font_data = set_font(&tems.ts_c_dimension.height,
 		    &tems.ts_c_dimension.width,
 		    tems.ts_p_dimension.height,
 		    tems.ts_p_dimension.width);
+
+		/*
+		 * The built in font is compressed, to use it, we
+		 * uncompress it into the allocated buffer.
+		 * To use loaded font, we free the allocated buffer
+		 * and assign the loaded buffer.
+		 * In case of next load, the previously loaded data
+		 * is freed here, so, the font loader must be careful
+		 * not to introduce double free.
+		 * We can not skip free() there, because we do not know if
+		 * the current font is builtin or loaded.
+		 */
+		if (tems.update_font == true) {
+			tems.update_font = false;
+			free(tems.ts_font.vf_bytes);
+			tems.ts_font.vf_bytes = NULL;
+		}
+		if (tems.ts_font.vf_bytes == NULL) {
+			for (i = 0; i < VFNT_MAPS; i++) {
+				tems.ts_font.vf_map[i] =
+				    font_data->font->vf_map[i];
+			}
+
+			if (font_data->compressed_size != 0) {
+				tems.ts_font.vf_bytes =
+				    malloc(font_data->uncompressed_size);
+				(void)lz4_decompress(font_data->compressed_data,
+				    tems.ts_font.vf_bytes,
+				    font_data->compressed_size,
+				    font_data->uncompressed_size, 0);
+			} else {
+				tems.ts_font.vf_bytes =
+				    font_data->font->vf_bytes;
+			}
+			tems.ts_font.vf_width = font_data->font->vf_width;
+			tems.ts_font.vf_height = font_data->font->vf_height;
+			for (i = 0; i < VFNT_MAPS; i++) {
+				tems.ts_font.vf_map_count[i] =
+				    font_data->font->vf_map_count[i];
+			}
+		}
 
 		snprintf(env, sizeof (env), "%d", tems.ts_c_dimension.height);
 		env_setenv("screen-#rows", EV_VOLATILE | EV_NOHOOK, env,
@@ -565,12 +611,12 @@ tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 		    env_noset, env_screen_nounset);
 
 		tems.ts_p_offset.y = (tems.ts_p_dimension.height -
-		    (tems.ts_c_dimension.height * tems.ts_font.height)) / 2;
+		    (tems.ts_c_dimension.height * tems.ts_font.vf_height)) / 2;
 		tems.ts_p_offset.x = (tems.ts_p_dimension.width -
-		    (tems.ts_c_dimension.width * tems.ts_font.width)) / 2;
+		    (tems.ts_c_dimension.width * tems.ts_font.vf_width)) / 2;
 
 		tems.ts_pix_data_size =
-		    tems.ts_font.width * tems.ts_font.height;
+		    tems.ts_font.vf_width * tems.ts_font.vf_height;
 
 		tems.ts_pix_data_size *= 4;
 
@@ -792,7 +838,7 @@ tem_prom_scroll_up(struct tem_vt_state *tem, int nrows)
 	int	ncols, width;
 
 	/* copy */
-	ma.s_row = nrows * tems.ts_font.height;
+	ma.s_row = nrows * tems.ts_font.vf_height;
 	ma.e_row = tems.ts_p_dimension.height - 1;
 	ma.t_row = 0;
 
@@ -803,7 +849,7 @@ tem_prom_scroll_up(struct tem_vt_state *tem, int nrows)
 	tems_copy(&ma);
 
 	/* clear */
-	width = tems.ts_font.width;
+	width = tems.ts_font.vf_width;
 	ncols = (tems.ts_p_dimension.width + (width - 1))/ width;
 
 	tem_pix_cls_range(tem, 0, nrows, tems.ts_p_offset.y,
@@ -825,12 +871,12 @@ tem_adjust_row(struct tem_vt_state *tem, int prom_row)
 
 	plat_tem_get_prom_font_size(&prom_charheight, &prom_window_top);
 	if (prom_charheight == 0)
-		prom_charheight = tems.ts_font.height;
+		prom_charheight = tems.ts_font.vf_height;
 
 	tem_y = (prom_row + 1) * prom_charheight + prom_window_top -
 	    tems.ts_p_offset.y;
-	tem_row = (tem_y + tems.ts_font.height - 1) /
-	    tems.ts_font.height - 1;
+	tem_row = (tem_y + tems.ts_font.vf_height - 1) /
+	    tems.ts_font.vf_height - 1;
 
 	if (tem_row < 0) {
 		tem_row = 0;
@@ -2114,8 +2160,8 @@ tem_pix_display(struct tem_vt_state *tem,
 	int	i;
 
 	da.data = (uint8_t *)tem->tvs_pix_data;
-	da.width = tems.ts_font.width;
-	da.height = tems.ts_font.height;
+	da.width = tems.ts_font.vf_width;
+	da.height = tems.ts_font.vf_height;
 	da.row = (row * da.height) + tems.ts_p_offset.y;
 	da.col = (col * da.width) + tems.ts_p_offset.x;
 
@@ -2148,9 +2194,9 @@ tem_pix_copy(struct tem_vt_state *tem,
 	}
 	need_clear = B_FALSE;
 
-	ma.s_row = s_row * tems.ts_font.height + tems.ts_p_offset.y;
-	ma.e_row = (e_row + 1) * tems.ts_font.height + tems.ts_p_offset.y - 1;
-	ma.t_row = t_row * tems.ts_font.height + tems.ts_p_offset.y;
+	ma.s_row = s_row * tems.ts_font.vf_height + tems.ts_p_offset.y;
+	ma.e_row = (e_row + 1) * tems.ts_font.vf_height + tems.ts_p_offset.y - 1;
+	ma.t_row = t_row * tems.ts_font.vf_height + tems.ts_p_offset.y;
 
 	/*
 	 * Check if we're in process of clearing OBP's columns area,
@@ -2162,15 +2208,15 @@ tem_pix_copy(struct tem_vt_state *tem,
 		 * We need to clear OBP's columns area outside our kernel
 		 * console term. So that we set ma.e_col to entire row here.
 		 */
-		ma.s_col = s_col * tems.ts_font.width;
+		ma.s_col = s_col * tems.ts_font.vf_width;
 		ma.e_col = tems.ts_p_dimension.width - 1;
 
-		ma.t_col = t_col * tems.ts_font.width;
+		ma.t_col = t_col * tems.ts_font.vf_width;
 	} else {
-		ma.s_col = s_col * tems.ts_font.width + tems.ts_p_offset.x;
-		ma.e_col = (e_col + 1) * tems.ts_font.width +
+		ma.s_col = s_col * tems.ts_font.vf_width + tems.ts_p_offset.x;
+		ma.e_col = (e_col + 1) * tems.ts_font.vf_width +
 		    tems.ts_p_offset.x - 1;
-		ma.t_col = t_col * tems.ts_font.width + tems.ts_p_offset.x;
+		ma.t_col = t_col * tems.ts_font.vf_width + tems.ts_p_offset.x;
 	}
 
 	tems_copy(&ma);
@@ -2214,7 +2260,7 @@ tem_pix_bit2pix(struct tem_vt_state *tem, tem_char_t c)
 		return;
 	}
 
-	fp(tem, TEM_CHAR(c), fg, bg);
+	fp(tem, c, fg, bg);
 }
 
 
@@ -2257,8 +2303,8 @@ tem_pix_clear_prom_output(struct tem_vt_state *tem)
 {
 	int	nrows, ncols, width, height, offset;
 
-	width = tems.ts_font.width;
-	height = tems.ts_font.height;
+	width = tems.ts_font.vf_width;
+	height = tems.ts_font.vf_height;
 	offset = tems.ts_p_offset.y % height;
 
 	nrows = tems.ts_p_offset.y / height;
@@ -2290,8 +2336,8 @@ tem_pix_clear_entire_screen(struct tem_vt_state *tem)
 	if (tems_cls(&cl) == 0)
 		return;
 
-	width = tems.ts_font.width;
-	height = tems.ts_font.height;
+	width = tems.ts_font.vf_width;
+	height = tems.ts_font.vf_height;
 
 	nrows = (tems.ts_p_dimension.height + (height - 1))/ height;
 	ncols = (tems.ts_p_dimension.width + (width - 1))/ width;
@@ -2570,12 +2616,12 @@ tem_pix_cursor(struct tem_vt_state *tem, short action)
 	text_color_t fg, bg;
 	uint16_t attr;
 
-	ca.row = tem->tvs_c_cursor.row * tems.ts_font.height +
+	ca.row = tem->tvs_c_cursor.row * tems.ts_font.vf_height +
 	    tems.ts_p_offset.y;
-	ca.col = tem->tvs_c_cursor.col * tems.ts_font.width +
+	ca.col = tem->tvs_c_cursor.col * tems.ts_font.vf_width +
 	    tems.ts_p_offset.x;
-	ca.width = tems.ts_font.width;
-	ca.height = tems.ts_font.height;
+	ca.width = tems.ts_font.vf_width;
+	ca.height = tems.ts_font.vf_height;
 
 	tem_get_attr(tem, &fg, &bg, &attr, TEM_ATTR_REVERSE);
 	tem_get_color(tem, &fg, &bg,
@@ -2619,11 +2665,11 @@ tem_pix_cursor(struct tem_vt_state *tem, short action)
 
 		if (ca.row != 0) {
 			tem->tvs_c_cursor.row = (ca.row - tems.ts_p_offset.y) /
-			    tems.ts_font.height;
+			    tems.ts_font.vf_height;
 		}
 		if (ca.col != 0) {
 			tem->tvs_c_cursor.col = (ca.col - tems.ts_p_offset.x) /
-			    tems.ts_font.width;
+			    tems.ts_font.vf_width;
 		}
 	}
 }
@@ -2778,8 +2824,8 @@ tem_pix_cls_range(struct tem_vt_state *tem,
 	if (sroll_up)
 		row_add = tems.ts_c_dimension.height - 1;
 
-	da.width = tems.ts_font.width;
-	da.height = tems.ts_font.height;
+	da.width = tems.ts_font.vf_width;
+	da.height = tems.ts_font.vf_height;
 
 	tem_get_attr(tem, &fg, &bg, &attr, TEM_ATTR_SCREEN_REVERSE);
 	c = TEM_BG_COLOR(bg) | TEM_FG_COLOR(fg) | TEM_ATTR(attr) | ' ';

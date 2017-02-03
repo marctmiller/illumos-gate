@@ -26,12 +26,15 @@
 #else
 #include <btxv86.h>
 #endif
-#include <sys/tem.h>
+#include <sys/tem_impl.h>
 #include <sys/consplat.h>
 #include <sys/visual_io.h>
 #include <sys/multiboot2.h>
+#include <sys/font.h>
+#include <sys/endian.h>
 #include <gfx_fb.h>
 #include <pnglite.h>
+#include <bootstrap.h>
 
 /*
  * Global framebuffer struct, to be updated with mode changes.
@@ -802,13 +805,16 @@ gfx_term_drawrect(int row1, int col1, int row2, int col2)
 	int x1, y1, x2, y2;
 	int xshift, yshift;
 	int width, i;
+	uint32_t vf_width, vf_height;
 
 	if (plat_stdout_is_framebuffer() == 0)
 		return;
 
-	width = tems.ts_font.width / 4;			/* line width */
-	xshift = (tems.ts_font.width - width) / 2;
-	yshift = (tems.ts_font.height - width) / 2;
+	vf_width = tems.ts_font.vf_width;
+	vf_height = tems.ts_font.vf_height;
+	width = vf_width / 4;			/* line width */
+	xshift = (vf_width - width) / 2;
+	yshift = (vf_height - width) / 2;
 	/* Terminal coordinates start from (1,1) */
 	row1--;
 	col1--;
@@ -818,65 +824,65 @@ gfx_term_drawrect(int row1, int col1, int row2, int col2)
 	/*
 	 * Draw horizontal lines width points thick, shifted from outer edge.
 	 */
-	x1 = row1 * tems.ts_font.width + tems.ts_p_offset.x;
-	x1 += tems.ts_font.width;
-	y1 = col1 * tems.ts_font.height + tems.ts_p_offset.y + yshift;
-	x2 = row2 * tems.ts_font.width + tems.ts_p_offset.x;
+	x1 = row1 * vf_width + tems.ts_p_offset.x;
+	x1 += vf_width;
+	y1 = col1 * vf_height + tems.ts_p_offset.y + yshift;
+	x2 = row2 * vf_width + tems.ts_p_offset.x;
 	gfx_fb_drawrect(x1, y1, x2, y1 + width, 1);
-	y2 = col2 * tems.ts_font.height + tems.ts_p_offset.y;
-	y2 += tems.ts_font.height - yshift - width;
+	y2 = col2 * vf_height + tems.ts_p_offset.y;
+	y2 += vf_height - yshift - width;
 	gfx_fb_drawrect(x1, y2, x2, y2 + width, 1);
 
 	/*
 	 * Draw vertical lines width points thick, shifted from outer edge.
 	 */
-	x1 = row1 * tems.ts_font.width + tems.ts_p_offset.x + xshift;
-	y1 = col1 * tems.ts_font.height + tems.ts_p_offset.y;
-	y1 += tems.ts_font.height;
-	y2 = col2 * tems.ts_font.height + tems.ts_p_offset.y;
+	x1 = row1 * vf_width + tems.ts_p_offset.x + xshift;
+	y1 = col1 * vf_height + tems.ts_p_offset.y;
+	y1 += vf_height;
+	y2 = col2 * vf_height + tems.ts_p_offset.y;
 	gfx_fb_drawrect(x1, y1, x1 + width, y2, 1);
-	x1 = row2 * tems.ts_font.width + tems.ts_p_offset.x;
-	x1 += tems.ts_font.width - xshift - width;
+	x1 = row2 * vf_width + tems.ts_p_offset.x;
+	x1 += vf_width - xshift - width;
 	gfx_fb_drawrect(x1, y1, x1 + width, y2, 1);
 
 	/* Draw upper left corner. */
-	x1 = row1 * tems.ts_font.width + tems.ts_p_offset.x + xshift;
-	y1 = col1 * tems.ts_font.height + tems.ts_p_offset.y;
-	y1 += tems.ts_font.height;
+	x1 = row1 * vf_width + tems.ts_p_offset.x + xshift;
+	y1 = col1 * vf_height + tems.ts_p_offset.y;
+	y1 += vf_height;
 
-	x2 = row1 * tems.ts_font.width + tems.ts_p_offset.x;
-	x2 += tems.ts_font.width;
-	y2 = col1 * tems.ts_font.height + tems.ts_p_offset.y + yshift;
+	x2 = row1 * vf_width + tems.ts_p_offset.x;
+	x2 += vf_width;
+	y2 = col1 * vf_height + tems.ts_p_offset.y + yshift;
 	for (i = 0; i <= width; i++)
 		gfx_fb_bezier(x1 + i, y1, x1 + i, y2 + i, x2, y2 + i, width-i);
 
 	/* Draw lower left corner. */
-	x1 = row1 * tems.ts_font.width + tems.ts_p_offset.x;
-	x1 += tems.ts_font.width;
-	y1 = col2 * tems.ts_font.height + tems.ts_p_offset.y;
-	y1 += tems.ts_font.height - yshift;
-	x2 = row1 * tems.ts_font.width + tems.ts_p_offset.x + xshift;
-	y2 = col2 * tems.ts_font.height + tems.ts_p_offset.y;
+	x1 = row1 * vf_width + tems.ts_p_offset.x;
+	x1 += vf_width;
+	y1 = col2 * vf_height + tems.ts_p_offset.y;
+	y1 += vf_height - yshift;
+	x2 = row1 * vf_width + tems.ts_p_offset.x + xshift;
+	y2 = col2 * vf_height + tems.ts_p_offset.y;
 	for (i = 0; i <= width; i++)
 		gfx_fb_bezier(x1, y1 - i, x2 + i, y1 - i, x2 + i, y2, width-i);
 
 	/* Draw upper right corner. */
-	x1 = row2 * tems.ts_font.width + tems.ts_p_offset.x;
-	y1 = col1 * tems.ts_font.height + tems.ts_p_offset.y + yshift;
-	x2 = row2 * tems.ts_font.width + tems.ts_p_offset.x;
-	x2 += tems.ts_font.width - xshift - width;
-	y2 = col1 * tems.ts_font.height + tems.ts_p_offset.y;
-	y2 += tems.ts_font.height;
+	x1 = row2 * vf_width + tems.ts_p_offset.x;
+	y1 = col1 * vf_height + tems.ts_p_offset.y + yshift;
+	x2 = row2 * vf_width + tems.ts_p_offset.x;
+	x2 += vf_width - xshift - width;
+	y2 = col1 * vf_height + tems.ts_p_offset.y;
+	y2 += vf_height;
 	for (i = 0; i <= width; i++)
 		gfx_fb_bezier(x1, y1 + i, x2 + i, y1 + i, x2 + i, y2, width-i);
 
 	/* Draw lower right corner. */
-	x1 = row2 * tems.ts_font.width + tems.ts_p_offset.x;
-	y1 = col2 * tems.ts_font.height + tems.ts_p_offset.y;
-	y1 += tems.ts_font.height - yshift;
-	x2 = row2 * tems.ts_font.width + tems.ts_p_offset.x;
-	x2 += tems.ts_font.width - xshift - width;
-	y2 = col2 * tems.ts_font.height + tems.ts_p_offset.y;
+	x1 = row2 * vf_width + tems.ts_p_offset.x;
+	y1 = col2 * vf_height + tems.ts_p_offset.y;
+	y1 += vf_height - yshift;
+	x2 = row2 * vf_width + tems.ts_p_offset.x;
+	x2 += vf_width - xshift - width;
+	y2 = col2 * vf_height + tems.ts_p_offset.y;
 	for (i = 0; i <= width; i++)
 		gfx_fb_bezier(x1, y1 - i, x2 + i, y1 - i, x2 + i, y2, width-i);
 }
@@ -972,4 +978,156 @@ gfx_fb_putimage(png_t *png)
 	gfx_fb_cons_display(&da);
 	free(da.data);
 	return (0);
+}
+
+static int
+load_mapping(int fd, struct font *fp, int n)
+{
+	int i;
+	size_t size;
+	struct font_map *mp;
+
+	if (fp->vf_map_count[n] == 0)
+		return (0);
+
+	mp = calloc(fp->vf_map_count[n], sizeof (*mp));
+	if (mp == NULL)
+		return (ENOMEM);
+	fp->vf_map[n] = mp;
+
+	size = fp->vf_map_count[n] * sizeof (*mp);
+	if ((i = read(fd, mp, size)) != size) {
+		return (EIO);
+	}
+
+	for (i = 0; i < fp->vf_map_count[n]; i++) {
+		mp[i].font_src = be32toh(mp[i].font_src);
+		mp[i].font_dst = be16toh(mp[i].font_dst);
+		mp[i].font_len = be16toh(mp[i].font_len);
+	}
+	return (0);
+}
+
+/* Load font from file. */
+int
+load_font(const char *path)
+{
+	int fd, rc, i;
+	uint32_t glyphs;
+	struct font_header fh;
+	bitmap_data_t *bp, *old;
+	struct font *fp;
+	size_t size;
+
+	errno = 0;
+	fd = open(path, O_RDONLY);
+	if (fd < 0) {
+		return (errno);
+	}
+
+	if ((rc = read(fd, &fh, sizeof (fh))) != sizeof (fh)) {
+		rc = EIO;
+		goto done;
+	}
+	rc = memcmp(fh.fh_magic, FONT_HEADER_MAGIC, sizeof (fh.fh_magic));
+	if (rc != 0) {
+		rc = EIO;
+		goto done;
+	}
+	if ((bp = calloc(sizeof (bitmap_data_t), 1)) == NULL) {
+		rc = ENOMEM;
+		goto done;
+	}
+	if ((fp = calloc(sizeof (struct font), 1)) == NULL) {
+		free(bp);
+		rc = ENOMEM;
+		goto done;
+	}
+	for (i = 0; i < VFNT_MAPS; i++)
+		fp->vf_map_count[i] = be32toh(fh.fh_map_count[i]);
+
+	glyphs = be32toh(fh.fh_glyph_count);
+	fp->vf_width = fh.fh_width;
+	bp->width = fh.fh_width;
+	fp->vf_height = fh.fh_height;
+	bp->height = fh.fh_height;
+	bp->font = fp;
+
+	bp->uncompressed_size = howmany(bp->width, 8) * bp->height * glyphs;
+	size = bp->uncompressed_size;
+	if ((fp->vf_bytes = malloc(size)) == NULL) {
+		rc = ENOMEM;
+		goto free_done;
+	}
+	rc = read(fd, fp->vf_bytes, size);
+	if (rc != size) {
+		rc = EIO;
+		goto free_done;
+	}
+	for (i = 0; i < VFNT_MAPS; i++) {
+		if ((rc = load_mapping(fd, fp, i)) != 0)
+			goto free_done;
+	}
+
+	old = fonts->data;
+	fonts->data = bp;
+	tems.update_font = true;
+	plat_cons_update_mode(-1);
+	if (old == &DEFAULT_FONT_DATA)
+		goto done;
+
+	fp = old->font;
+	fp->vf_bytes = NULL;	/* freed by tem */
+	bp = old;
+
+free_done:
+	for (i = 0; i < VFNT_MAPS; i++)
+		free(fp->vf_map[i]);
+	free(fp->vf_bytes);
+	free(fp);
+	free(bp);
+done:
+	close(fd);
+	return (rc);
+}
+
+COMMAND_SET(load_font, "loadfont", "load console font from file", command_font);
+
+static int
+command_font(int argc, char *argv[])
+{
+	int i, rc = CMD_OK;
+	bitmap_data_t *old;
+	struct font *fp;
+
+	if (argc > 2) {
+		printf("Usage: loadfont [file.fnt]\n");
+		return (CMD_ERROR);
+	}
+
+	if (argc == 2) {
+		if ((rc = load_font(argv[1])) != 0) {
+			printf("loadfont failed, error: %d\n", rc);
+			rc = CMD_ERROR;
+		} else {
+			rc = CMD_OK;
+		}
+		return (rc);
+	}
+
+	if (argc == 1) {
+		if (fonts->data == &DEFAULT_FONT_DATA)
+			return (rc);
+
+		old = fonts->data;
+		fonts->data = &DEFAULT_FONT_DATA;
+		tems.update_font = true;
+		plat_cons_update_mode(-1);
+		fp = old->font;
+		for (i = 0; i < VFNT_MAPS; i++)
+			free(fp->vf_map[i]);
+		free(fp);
+		free(old);
+	}
+	return (rc);
 }
