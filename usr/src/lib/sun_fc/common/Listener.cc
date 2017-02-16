@@ -75,13 +75,10 @@ Listener::~Listener() {
 			tmp != listeners.end(); tmp++) {
 		if (*tmp == this) {
 		    listeners.erase(tmp);
-		    Lockable::unlock(&staticLock);
-		    return;
+		    break;
 		}
 	    }
 	} catch (...) {
-	    Lockable::unlock(&staticLock);
-	    throw;
 	}
 	Lockable::unlock(&staticLock);
 }

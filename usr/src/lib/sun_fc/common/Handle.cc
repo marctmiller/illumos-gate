@@ -166,11 +166,9 @@ Handle::~Handle() {
 	lock(&staticLock);
 	try {
 	    openHandles.erase(openHandles.find(getHandle()));
-	    unlock(&staticLock);
 	} catch (...) {
-	    unlock(&staticLock);
-	    throw;
 	}
+	unlock(&staticLock);
 
 	// Now nuke all internal dynamic allocations
 	typedef map<uint64_t, HandlePort *>::const_iterator CI;
@@ -181,11 +179,9 @@ Handle::~Handle() {
 		delete port->second;
 	    }
 	    portHandles.clear();
-	    unlock();
 	} catch (...) {
-	    unlock();
-	    throw;
 	}
+	unlock(&staticLock);
 }
 
 /**
