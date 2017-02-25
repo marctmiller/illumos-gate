@@ -984,7 +984,7 @@ vgatext_setfont(struct gfxp_fb_softc *softc)
 	s = console->vga.vga_fontslot;
 	f_offset = s * 8 * 1024;
 	for (i = 0; i < 256; i++) {
-		from = font_data_8x16.encoding[i];
+		from = font_lookup(font_data_8x16->font, i);
 		to = (unsigned char *)console->vga.fb.addr + f_offset +
 		    i * 0x20;
 		for (j = 0; j < bpc; j++)
