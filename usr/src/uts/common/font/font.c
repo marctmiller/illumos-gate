@@ -51,14 +51,7 @@
  * Must be sorted by font size in descending order
  */
 struct fontlist fonts[] = {
-<<<<<<< HEAD
 	{  &font_data_10x18, (font_load_cb_t *)NULL },
-/*
-	{  &font_data_12x22, (font_load_cb_t *)NULL },
-	{  &font_data_8x16, (font_load_cb_t *)NULL },
-	{  &font_data_7x14, (font_load_cb_t *)NULL },
-	{  &font_data_6x10, (font_load_cb_t *)NULL },
-*/
 	{  NULL, (font_load_cb_t *)NULL }
 };
 
@@ -149,7 +142,7 @@ font_bisearch(const struct font_map *map, uint32_t len, uint32_t src)
  * Return glyph bitmap. If glyph is not found, we will return bitmap
  * for the first (offset 0) glyph.
  */
-static const uint8_t *
+const uint8_t *
 font_lookup(const struct font *vf, tem_char_t c)
 {
 	uint32_t src;

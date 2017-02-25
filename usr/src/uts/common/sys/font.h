@@ -86,13 +86,14 @@ extern struct fontlist fonts[];
 /*
  * Built in fonts.
 extern bitmap_data_t font_data_12x22;
-extern bitmap_data_t font_data_8x16;
 extern bitmap_data_t font_data_7x14;
 extern bitmap_data_t font_data_6x10;
  */
 extern bitmap_data_t font_data_10x18;
+extern bitmap_data_t font_data_8x16;
 
 bitmap_data_t *set_font(short *, short *, short, short);
+const uint8_t *font_lookup(const struct font *, tem_char_t);
 void font_bit_to_pix4(struct font *, uint8_t *, uint32_t, uint8_t, uint8_t);
 void font_bit_to_pix8(struct font *, uint8_t *, uint32_t, uint8_t, uint8_t);
 void font_bit_to_pix16(struct font *, uint16_t *, uint32_t, uint16_t, uint16_t);
