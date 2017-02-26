@@ -16,14 +16,7 @@
 
 include $(SRC)/Makefile.master
 include $(SRC)/boot/Makefile.version
-
-#
-# We build compressed, stripped down version of the default font, so we have
-# bare minimum for case we can not load font from the OS root.
-#
-FONT	= 10x18
-FONT_SRC= ter-u18n.bdf
-FONT_DIR= $(SRC)/cmd/vtfontcvt/fonts
+include $(SRC)/boot/sys/boot/Makefile.inc
 
 CFLAGS=		-Os
 CPPFLAGS=	-DSTAND -nostdinc -I../../../../include -I../../..

@@ -15,6 +15,7 @@
 
 include $(SRC)/Makefile.master
 include $(SRC)/boot/Makefile.version
+include $(SRC)/boot/sys/boot/Makefile.inc
 
 CC=		$(GCC_ROOT)/bin/gcc
 LD=		$(GNU_ROOT)/bin/gld
@@ -22,14 +23,6 @@ OBJCOPY=	$(GNU_ROOT)/bin/gobjcopy
 OBJDUMP=	$(GNU_ROOT)/bin/gobjdump
 
 PROG=		loader.sym
-
-#
-# We build compressed, stripped down version of the default font, so we have
-# bare minimum for case we can not load font from the OS root.
-#
-FONT	= 10x18
-FONT_SRC= ter-u18n.bdf
-FONT_DIR= $(SRC)/cmd/vtfontcvt/fonts
 
 PNGLITE=	$(SRC)/common/pnglite
 
