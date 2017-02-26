@@ -34,8 +34,8 @@
  */
 #include <sys/types.h>
 #include <sys/systm.h>
-#include <sys/font.h>
 #include <sys/tem_impl.h>
+#include <sys/font.h>
 #include <sys/sysmacros.h>
 
 /*
@@ -51,7 +51,7 @@
  * Must be sorted by font size in descending order
  */
 struct fontlist fonts[] = {
-	{  &font_data_10x18, (font_load_cb_t *)NULL },
+	{  &DEFAULT_FONT_DATA, (font_load_cb_t *)NULL },
 	{  NULL, (font_load_cb_t *)NULL }
 };
 
@@ -143,7 +143,7 @@ font_bisearch(const struct font_map *map, uint32_t len, uint32_t src)
  * for the first (offset 0) glyph.
  */
 const uint8_t *
-font_lookup(const struct font *vf, tem_char_t c)
+font_lookup(const struct font *vf, uint32_t c)
 {
 	uint32_t src;
 	uint16_t dst;

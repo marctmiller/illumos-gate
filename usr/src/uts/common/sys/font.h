@@ -81,19 +81,21 @@ struct font_header {
 
 extern struct fontlist fonts[];
 
-#define	DEFAULT_FONT_DATA	font_data_10x18
-#define	BORDER_PIXELS		10	/* space from screen border */
 /*
- * Built in fonts.
-extern bitmap_data_t font_data_12x22;
-extern bitmap_data_t font_data_7x14;
-extern bitmap_data_t font_data_6x10;
+ * Built in fonts. We are using Gallant as default on sparc to keep
+ * smooth transition from prom and 8x16 on x86, for vga text mode.
  */
-extern bitmap_data_t font_data_10x18;
+#ifdef sparc
+#define	DEFAULT_FONT_DATA	font_data_12x22
+extern bitmap_data_t font_data_12x22;
+#else
+#define	DEFAULT_FONT_DATA	font_data_8x16
 extern bitmap_data_t font_data_8x16;
+#endif
+#define	BORDER_PIXELS		10	/* space from screen border */
 
 bitmap_data_t *set_font(short *, short *, short, short);
-const uint8_t *font_lookup(const struct font *, tem_char_t);
+const uint8_t *font_lookup(const struct font *, uint32_t);
 void font_bit_to_pix4(struct font *, uint8_t *, uint32_t, uint8_t, uint8_t);
 void font_bit_to_pix8(struct font *, uint8_t *, uint32_t, uint8_t, uint8_t);
 void font_bit_to_pix16(struct font *, uint16_t *, uint32_t, uint16_t, uint16_t);
