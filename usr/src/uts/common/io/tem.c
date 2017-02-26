@@ -526,6 +526,7 @@ tems_check_videomode(struct vis_devinit *tp)
 static void
 tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 {
+	bitmap_data_t *font_data;
 	int i;
 	int old_blank_buf_size = tems.ts_c_dimension.width *
 	    sizeof (*tems.ts_blank_line);
@@ -571,19 +572,28 @@ tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 		 * default builtin font and adjust the rows and columns
 		 * to fit on the screen.
 		 */
-		set_font(&tems.ts_font,
-		    &tems.ts_c_dimension.height,
+		font_data = set_font(&tems.ts_c_dimension.height,
 		    &tems.ts_c_dimension.width,
 		    tems.ts_p_dimension.height,
 		    tems.ts_p_dimension.width);
 
+		for (i = 0; i < VFNT_MAPS; i++) {
+			tems.ts_font.vf_map[i] =
+			    font_data->font->vf_map[i];
+			tems.ts_font.vf_map_count[i] =
+			    font_data->font->vf_map_count[i];
+		}
+		tems.ts_font.vf_bytes = font_data->font->vf_bytes;
+		tems.ts_font.vf_width = font_data->font->vf_width;
+		tems.ts_font.vf_height = font_data->font->vf_height;
+
 		tems.ts_p_offset.y = (tems.ts_p_dimension.height -
-		    (tems.ts_c_dimension.height * tems.ts_font.height)) / 2;
+		    (tems.ts_c_dimension.height * tems.ts_font.vf_height)) / 2;
 		tems.ts_p_offset.x = (tems.ts_p_dimension.width -
-		    (tems.ts_c_dimension.width * tems.ts_font.width)) / 2;
+		    (tems.ts_c_dimension.width * tems.ts_font.vf_width)) / 2;
 
 		tems.ts_pix_data_size =
-		    tems.ts_font.width * tems.ts_font.height;
+		    tems.ts_font.vf_width * tems.ts_font.vf_height;
 
 		tems.ts_pix_data_size *= 4;
 
@@ -808,7 +818,7 @@ tem_prom_scroll_up(struct tem_vt_state *tem, int nrows, cred_t *credp,
 	int	ncols, width;
 
 	/* copy */
-	ma.s_row = nrows * tems.ts_font.height;
+	ma.s_row = nrows * tems.ts_font.vf_height;
 	ma.e_row = tems.ts_p_dimension.height - 1;
 	ma.t_row = 0;
 
@@ -819,7 +829,7 @@ tem_prom_scroll_up(struct tem_vt_state *tem, int nrows, cred_t *credp,
 	tems_safe_copy(&ma, credp, called_from);
 
 	/* clear */
-	width = tems.ts_font.width;
+	width = tems.ts_font.vf_width;
 	ncols = (tems.ts_p_dimension.width + (width - 1))/ width;
 
 	tem_safe_pix_cls_range(tem, 0, nrows, tems.ts_p_offset.y,
@@ -851,8 +861,8 @@ tem_adjust_row(struct tem_vt_state *tem, int prom_row, cred_t *credp,
 
 	tem_y = (prom_row + 1) * prom_charheight + prom_window_top -
 	    tems.ts_p_offset.y;
-	tem_row = (tem_y + tems.ts_font.height - 1) /
-	    tems.ts_font.height - 1;
+	tem_row = (tem_y + tems.ts_font.vf_height - 1) /
+	    tems.ts_font.vf_height - 1;
 
 	if (tem_row < 0) {
 		tem_row = 0;

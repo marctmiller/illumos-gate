@@ -37,13 +37,15 @@ extern "C" {
 #endif
 
 #include <sys/types.h>
+#include <sys/font.h>
+#if !defined(_BOOT)
 #include <sys/sunddi.h>
 #include <sys/sunldi.h>
 #include <sys/visual_io.h>
-#include <sys/font.h>
 #include <sys/list.h>
 #include <sys/tem.h>
 #include <sys/note.h>
+#endif
 
 /*
  * definitions for ANSI x3.64 terminal control language parser
@@ -104,7 +106,17 @@ extern "C" {
 
 typedef uint32_t tem_char_t;	/* 32bit char to support UTF-8 */
 typedef uint8_t text_color_t;
+#define	TEM_CHAR(c)		((c) & 0x1fffff)
+#define	TEM_CHAR_ATTR(c)	(((c) >> 21) & 0x1f)
 
+/* Char attributes 0-0x1f */
+#define	TF_NORMAL		0x00
+#define	TF_REVERSE		0x01
+#define	TF_BOLD			0x02
+#define	TF_BRIGHT_FG		0x04
+#define	TF_BRIGHT_BG		0x08
+
+#if !defined(_BOOT)
 typedef struct tem_color {
 	text_color_t	fg_color;
 	text_color_t	bg_color;
@@ -299,6 +311,7 @@ void	tem_safe_blank_screen(struct tem_vt_state *, cred_t *,
 	    enum called_from);
 void	tem_safe_unblank_screen(struct tem_vt_state *, cred_t *,
 	    enum called_from);
+#endif	/* _BOOT */
 
 #ifdef __cplusplus
 }
