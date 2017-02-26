@@ -37,7 +37,7 @@
 #include <sys/module.h>
 #include <sys/queue.h>
 #include <sys/stdint.h>
-#include <sys/tem.h>
+#include <sys/tem_impl.h>
 
 #include "bootstrap.h"
 
