@@ -55,8 +55,14 @@ struct vis_conscopy {
 	uint16_t t_col;		/* Col to move to */
 };
 
-/* we have built in fonts 12x22, 6x10, 7x14 and depth 32. */
-#define	MAX_GLYPH	(12 * 22 * 4)
+/*
+ * We have largest font 16x32 with depth 32. This will allocate 2048
+ * bytes from BSS.
+ */
+#define	MAX_GLYPH	(16 * 32 * 4)
+
+static bitmap_data_t	cf_data;
+static struct font	cf_font;
 
 static struct font	boot_fb_font; /* set by set_font() */
 static uint8_t		glyph[MAX_GLYPH];
@@ -96,6 +102,68 @@ static void boot_fb_eraseline(void);
 static void boot_fb_setpos(int, int);
 static void boot_fb_shiftline(int);
 
+struct font_info {
+	int32_t fi_checksum;
+	uint32_t fi_width;
+	uint32_t fi_height;
+	uint32_t fi_bitmap_size;
+	uint32_t fi_map_count[VFNT_MAPS];
+};
+
+static void
+xbi_init_font(struct xboot_info *xbi)
+{
+	uint32_t i, checksum = 0;
+	struct boot_modules *modules;
+	struct font_info *fi;
+	uintptr_t ptr;
+
+	modules = (struct boot_modules *)(uintptr_t)xbi->bi_modules;
+	for (i = 0; i < xbi->bi_module_cnt; i++) {
+		if (modules[i].bm_type == BMT_FONT)
+			break;
+	}
+	if (i == xbi->bi_module_cnt)
+		return;
+
+	ptr = (uintptr_t)modules[i].bm_addr;
+	fi = (struct font_info *)ptr;
+
+	/*
+	 * Compute and verify checksum. The total sum of all the fields
+	 * must be 0. Note, the return from this point means we will
+	 * use default font.
+	 */
+	checksum += fi->fi_width;
+	checksum += fi->fi_height;
+	checksum += fi->fi_bitmap_size;
+	for (i = 0; i < VFNT_MAPS; i++)
+		checksum += fi->fi_map_count[i];
+	if (checksum + fi->fi_checksum != 0)
+		return;
+
+	cf_data.width = fi->fi_width;
+	cf_data.height = fi->fi_height;
+	cf_data.uncompressed_size = fi->fi_bitmap_size;
+	cf_data.font = &cf_font;
+
+	ptr += sizeof (struct font_info);
+	ptr = P2ROUNDUP(ptr, 8);
+
+	cf_font.vf_width = fi->fi_width;
+	cf_font.vf_height = fi->fi_height;
+	for (i = 0; i < VFNT_MAPS; i++) {
+		if (fi->fi_map_count[i] == 0)
+			continue;
+		cf_font.vf_map_count[i] = fi->fi_map_count[i];
+		cf_font.vf_map[i] = (struct font_map *)ptr;
+		ptr += (fi->fi_map_count[i] * sizeof (struct font_map));
+		ptr = P2ROUNDUP(ptr, 8);
+	}
+	cf_font.vf_bytes = (uint8_t *)ptr;
+	fonts->data = &cf_data;
+}
+
 /*
  * extract data from MB2 framebuffer tag and set up initial frame buffer.
  */
@@ -105,6 +173,7 @@ xbi_fb_init(struct xboot_info *xbi, bcons_dev_t *bcons_dev)
 	multiboot_tag_framebuffer_t *tag;
 	boot_framebuffer_t *xbi_fb;
 
+	xbi_init_font(xbi);
 	xbi_fb = (boot_framebuffer_t *)(uintptr_t)xbi->bi_framebuffer;
 	if (xbi_fb == NULL)
 		return (B_FALSE);

@@ -68,6 +68,7 @@
 #include <vm/hat_i86.h>
 #include <sys/x86_archext.h>
 #include <sys/avl.h>
+#include <sys/font.h>
 
 /*
  * DDI Boot Configuration
@@ -2032,6 +2033,47 @@ get_vga_properties(void)
 	kmem_free(bop_staging_area, MMU_PAGESIZE);
 }
 
+/*
+ * Copy console font to kernel memory. The temporary font setup
+ * to use font module was done in early console setup, using low
+ * memory and data from font module. Now we need to allocate
+ * kernel memory and copy data over, so the low memory can be freed.
+ */
+static void
+get_console_font(void)
+{
+	bitmap_data_t *bd;
+	struct font *fd, *tmp;
+	int i;
+
+	/* If fonts->data is DEFAULT_FONT_DATA, no font was provided. */
+	if (fonts->data == &DEFAULT_FONT_DATA)
+		return;
+
+	bd = kmem_zalloc(sizeof (*bd), KM_SLEEP);
+	fd = kmem_zalloc(sizeof (*fd), KM_SLEEP);
+
+	bd->width = fonts->data->width;
+	bd->height = fonts->data->height;
+	bd->uncompressed_size = fonts->data->uncompressed_size;
+	bd->font = fd;
+
+	tmp = fonts->data->font;
+	fd->vf_width = tmp->vf_width;
+	fd->vf_height = tmp->vf_height;
+	for (i = 0; i < VFNT_MAPS; i++) {
+		if (tmp->vf_map_count[i] == 0)
+			continue;
+		fd->vf_map_count[i] = tmp->vf_map_count[i];
+		fd->vf_map[i] = kmem_alloc(fd->vf_map_count[i] *
+		    sizeof (*fd->vf_map[i]), KM_SLEEP);
+		bcopy(tmp->vf_map[i], fd->vf_map[i], fd->vf_map_count[i] *
+		    sizeof (*fd->vf_map[i]));
+	}
+	fd->vf_bytes = kmem_alloc(bd->uncompressed_size, KM_SLEEP);
+	bcopy(tmp->vf_bytes, fd->vf_bytes, bd->uncompressed_size);
+	fonts->data = bd;
+}
 
 /*
  * This is temporary, but absolutely necessary.  If we are being
@@ -2583,6 +2625,9 @@ impl_setup_ddi(void)
 
 	/* not framebuffer should be enumerated, if present */
 	get_vga_properties();
+
+	/* Copy console font if provided by boot. */
+	get_console_font();
 
 	/*
 	 * Check for administratively disabled drivers.
