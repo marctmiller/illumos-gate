@@ -38,6 +38,7 @@
 #include <sys/queue.h>
 #include <sys/stdint.h>
 #include <sys/tem_impl.h>
+#include <sys/font.h>
 
 #include "bootstrap.h"
 
@@ -473,6 +474,119 @@ build_environment_module(void)
 	}
 
 	laddr = bi_copyenv(loadaddr);
+
+	/* Looks OK so far; populate control structure */
+	fp->f_loader = -1;
+	fp->f_addr = loadaddr;
+	fp->f_size = laddr - loadaddr;
+
+	/* recognise space consumption */
+	loadaddr = laddr;
+
+	file_insert_tail(fp);
+}
+
+/*
+ * If the custom console font was loaded, pass it for kernel as an module.
+ * We do not just load the font file, as the font file needs to be processed,
+ * and the early boot has very little resources. So we just set up the
+ * needed structures and make an copy of the byte arrays.
+ *
+ * Note we can not copy the structures one to one due to the pointer size,
+ * so we record the data by using fixed size structure.
+ */
+struct font_info {
+	int32_t fi_checksum;
+	uint32_t fi_width;
+	uint32_t fi_height;
+	uint32_t fi_bitmap_size;
+	uint32_t fi_map_count[VFNT_MAPS];
+};
+
+void
+build_font_module(void)
+{
+	bitmap_data_t *bd;
+	struct font *fd;
+	struct preloaded_file *fp;
+	size_t size;
+	uint32_t checksum;
+	int i;
+	char *name = "console-font";
+	vm_offset_t laddr;
+	struct font_info fi;
+
+	if (fonts->data == &DEFAULT_FONT_DATA)
+		return;
+
+	/* We can't load first */
+	if ((file_findfile(NULL, NULL)) == NULL) {
+		printf("Can not load font module: %s\n",
+		    "the kernel is not loaded");
+		return;
+	}
+
+	/* helper pointers */
+	bd = fonts->data;
+	fd = bd->font;
+
+	fi.fi_width = fd->vf_width;
+	checksum = fi.fi_width;
+	fi.fi_height = fd->vf_height;
+	checksum += fi.fi_height;
+	fi.fi_bitmap_size = bd->uncompressed_size;
+	checksum += fi.fi_bitmap_size;
+
+	size = roundup2(sizeof (struct font_info), 8);
+	for (i = 0; i < VFNT_MAPS; i++) {
+		fi.fi_map_count[i] = fd->vf_map_count[i];
+		checksum += fi.fi_map_count[i];
+		size += fd->vf_map_count[i] * sizeof (struct font_map);
+		size += roundup2(size, 8);
+	}
+	size += bd->uncompressed_size;
+
+	fi.fi_checksum = -checksum;
+
+	fp = file_alloc();
+	if (fp != NULL) {
+		fp->f_name = strdup(name);
+		fp->f_type = strdup(name);
+	}
+
+	if (fp == NULL || fp->f_name == NULL || fp->f_type == NULL) {
+		printf("Can not load font module: %s\n",
+		    "out of memory");
+		if (fp != NULL)
+			file_discard(fp);
+		return;
+	}
+
+	if (archsw.arch_loadaddr != NULL)
+		loadaddr = archsw.arch_loadaddr(LOAD_MEM, &size, loadaddr);
+
+	if (loadaddr == 0) {
+		printf("Can not load font module: %s\n",
+		    "out of memory");
+		file_discard(fp);
+		return;
+	}
+
+	laddr = loadaddr;
+	laddr += archsw.arch_copyin(&fi, laddr, sizeof (struct font_info));
+	laddr = roundup2(laddr, 8);
+
+	/* Copy maps. */
+	for (i = 0; i < VFNT_MAPS; i++) {
+		if (fd->vf_map_count[i] != 0) {
+			laddr += archsw.arch_copyin(fd->vf_map[i], laddr,
+			    fd->vf_map_count[i] * sizeof (struct font_map));
+			laddr = roundup2(laddr, 8);
+		}
+	}
+
+	/* Copy the bitmap. */
+	laddr += archsw.arch_copyin(fd->vf_bytes, laddr, fi.fi_bitmap_size);
 
 	/* Looks OK so far; populate control structure */
 	fp->f_loader = -1;

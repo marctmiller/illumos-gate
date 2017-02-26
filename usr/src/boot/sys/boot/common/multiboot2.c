@@ -856,6 +856,11 @@ multiboot2_exec(struct preloaded_file *fp)
 	/* mb_kernel_cmdline() updates the environment. */
 	build_environment_module();
 
+	if (have_framebuffer == true) {
+		/* Pass the loaded console font for kernel. */
+		build_font_module();
+	}
+
 	size = mbi_size(fp, cmdline);	/* Get the size for MBI. */
 
 	/* Set up the base for mb_malloc. */
