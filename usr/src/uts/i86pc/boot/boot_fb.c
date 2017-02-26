@@ -173,10 +173,22 @@ xbi_fb_init(struct xboot_info *xbi, bcons_dev_t *bcons_dev)
 static void
 boot_fb_set_font(uint16_t height, uint16_t width)
 {
-	set_font(&boot_fb_font, (short *)&fb_info.terminal.y,
+	bitmap_data_t *bp;
+	int i;
+
+	bp = set_font((short *)&fb_info.terminal.y,
 	    (short *)&fb_info.terminal.x, (short)height, (short)width);
-	fb_info.font_width = boot_fb_font.width;
-	fb_info.font_height = boot_fb_font.height;
+
+	boot_fb_font.vf_bytes = bp->font->vf_bytes;
+	boot_fb_font.vf_width = bp->font->vf_width;
+	boot_fb_font.vf_height = bp->font->vf_height;
+	for (i = 0; i < VFNT_MAPS; i++) {
+		boot_fb_font.vf_map[i] = bp->font->vf_map[i];
+		boot_fb_font.vf_map_count[i] = bp->font->vf_map_count[i];
+	}
+
+	fb_info.font_width = boot_fb_font.vf_width;
+	fb_info.font_height = boot_fb_font.vf_height;
 }
 
 /* fill framebuffer */
@@ -329,10 +341,10 @@ boot_fb_init(int console)
 	fb_info.fb = (uint8_t *)(uintptr_t)fb_info.paddr;
 
 	boot_fb_set_font(fb_info.screen.y, fb_info.screen.x);
-	window.x =
-	    (fb_info.screen.x - fb_info.terminal.x * boot_fb_font.width) / 2;
-	window.y =
-	    (fb_info.screen.y - fb_info.terminal.y * boot_fb_font.height) / 2;
+	window.x = (fb_info.screen.x -
+	    fb_info.terminal.x * boot_fb_font.vf_width) / 2;
+	window.y = (fb_info.screen.y -
+	    fb_info.terminal.y * boot_fb_font.vf_height) / 2;
 	fb_info.terminal_origin.x = window.x;
 	fb_info.terminal_origin.y = window.y;
 
@@ -344,9 +356,9 @@ boot_fb_init(int console)
 	 */
 	if (fb_info.cursor.pos.x != 0 || fb_info.cursor.pos.y != 0) {
 		fb_info.cursor.origin.x = window.x +
-		    fb_info.cursor.pos.x * boot_fb_font.width;
+		    fb_info.cursor.pos.x * boot_fb_font.vf_width;
 		fb_info.cursor.origin.y = window.y +
-		    fb_info.cursor.pos.y * boot_fb_font.height;
+		    fb_info.cursor.pos.y * boot_fb_font.vf_height;
 	}
 #endif
 
@@ -462,14 +474,14 @@ boot_fb_eraseline_impl(uint16_t x, uint16_t y)
 	uint8_t *dst, *sdst;
 	int i;
 
-	size = fb_info.terminal.x * boot_fb_font.width * fb_info.bpp;
+	size = fb_info.terminal.x * boot_fb_font.vf_width * fb_info.bpp;
 
 	toffset = x * fb_info.bpp + y * fb_info.pitch;
 	dst = fb_info.fb + toffset;
 	if (fb_info.shadow_fb != NULL)
 		sdst = fb_info.shadow_fb + toffset;
 
-	for (i = 0; i < boot_fb_font.height; i++) {
+	for (i = 0; i < boot_fb_font.vf_height; i++) {
 		uint8_t *dest = dst + i * fb_info.pitch;
 		if (fb_info.fb + fb_info.fb_size >= dest + size)
 			boot_fb_fill(dest, bg, size);
@@ -540,11 +552,11 @@ boot_fb_shiftline(int chars)
 	c_copy.s_col = fb_info.cursor.origin.x;
 	c_copy.s_row = fb_info.cursor.origin.y;
 
-	c_copy.e_col = (fb_info.terminal.x - chars) * boot_fb_font.width;
+	c_copy.e_col = (fb_info.terminal.x - chars) * boot_fb_font.vf_width;
 	c_copy.e_col += fb_info.terminal_origin.x;
-	c_copy.e_row = c_copy.s_row + boot_fb_font.height;
+	c_copy.e_row = c_copy.s_row + boot_fb_font.vf_height;
 
-	c_copy.t_col = fb_info.cursor.origin.x + chars * boot_fb_font.width;
+	c_copy.t_col = fb_info.cursor.origin.x + chars * boot_fb_font.vf_width;
 	c_copy.t_row = fb_info.cursor.origin.y;
 
 	boot_fb_conscopy(&c_copy);
@@ -559,7 +571,7 @@ boot_fb_scroll(void)
 	struct vis_conscopy c_copy;
 
 	/* support for scrolling. set up the console copy data and last line */
-	c_copy.s_row = fb_info.terminal_origin.y + boot_fb_font.height;
+	c_copy.s_row = fb_info.terminal_origin.y + boot_fb_font.vf_height;
 	c_copy.s_col = fb_info.terminal_origin.x;
 	c_copy.e_row = fb_info.screen.y - fb_info.terminal_origin.y;
 	c_copy.e_col = fb_info.screen.x - fb_info.terminal_origin.x;
@@ -571,7 +583,7 @@ boot_fb_scroll(void)
 	/* now clean up the last line */
 	boot_fb_eraseline_impl(fb_info.terminal_origin.x,
 	    fb_info.terminal_origin.y +
-	    (fb_info.terminal.y - 1) * boot_fb_font.height);
+	    (fb_info.terminal.y - 1) * boot_fb_font.vf_height);
 }
 
 /*
@@ -594,7 +606,7 @@ boot_fb_cursor(boolean_t visible)
 
 	fb_info.cursor.visible = visible;
 	pitch = fb_info.pitch;
-	size = boot_fb_font.width * fb_info.bpp;
+	size = boot_fb_font.vf_width * fb_info.bpp;
 
 	/*
 	 * Build cursor image. We are building mirror image of data on
@@ -604,7 +616,7 @@ boot_fb_cursor(boolean_t visible)
 	    fb_info.cursor.origin.y * pitch;
 	switch (fb_info.depth) {
 	case 8:
-		for (i = 0; i < boot_fb_font.height; i++) {
+		for (i = 0; i < boot_fb_font.vf_height; i++) {
 			fb8 = fb_info.fb + offset + i * pitch;
 			if (fb_info.shadow_fb != NULL)
 				sfb8 = fb_info.shadow_fb + offset + i * pitch;
@@ -620,12 +632,12 @@ boot_fb_cursor(boolean_t visible)
 		break;
 	case 15:
 	case 16:
-		for (i = 0; i < boot_fb_font.height; i++) {
+		for (i = 0; i < boot_fb_font.vf_height; i++) {
 			fb16 = (uint16_t *)(fb_info.fb + offset + i * pitch);
 			if (fb_info.shadow_fb != NULL)
 				sfb16 = (uint16_t *)
 				    (fb_info.shadow_fb + offset + i * pitch);
-			for (j = 0; j < boot_fb_font.width; j++) {
+			for (j = 0; j < boot_fb_font.vf_width; j++) {
 				fb16[j] = (fb16[j] ^ (fg & 0xffff)) ^
 				    (bg & 0xffff);
 
@@ -638,7 +650,7 @@ boot_fb_cursor(boolean_t visible)
 		}
 		break;
 	case 24:
-		for (i = 0; i < boot_fb_font.height; i++) {
+		for (i = 0; i < boot_fb_font.vf_height; i++) {
 			fb8 = fb_info.fb + offset + i * pitch;
 			if (fb_info.shadow_fb != NULL)
 				sfb8 = fb_info.shadow_fb + offset + i * pitch;
@@ -663,13 +675,13 @@ boot_fb_cursor(boolean_t visible)
 		}
 		break;
 	case 32:
-		for (i = 0; i < boot_fb_font.height; i++) {
+		for (i = 0; i < boot_fb_font.vf_height; i++) {
 			fb32 = (uint32_t *)(fb_info.fb + offset + i * pitch);
 			if (fb_info.shadow_fb != NULL) {
 				sfb32 = (uint32_t *)
 				    (fb_info.shadow_fb + offset + i * pitch);
 			}
-			for (j = 0; j < boot_fb_font.width; j++) {
+			for (j = 0; j < boot_fb_font.vf_width; j++) {
 				fb32[j] = (fb32[j] ^ fg) ^ bg;
 
 				if (sfb32 == NULL)
@@ -697,9 +709,9 @@ boot_fb_setpos(int row, int col)
 	fb_info.cursor.pos.x = col;
 	fb_info.cursor.pos.y = row;
 	fb_info.cursor.origin.x = fb_info.terminal_origin.x;
-	fb_info.cursor.origin.x += col * boot_fb_font.width;
+	fb_info.cursor.origin.x += col * boot_fb_font.vf_width;
 	fb_info.cursor.origin.y = fb_info.terminal_origin.y;
-	fb_info.cursor.origin.y += row * boot_fb_font.height;
+	fb_info.cursor.origin.y += row * boot_fb_font.vf_height;
 }
 
 static void
@@ -722,8 +734,8 @@ boot_fb_putchar(int c)
 	bit_to_pix(c);
 	display.col = fb_info.cursor.origin.x;
 	display.row = fb_info.cursor.origin.y;
-	display.width = boot_fb_font.width;
-	display.height = boot_fb_font.height;
+	display.width = boot_fb_font.vf_width;
+	display.height = boot_fb_font.vf_height;
 	display.data = glyph;
 
 	boot_fb_blit(&display);
