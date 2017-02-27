@@ -121,7 +121,7 @@ static struct modlmisc	modlmisc = {
 };
 
 static struct modlinkage modlinkage = {
-	MODREV_1, (void *)&modlmisc, NULL
+	MODREV_1, { (void *)&modlmisc, NULL }
 };
 
 int
@@ -209,12 +209,10 @@ static void
 tem_internal_init(struct tem_vt_state *ptem, cred_t *credp,
     boolean_t init_color, boolean_t clear_screen)
 {
-	int i, j;
-	int width, height;
-	int total;
+	unsigned i, j, width, height;
+	text_attr_t attr;
 	text_color_t fg;
 	text_color_t bg;
-	size_t	tc_size = sizeof (text_color_t);
 
 	ASSERT(MUTEX_HELD(&tems.ts_lock) && MUTEX_HELD(&ptem->tvs_lock));
 
@@ -230,14 +228,13 @@ tem_internal_init(struct tem_vt_state *ptem, cred_t *credp,
 
 	width = tems.ts_c_dimension.width;
 	height = tems.ts_c_dimension.height;
-	ptem->tvs_screen_buf_size = width * height *
+	ptem->tvs_screen_history_size = height;
+
+	ptem->tvs_screen_buf_size = width * ptem->tvs_screen_history_size *
 	    sizeof (*ptem->tvs_screen_buf);
 	ptem->tvs_screen_buf = kmem_alloc(ptem->tvs_screen_buf_size, KM_SLEEP);
-
-	total = width * height * tc_size;
-	ptem->tvs_fg_buf = (text_color_t *)kmem_alloc(total, KM_SLEEP);
-	ptem->tvs_bg_buf = (text_color_t *)kmem_alloc(total, KM_SLEEP);
-	ptem->tvs_color_buf_size = total;
+	ptem->tvs_screen_rows = kmem_alloc(ptem->tvs_screen_history_size *
+	    sizeof (term_char_t *), KM_SLEEP);
 
 	tem_safe_reset_display(ptem, credp, CALLED_FROM_NORMAL,
 	    clear_screen, init_color);
@@ -245,16 +242,21 @@ tem_internal_init(struct tem_vt_state *ptem, cred_t *credp,
 	ptem->tvs_utf8_left = 0;
 	ptem->tvs_utf8_partial = 0;
 
-	tem_safe_get_color(ptem, &fg, &bg, TEM_ATTR_SCREEN_REVERSE);
-	for (i = 0; i < height; i++)
+	/* Get default attributes and fill up the screen buffer. */
+	tem_safe_get_attr(ptem, &fg, &bg, &attr, TEM_ATTR_SCREEN_REVERSE);
+	for (i = 0; i < ptem->tvs_screen_history_size; i++) {
+		ptem->tvs_screen_rows[i] = &ptem->tvs_screen_buf[i * width];
+
 		for (j = 0; j < width; j++) {
-			ptem->tvs_screen_buf[i * width + j] = ' ';
-			ptem->tvs_fg_buf[(i * width +j) * tc_size] = fg;
-			ptem->tvs_bg_buf[(i * width +j) * tc_size] = bg;
+			ptem->tvs_screen_rows[i][j].tc_fg_color = fg;
+			ptem->tvs_screen_rows[i][j].tc_bg_color = bg;
+			ptem->tvs_screen_rows[i][j].tc_char =
+			    TEM_ATTR(attr) | ' ';
 
 		}
+	}
 
-	ptem->tvs_initialized  = 1;
+	ptem->tvs_initialized = B_TRUE;
 }
 
 int
@@ -264,7 +266,7 @@ tem_initialized(tem_vt_state_t tem_arg)
 	int ret;
 
 	mutex_enter(&ptem->tvs_lock);
-	ret = ptem->tvs_initialized;
+	ret = ptem->tvs_initialized == B_TRUE? 1 : 0;
 	mutex_exit(&ptem->tvs_lock);
 
 	return (ret);
@@ -288,7 +290,7 @@ tem_init(cred_t *credp)
 	 * A tem is regarded as initialized only after tem_internal_init(),
 	 * will be set at the end of tem_internal_init().
 	 */
-	ptem->tvs_initialized = 0;
+	ptem->tvs_initialized = B_FALSE;
 
 
 	if (!tems.ts_initialized) {
@@ -335,10 +337,10 @@ tem_free_buf(struct tem_vt_state *tem)
 		kmem_free(tem->tvs_pix_data, tem->tvs_pix_data_size);
 	if (tem->tvs_screen_buf != NULL)
 		kmem_free(tem->tvs_screen_buf, tem->tvs_screen_buf_size);
-	if (tem->tvs_fg_buf != NULL)
-		kmem_free(tem->tvs_fg_buf, tem->tvs_color_buf_size);
-	if (tem->tvs_bg_buf != NULL)
-		kmem_free(tem->tvs_bg_buf, tem->tvs_color_buf_size);
+	if (tem->tvs_screen_rows != NULL) {
+		kmem_free(tem->tvs_screen_rows, tem->tvs_screen_history_size *
+		    sizeof (term_char_t *));
+	}
 }
 
 void
@@ -606,11 +608,8 @@ tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 	if (tems.ts_blank_line)
 		kmem_free(tems.ts_blank_line, old_blank_buf_size);
 
-	tems.ts_blank_line =
-	    kmem_alloc(tems.ts_c_dimension.width * sizeof (*tems.ts_blank_line),
-	    KM_SLEEP);
-	for (i = 0; i < tems.ts_c_dimension.width; i++)
-		tems.ts_blank_line[i] = ' ';
+	tems.ts_blank_line = kmem_alloc(tems.ts_c_dimension.width *
+	    sizeof (*tems.ts_blank_line), KM_SLEEP);
 }
 
 /*

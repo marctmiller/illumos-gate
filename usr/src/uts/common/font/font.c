@@ -152,7 +152,7 @@ font_lookup(const struct font *vf, uint32_t c)
 	src = TEM_CHAR(c);
 
 	/* Substitute bold with normal if not found. */
-	if (TEM_CHAR_ATTR(c) & TF_BOLD) {
+	if (TEM_CHAR_ATTR(c) & TEM_ATTR_BOLD) {
 		dst = font_bisearch(vf->vf_map[VFNT_MAP_BOLD],
 		    vf->vf_map_count[VFNT_MAP_BOLD], src);
 		if (dst != 0)
@@ -407,10 +407,15 @@ font_bit_to_pix32(
 	int	row;
 	int	byte;
 	int	i;
-	const uint8_t *cp;
+	const uint8_t *cp, *ul;
 	uint32_t data;
 	int	bytes_wide;
 	int	bitsleft, nbits;
+
+	if (TEM_CHAR_ATTR(c) & TEM_ATTR_UNDERLINE)
+		ul = font_lookup(f, 0x0332);	/* combining low line */
+	else
+		ul = NULL;
 
 	cp = font_lookup(f, c);
 	bytes_wide = (f->vf_width + 7) / 8;
@@ -418,7 +423,10 @@ font_bit_to_pix32(
 	for (row = 0; row < f->vf_height; row++) {
 		bitsleft = f->vf_width;
 		for (byte = 0; byte < bytes_wide; byte++) {
-			data = *cp++;
+			if (ul == NULL)
+				data = *cp++;
+			else
+				data = *cp++ | *ul++;
 			nbits = MIN(8, bitsleft);
 			bitsleft -= nbits;
 			for (i = 0; i < nbits; i++) {
