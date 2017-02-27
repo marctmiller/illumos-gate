@@ -44,7 +44,7 @@ extern "C" {
 #include <stdbool.h>
 
 /*
- * definitions for ANSI x3.64 terminal control language parser
+ * Definitions for ANSI x3.64 terminal control language parser.
  * With UTF-8 support we use 32-bit value for Unicode codepoints.
  *
  * However, as we only need 21 bits for unicode char, we will use the
@@ -54,19 +54,14 @@ extern "C" {
  *
  *  Bits  Meaning
  *  0-20  char
- * 21-25  attributes
- * 26-28  foreground color
- * 29-31  background color
+ * 21-31  attributes
  */
 
 typedef uint32_t tem_char_t;	/* 32bit char to support UTF-8 */
+#define	TEM_ATTR_MASK		0x7FF
 #define	TEM_CHAR(c)		((c) & 0x1fffff)
-#define	TEM_CHAR_ATTR(c)	(((c) >> 21) & 0x1f)
-#define	TEM_CHAR_FGCOLOR(c)	(((c) >> 26) & 0x7)
-#define	TEM_CHAR_BGCOLOR(c)	(((c) >> 29) & 0x7)
-#define	TEM_ATTR(c)		(((c) & 0x1f) << 21)
-#define	TEM_FG_COLOR(c)		(((c) & 0x7) << 26)
-#define	TEM_BG_COLOR(c)		(((c) & 0x7) << 29)
+#define	TEM_CHAR_ATTR(c)	(((c) >> 21) & TEM_ATTR_MASK)
+#define	TEM_ATTR(c)		(((c) & TEM_ATTR_MASK) << 21)
 
 #define	TEM_MAXPARAMS	5	/* maximum number of ANSI paramters */
 #define	TEM_MAXTAB	40	/* maximum number of tab stops */
@@ -78,22 +73,16 @@ typedef uint32_t tem_char_t;	/* 32bit char to support UTF-8 */
 #define	TEM_SHIFT_LEFT		0
 #define	TEM_SHIFT_RIGHT		1
 
+/* Attributes 0-0x7ff */
 #define	TEM_ATTR_NORMAL		0x0000
 #define	TEM_ATTR_REVERSE	0x0001
 #define	TEM_ATTR_BOLD		0x0002
 #define	TEM_ATTR_BLINK		0x0004
-#define	TEM_ATTR_TRANSPARENT	0x0008
+#define	TEM_ATTR_UNDERLINE	0x0008
 #define	TEM_ATTR_SCREEN_REVERSE	0x0010
 #define	TEM_ATTR_BRIGHT_FG	0x0020
 #define	TEM_ATTR_BRIGHT_BG	0x0040
-#define	TEM_ATTR_CJK_RIGHT	0x0080
-
-/* Char attributes 0-0x1f */
-#define	TF_NORMAL		0x00
-#define	TF_REVERSE		0x01
-#define	TF_BOLD			0x02
-#define	TF_BRIGHT_FG		0x04
-#define	TF_BRIGHT_BG		0x08
+#define	TEM_ATTR_TRANSPARENT	0x0080
 
 #define	ANSI_COLOR_BLACK	0
 #define	ANSI_COLOR_RED		1
@@ -136,11 +125,12 @@ typedef uint32_t tem_char_t;	/* 32bit char to support UTF-8 */
 #define	BUF_LEN		160 /* Two lines of data can be processed at a time */
 
 typedef uint8_t text_color_t;
+typedef uint16_t text_attr_t;
 
 typedef struct tem_color {
 	text_color_t	fg_color;
 	text_color_t	bg_color;
-	unsigned short	a_flags;
+	text_attr_t	a_flags;
 } tem_color_t;
 
 struct tem_pix_pos {
@@ -164,6 +154,13 @@ typedef struct {
 	uint8_t blue[16];
 } text_cmap_t;
 
+/* Combined color and 32bit tem char */
+typedef struct term_char {
+	text_color_t	tc_fg_color;
+	text_color_t	tc_bg_color;
+	tem_char_t	tc_char;
+} term_char_t;
+
 extern text_cmap_t cmap4_to_24;
 
 /*
@@ -171,9 +168,9 @@ extern text_cmap_t cmap4_to_24;
  */
 struct tem_vt_state {
 	uint8_t		tvs_fbmode;	/* framebuffer mode */
-	unsigned short	tvs_flags;	/* flags for this x3.64 terminal */
+	text_attr_t	tvs_flags;	/* flags for this x3.64 terminal */
 	int		tvs_state;	/* state in output esc seq processing */
-	boolean_t	tvs_gotparam;	/* does output esc seq have a param */
+	bool		tvs_gotparam;	/* does output esc seq have a param */
 
 	int	tvs_curparam;	/* current param # of output esc seq */
 	int	tvs_paramval;	/* value of current param */
@@ -186,7 +183,7 @@ struct tem_vt_state {
 	struct tem_char_pos tvs_c_cursor;	/* current cursor position */
 	struct tem_char_pos tvs_r_cursor;	/* remembered cursor position */
 
-	tem_char_t	*tvs_outbuf;	/* place to keep incomplete lines */
+	term_char_t	*tvs_outbuf;	/* place to keep incomplete lines */
 	int		tvs_outindex;	/* index into a_outbuf */
 	void   		*tvs_pix_data;	/* pointer to tmp bitmap area */
 	int		tvs_pix_data_size;
@@ -194,25 +191,23 @@ struct tem_vt_state {
 	text_color_t	tvs_bg_color;
 	int		tvs_first_line;	/* kernel console output begins */
 
-	tem_char_t	*tvs_screen_buf;	/* whole screen buffer */
-
 	unsigned	tvs_utf8_left;		/* UTF-8 code points */
 	tem_char_t	tvs_utf8_partial;	/* UTF-8 char being completed */
 
-	boolean_t	tvs_isactive;
-	int		tvs_initialized;	/* initialization flag */
+	bool		tvs_isactive;
+	bool		tvs_initialized;	/* initialization flag */
 
 	list_node_t	tvs_list_node;
 };
 
 typedef struct tem_callbacks {
-	void (*tsc_display)(struct tem_vt_state *, tem_char_t *, int,
+	void (*tsc_display)(struct tem_vt_state *, term_char_t *, int,
 	    screen_pos_t, screen_pos_t);
 	void (*tsc_copy)(struct tem_vt_state *,
 	    screen_pos_t, screen_pos_t, screen_pos_t, screen_pos_t,
 	    screen_pos_t, screen_pos_t);
 	void (*tsc_cursor)(struct tem_vt_state *, short);
-	void (*tsc_bit2pix)(struct tem_vt_state *, tem_char_t);
+	void (*tsc_bit2pix)(struct tem_vt_state *, term_char_t);
 	void (*tsc_cls)(struct tem_vt_state *, int, screen_pos_t, screen_pos_t);
 } tem_callbacks_t;
 
@@ -238,7 +233,6 @@ typedef struct tem_state {
 	struct font	ts_font;	/* font table */
 	bool	update_font;		/* flag the font change */
 
-	tem_char_t	*ts_blank_line;	/* a blank line for scrolling */
 	tem_callbacks_t	*ts_callbacks;	/* internal output functions */
 
 	int	ts_initialized;		/* initialization flag */
@@ -269,16 +263,12 @@ int	tem_initialized(tem_vt_state_t);
 
 tem_vt_state_t tem_init(void);
 
-void	tem_destroy(tem_vt_state_t);
 int	tem_info_init(struct console *);
 void	tem_write(tem_vt_state_t, uint8_t *, ssize_t);
 void	tem_get_size(uint16_t *, uint16_t *, uint16_t *, uint16_t *);
 void	tem_save_state(void);
 void	tem_register_modechg_cb(tem_modechg_cb_t, tem_modechg_cb_arg_t);
 void	tem_activate(tem_vt_state_t, boolean_t);
-void	tem_switch(tem_vt_state_t, tem_vt_state_t);
-uint8_t	tem_get_fbmode(tem_vt_state_t);
-void	tem_set_fbmode(tem_vt_state_t, uint8_t);
 void	tem_get_colors(tem_vt_state_t, text_color_t *, text_color_t *);
 
 #ifdef __cplusplus
