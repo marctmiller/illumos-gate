@@ -5304,7 +5304,7 @@ sun-color|Sun Microsystems Workstation console with color support (IA systems),
 	setaf=\E[3%p1%dm,
 	setb=\E[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
 	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	smso=\E[1m, use=sun,
+	smso=\E[1m, smul=\E[4m,rmul=\E[24m,use=sun,
 
 #### Iris consoles
 #
