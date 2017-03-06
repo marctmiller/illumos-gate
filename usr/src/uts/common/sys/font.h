@@ -27,6 +27,8 @@
 #ifndef _SYS_FONT_H
 #define	_SYS_FONT_H
 
+#include <sys/queue.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -64,9 +66,18 @@ typedef	struct  bitmap_data {
 } bitmap_data_t;
 
 typedef	bitmap_data_t   *font_load_cb_t(char *);
+typedef enum {
+	FONT_AUTO,
+	FONT_MANUAL,
+	FONT_BOOT
+} FONT_FLAGS;
+
 struct fontlist {
-	bitmap_data_t	*data;
-	font_load_cb_t	*fontload;
+	char		*font_name;
+	FONT_FLAGS	font_flags;
+	bitmap_data_t	*font_data;
+	font_load_cb_t	*font_load;
+	STAILQ_ENTRY(fontlist) font_next;
 };
 
 #define	FONT_HEADER_MAGIC	"VFNT0002"
@@ -79,7 +90,8 @@ struct font_header {
 	uint32_t	fh_map_count[4];
 } __attribute__((__packed__));
 
-extern struct fontlist fonts[];
+typedef STAILQ_HEAD(font_list, fontlist) font_list_t;
+extern font_list_t fonts;
 
 /*
  * Built in fonts. We are using Gallant as default on sparc to keep

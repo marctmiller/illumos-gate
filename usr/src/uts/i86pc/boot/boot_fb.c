@@ -61,6 +61,7 @@ struct vis_conscopy {
  */
 #define	MAX_GLYPH	(16 * 32 * 4)
 
+struct fontlist		cf_fontlist;
 static bitmap_data_t	cf_data;
 static struct font	cf_font;
 
@@ -161,7 +162,11 @@ xbi_init_font(struct xboot_info *xbi)
 		ptr = P2ROUNDUP(ptr, 8);
 	}
 	cf_font.vf_bytes = (uint8_t *)ptr;
-	fonts->data = &cf_data;
+	cf_fontlist.font_name = NULL;
+	cf_fontlist.font_flags = FONT_BOOT;
+	cf_fontlist.font_data = &cf_data;
+	cf_fontlist.font_load = NULL;
+	STAILQ_INSERT_HEAD(&fonts, &cf_fontlist, font_next);
 }
 
 /*
@@ -173,7 +178,6 @@ xbi_fb_init(struct xboot_info *xbi, bcons_dev_t *bcons_dev)
 	multiboot_tag_framebuffer_t *tag;
 	boot_framebuffer_t *xbi_fb;
 
-	xbi_init_font(xbi);
 	xbi_fb = (boot_framebuffer_t *)(uintptr_t)xbi->bi_framebuffer;
 	if (xbi_fb == NULL)
 		return (B_FALSE);
@@ -191,6 +195,8 @@ xbi_fb_init(struct xboot_info *xbi, bcons_dev_t *bcons_dev)
 	if (tag == NULL) {
 		return (B_FALSE);
 	}
+
+	xbi_init_font(xbi);
 
 	fb_info.paddr = tag->framebuffer_common.framebuffer_addr;
 	fb_info.pitch = tag->framebuffer_common.framebuffer_pitch;

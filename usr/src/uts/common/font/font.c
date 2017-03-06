@@ -50,16 +50,36 @@
 /*
  * Must be sorted by font size in descending order
  */
-struct fontlist fonts[] = {
-	{  &DEFAULT_FONT_DATA, (font_load_cb_t *)NULL },
-	{  NULL, (font_load_cb_t *)NULL }
-};
+font_list_t fonts = STAILQ_HEAD_INITIALIZER(fonts);
 
 bitmap_data_t *
 set_font(short *rows, short *cols, short height, short width)
 {
-	bitmap_data_t *default_font = NULL, *font_selected = NULL;
+	bitmap_data_t *font = NULL;
 	struct fontlist	*fl;
+
+	/*
+	 * First check for manually loaded font.
+	 */
+	STAILQ_FOREACH(fl, &fonts, font_next) {
+		if (fl->font_flags == FONT_MANUAL ||
+		    fl->font_flags == FONT_BOOT) {
+			font = fl->font_data;
+			if (font->font == NULL && fl->font_load != NULL &&
+			    fl->font_name != NULL) {
+				font = fl->font_load(fl->font_name);
+			}
+			if (font == NULL || font->font == NULL)
+				font = NULL;
+			break;
+		}
+	}
+
+	if (font != NULL) {
+		*rows = (height - BORDER_PIXELS) / font->height;
+		*cols = (width - BORDER_PIXELS) / font->width;
+		return (font);
+	}
 
 	/*
 	 * Find best font for these dimensions, or use default
@@ -71,35 +91,43 @@ set_font(short *rows, short *cols, short height, short width)
 	 * emulator causes much better font selection for the
 	 * normal range of screen resolutions.
 	 */
-	for (fl = fonts; fl->data; fl++) {
-		if ((((*rows * fl->data->height) + BORDER_PIXELS) <= height) &&
-		    (((*cols * fl->data->width) + BORDER_PIXELS) <= width)) {
-			font_selected = fl->data;
-			*rows = (height - BORDER_PIXELS) /
-			    font_selected->height;
-			*cols = (width - BORDER_PIXELS) /
-			    font_selected->width;
+	STAILQ_FOREACH(fl, &fonts, font_next) {
+		font = fl->font_data;
+		if ((((*rows * font->height) + BORDER_PIXELS) <= height) &&
+		    (((*cols * font->width) + BORDER_PIXELS) <= width)) {
+			if (font->font == NULL) {
+				if (fl->font_load != NULL &&
+				    fl->font_name != NULL) {
+					font = fl->font_load(fl->font_name);
+				}
+				if (font == NULL)
+					continue;
+			}
+			*rows = (height - BORDER_PIXELS) / font->height;
+			*cols = (width - BORDER_PIXELS) / font->width;
 			break;
 		}
-		default_font = fl->data;
+		font = NULL;
 	}
-	/*
-	 * The minus 2 is to make sure we have at least a 1 pixel
-	 * border around the entire screen.
-	 */
-	if (font_selected == NULL) {
-		if (default_font == NULL)
-			default_font = &DEFAULT_FONT_DATA;
 
-		if (((*rows * default_font->height) > height) ||
-		    ((*cols * default_font->width) > width)) {
-			*rows = (height - 2) / default_font->height;
-			*cols = (width - 2) / default_font->width;
+	if (font == NULL) {
+		/*
+		 * We have fonts sorted smallest last, try it before
+		 * falling back to builtin.
+		 */
+		fl = STAILQ_LAST(&fonts, fontlist, font_next);
+		if (fl != NULL && fl->font_load != NULL &&
+		    fl->font_name != NULL) {
+			font = fl->font_load(fl->font_name);
 		}
-		font_selected = default_font;
+		if (font == NULL)
+			font = &DEFAULT_FONT_DATA;
+
+		*rows = (height - BORDER_PIXELS) / font->height;
+		*cols = (width - BORDER_PIXELS) / font->width;
 	}
 
-	return (font_selected);
+	return (font);
 }
 
 /* Binary search for the glyph. Return 0 if not found. */

@@ -2038,27 +2038,35 @@ get_vga_properties(void)
  * to use font module was done in early console setup, using low
  * memory and data from font module. Now we need to allocate
  * kernel memory and copy data over, so the low memory can be freed.
+ * We can have at most one entry in font list from early boot.
  */
 static void
 get_console_font(void)
 {
+	struct fontlist *fp, *fl;
 	bitmap_data_t *bd;
 	struct font *fd, *tmp;
 	int i;
 
-	/* If fonts->data is DEFAULT_FONT_DATA, no font was provided. */
-	if (fonts->data == &DEFAULT_FONT_DATA)
+	if (STAILQ_EMPTY(&fonts))
 		return;
 
+	fl = STAILQ_FIRST(&fonts);
+	STAILQ_REMOVE_HEAD(&fonts, font_next);
+	fp = kmem_zalloc(sizeof (*fp), KM_SLEEP);
 	bd = kmem_zalloc(sizeof (*bd), KM_SLEEP);
 	fd = kmem_zalloc(sizeof (*fd), KM_SLEEP);
 
-	bd->width = fonts->data->width;
-	bd->height = fonts->data->height;
-	bd->uncompressed_size = fonts->data->uncompressed_size;
+	fp->font_name = NULL;
+	fp->font_flags = FONT_BOOT;
+	fp->font_data = bd;
+
+	bd->width = fl->font_data->width;
+	bd->height = fl->font_data->height;
+	bd->uncompressed_size = fl->font_data->uncompressed_size;
 	bd->font = fd;
 
-	tmp = fonts->data->font;
+	tmp = fl->font_data->font;
 	fd->vf_width = tmp->vf_width;
 	fd->vf_height = tmp->vf_height;
 	for (i = 0; i < VFNT_MAPS; i++) {
@@ -2072,7 +2080,7 @@ get_console_font(void)
 	}
 	fd->vf_bytes = kmem_alloc(bd->uncompressed_size, KM_SLEEP);
 	bcopy(tmp->vf_bytes, fd->vf_bytes, bd->uncompressed_size);
-	fonts->data = bd;
+	STAILQ_INSERT_HEAD(&fonts, fp, font_next);
 }
 
 /*
