@@ -512,11 +512,17 @@ tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 		 * We can not skip free() there, because we do not know if
 		 * the current font is builtin or loaded.
 		 */
-		if (tems.update_font == true) {
-			tems.update_font = false;
+		tems.update_font = false;
+
+		/*
+		 * If the font bytes pointer has changed, free the old one
+		 * and reset the font data.
+		 */
+		if (tems.ts_font.vf_bytes != font_data->font->vf_bytes) {
 			free(tems.ts_font.vf_bytes);
 			tems.ts_font.vf_bytes = NULL;
 		}
+
 		if (tems.ts_font.vf_bytes == NULL) {
 			for (i = 0; i < VFNT_MAPS; i++) {
 				tems.ts_font.vf_map[i] =
@@ -555,6 +561,11 @@ tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 		snprintf(env, sizeof (env), "%d", tems.ts_p_dimension.width);
 		env_setenv("screen-width", EV_VOLATILE | EV_NOHOOK, env,
 		    env_noset, env_screen_nounset);
+
+		snprintf(env, sizeof (env), "%dx%d", tems.ts_font.vf_width,
+		    tems.ts_font.vf_height);
+		env_setenv("screen-font", EV_VOLATILE | EV_NOHOOK, env, NULL,
+		    NULL);
 
 		tems.ts_p_offset.y = (tems.ts_p_dimension.height -
 		    (tems.ts_c_dimension.height * tems.ts_font.vf_height)) / 2;

@@ -515,8 +515,9 @@ build_font_module(void)
 	char *name = "console-font";
 	vm_offset_t laddr;
 	struct font_info fi;
+	struct fontlist *fl;
 
-	if (fonts->data == &DEFAULT_FONT_DATA)
+	if (STAILQ_EMPTY(&fonts))
 		return;
 
 	/* We can't load first */
@@ -527,7 +528,15 @@ build_font_module(void)
 	}
 
 	/* helper pointers */
-	bd = fonts->data;
+	bd = NULL;
+	STAILQ_FOREACH(fl, &fonts, font_next) {
+		if (fl->font_data->font != NULL) {
+			bd = fl->font_data;
+			break;
+		}
+	}
+	if (bd == NULL)
+		return;
 	fd = bd->font;
 
 	fi.fi_width = fd->vf_width;

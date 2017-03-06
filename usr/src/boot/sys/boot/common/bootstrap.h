@@ -114,6 +114,7 @@ struct console
 extern struct console	*consoles[];
 void		cons_probe(void);
 void		cons_mode(int);
+void		autoload_font(void);
 
 /*
  * Plug-and-play enumerator/configurator interface.

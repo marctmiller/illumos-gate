@@ -990,12 +990,12 @@ load_mapping(int fd, struct font *fp, int n)
 	if (fp->vf_map_count[n] == 0)
 		return (0);
 
-	mp = calloc(fp->vf_map_count[n], sizeof (*mp));
+	size = fp->vf_map_count[n] * sizeof (*mp);
+	mp = malloc(size);
 	if (mp == NULL)
 		return (ENOMEM);
 	fp->vf_map[n] = mp;
 
-	size = fp->vf_map_count[n] * sizeof (*mp);
 	if ((i = read(fd, mp, size)) != size) {
 		return (EIO);
 	}
@@ -1009,38 +1009,39 @@ load_mapping(int fd, struct font *fp, int n)
 }
 
 /* Load font from file. */
-int
-load_font(const char *path)
+static bitmap_data_t *
+load_font(char *path)
 {
 	int fd, rc, i;
 	uint32_t glyphs;
 	struct font_header fh;
-	bitmap_data_t *bp, *old;
+	struct fontlist *fl;
+	bitmap_data_t *bp = NULL;
 	struct font *fp;
 	size_t size;
 
-	errno = 0;
+	/* Get our entry from the font list. */
+	STAILQ_FOREACH(fl, &fonts, font_next) {
+		if (strcmp(fl->font_name, path) == 0)
+			break;
+	}
+	if (fl == NULL)
+		return (NULL);	/* Should not happen. */
+	bp = fl->font_data;
+	if (bp->font != NULL)
+		return (bp);
+
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
-		return (errno);
+		return (NULL);
 	}
 
-	if ((rc = read(fd, &fh, sizeof (fh))) != sizeof (fh)) {
-		rc = EIO;
+	if ((rc = read(fd, &fh, sizeof (fh))) != sizeof (fh))
 		goto done;
-	}
-	rc = memcmp(fh.fh_magic, FONT_HEADER_MAGIC, sizeof (fh.fh_magic));
-	if (rc != 0) {
-		rc = EIO;
+	if (memcmp(fh.fh_magic, FONT_HEADER_MAGIC, sizeof (fh.fh_magic)) != 0)
 		goto done;
-	}
-	if ((bp = calloc(sizeof (bitmap_data_t), 1)) == NULL) {
-		rc = ENOMEM;
-		goto done;
-	}
 	if ((fp = calloc(sizeof (struct font), 1)) == NULL) {
-		free(bp);
-		rc = ENOMEM;
+		bp = NULL;
 		goto done;
 	}
 	for (i = 0; i < VFNT_MAPS; i++)
@@ -1048,47 +1049,246 @@ load_font(const char *path)
 
 	glyphs = be32toh(fh.fh_glyph_count);
 	fp->vf_width = fh.fh_width;
-	bp->width = fh.fh_width;
 	fp->vf_height = fh.fh_height;
-	bp->height = fh.fh_height;
-	bp->font = fp;
 
 	bp->uncompressed_size = howmany(bp->width, 8) * bp->height * glyphs;
 	size = bp->uncompressed_size;
-	if ((fp->vf_bytes = malloc(size)) == NULL) {
-		rc = ENOMEM;
+	if ((fp->vf_bytes = malloc(size)) == NULL)
 		goto free_done;
-	}
-	rc = read(fd, fp->vf_bytes, size);
-	if (rc != size) {
-		rc = EIO;
+
+	if ((i = read(fd, fp->vf_bytes, size)) != size)
 		goto free_done;
-	}
 	for (i = 0; i < VFNT_MAPS; i++) {
-		if ((rc = load_mapping(fd, fp, i)) != 0)
+		if (load_mapping(fd, fp, i) != 0)
 			goto free_done;
 	}
+	bp->font = fp;
 
-	old = fonts->data;
-	fonts->data = bp;
-	tems.update_font = true;
-	plat_cons_update_mode(-1);
-	if (old == &DEFAULT_FONT_DATA)
-		goto done;
+	/*
+	 * Release previously loaded entry. We can do this now, as
+	 * the new font is loaded. Note, there can be no console
+	 * output till the new font is in place and tem is notified.
+	 * We do need to keep fl->font_data for glyph dimensions.
+	 */
+	STAILQ_FOREACH(fl, &fonts, font_next) {
+		if (fl->font_data->width == bp->width &&
+		    fl->font_data->height == bp->height)
+			continue;
 
-	fp = old->font;
-	fp->vf_bytes = NULL;	/* freed by tem */
-	bp = old;
+		if (fl->font_data->font != NULL) {
+			/* The tem is releasing font bytes. */
+			for (i = 0; i < VFNT_MAPS; i++)
+				free(fl->font_data->font->vf_map[i]);
+			free(fl->font_data->font);
+			fl->font_data->font = NULL;
+			fl->font_data->uncompressed_size = 0;
+			fl->font_flags = FONT_AUTO;
+		}
+	}
+
+done:
+	close(fd);
+	return (bp);
 
 free_done:
 	for (i = 0; i < VFNT_MAPS; i++)
 		free(fp->vf_map[i]);
 	free(fp->vf_bytes);
 	free(fp);
-	free(bp);
-done:
+	bp = NULL;
+	goto done;
+}
+
+
+struct name_entry {
+	char			*n_name;
+	SLIST_ENTRY(name_entry)	n_entry;
+};
+
+SLIST_HEAD(name_list, name_entry);
+
+/* Read font names from index file. */
+static struct name_list *
+read_list(char *fonts)
+{
+	struct name_list *nl;
+	struct name_entry *np;
+	char buf[PATH_MAX];
+	int fd, len;
+
+	fd = open(fonts, O_RDONLY);
+	if (fd < 0)
+		return (NULL);
+
+	nl = malloc(sizeof (*nl));
+	if (nl == NULL) {
+		close(fd);
+		return (nl);
+	}
+
+	SLIST_INIT(nl);
+	while ((len = fgetstr(buf, sizeof (buf), fd)) > 0) {
+		np = malloc(sizeof (*np));
+		if (np == NULL) {
+			close(fd);
+			return (nl);    /* return what we have */
+		}
+		np->n_name = strdup(buf);
+		if (np->n_name == NULL) {
+			free(np);
+			close(fd);
+			return (nl);    /* return what we have */
+		}
+		SLIST_INSERT_HEAD(nl, np, n_entry);
+	}
 	close(fd);
-	return (rc);
+	return (nl);
+}
+
+/*
+ * Read the font properties and insert new entry into the list.
+ * The font list is built in descending order.
+ */
+static bool
+insert_font(char *name)
+{
+	struct font_header fh;
+	struct fontlist *fp, *previous, *entry, *next;
+	int fd, size;
+
+	fd = open(name, O_RDONLY);
+	if (fd < 0)
+		return (false);
+	size = read(fd, &fh, sizeof (fh));
+	close(fd);
+	if (size != sizeof (fh))
+		return (false);
+
+	if (memcmp(fh.fh_magic, FONT_HEADER_MAGIC, sizeof (fh.fh_magic)) != 0)
+		return (false);
+
+	/*
+	 * If we have an entry with the same glyph dimensions, just replace
+	 * the file name.
+	 */
+	STAILQ_FOREACH(entry, &fonts, font_next) {
+		if (fh.fh_width == entry->font_data->width &&
+		    fh.fh_height == entry->font_data->height) {
+			free(entry->font_name);
+			entry->font_name = name;
+			return (true);
+		}
+	}
+
+	fp = calloc(sizeof (*fp), 1);
+	if (fp == NULL)
+		return (false);
+	fp->font_data = calloc(sizeof (*fp->font_data), 1);
+	if (fp->font_data == NULL) {
+		free(fp);
+		return (false);
+	}
+	fp->font_name = name;
+	fp->font_flags = FONT_AUTO;
+	fp->font_load = load_font;
+	fp->font_data->width = fh.fh_width;
+	fp->font_data->height = fh.fh_height;
+
+	if (STAILQ_EMPTY(&fonts)) {
+		STAILQ_INSERT_HEAD(&fonts, fp, font_next);
+		return (true);
+	}
+
+	previous = NULL;
+	size = fp->font_data->width * fp->font_data->height;
+
+	STAILQ_FOREACH(entry, &fonts, font_next) {
+		/* Should fp be inserted before the entry? */
+		if (size >
+		    entry->font_data->width * entry->font_data->height) {
+			if (previous == NULL) {
+				STAILQ_INSERT_HEAD(&fonts, fp, font_next);
+			} else {
+				STAILQ_INSERT_AFTER(&fonts, previous, fp,
+				    font_next);
+			}
+			return (true);
+		}
+		next = STAILQ_NEXT(entry, font_next);
+		if (next == NULL ||
+		    size > next->font_data->width * next->font_data->height) {
+			STAILQ_INSERT_AFTER(&fonts, entry, fp, font_next);
+			return (true);
+		}
+		previous = entry;
+	}
+	return (true);
+}
+
+static int
+font_set(struct env_var *ev, int flags, const void *value)
+{
+	struct fontlist *fl, *tmp;
+	char *eptr;
+	unsigned long x = 0, y = 0;
+
+	/*
+	 * Attempt to extract values from "XxY" string. In case of error,
+	 * we have unmaching glyph dimensions and will just output the
+	 * available values.
+	 */
+	if (value != NULL) {
+		x = strtoul(value, &eptr, 10);
+		if (*eptr == 'x')
+			y = strtoul(eptr + 1, &eptr, 10);
+	}
+	STAILQ_FOREACH(fl, &fonts, font_next) {
+		if (fl->font_data->width == x && fl->font_data->height == y)
+			break;
+	}
+	if (fl != NULL) {
+		/* Reset any FONT_MANUAL flag. */
+		STAILQ_FOREACH(tmp, &fonts, font_next)
+			tmp->font_flags = FONT_AUTO;
+
+		fl->font_flags = FONT_MANUAL;
+		/* Trigger tem update. */
+		tems.update_font = true;
+		plat_cons_update_mode(-1);
+		return (CMD_OK);
+	}
+
+	printf("Available fonts:\n");
+	STAILQ_FOREACH(fl, &fonts, font_next) {
+		printf("    %dx%d\n", fl->font_data->width,
+		    fl->font_data->height);
+	}
+	return (CMD_OK);
+}
+
+void
+autoload_font(void)
+{
+	struct name_list *nl;
+	struct name_entry *np;
+
+	nl = read_list("/boot/fonts/fonts.dir");
+	if (nl == NULL)
+		return;
+
+	while (!SLIST_EMPTY(nl)) {
+		np = SLIST_FIRST(nl);
+		SLIST_REMOVE_HEAD(nl, n_entry);
+		if (insert_font(np->n_name) == false)
+			free(np->n_name);
+		free(np);
+	}
+
+	unsetenv("screen-font");
+	env_setenv("screen-font", EV_VOLATILE, NULL, font_set, env_nounset);
+	/* Trigger tem update. */
+	tems.update_font = true;
+	plat_cons_update_mode(-1);
 }
 
 COMMAND_SET(load_font, "loadfont", "load console font from file", command_font);
@@ -1097,8 +1297,8 @@ static int
 command_font(int argc, char *argv[])
 {
 	int i, rc = CMD_OK;
-	bitmap_data_t *old;
-	struct font *fp;
+	struct fontlist *fl;
+	bitmap_data_t *bd;
 
 	if (argc > 2) {
 		printf("Usage: loadfont [file.fnt]\n");
@@ -1106,28 +1306,54 @@ command_font(int argc, char *argv[])
 	}
 
 	if (argc == 2) {
-		if ((rc = load_font(argv[1])) != 0) {
-			printf("loadfont failed, error: %d\n", rc);
-			rc = CMD_ERROR;
-		} else {
-			rc = CMD_OK;
+		char *name = strdup(argv[1]);
+
+		if (name == NULL) {
+			printf("loadfont error: out of memory\n");
+			return (CMD_ERROR);
 		}
-		return (rc);
+
+		if (insert_font(name) == false) {
+			free(name);
+			printf("loadfont error: loading failed\n");
+			return (CMD_ERROR);
+		}
+
+		bd = load_font(argv[1]);
+		if (bd == NULL) {
+			printf("loadfont error: loading failed\n");
+			return (CMD_ERROR);
+		}
+
+		/* Get the font list entry and mark it manually loaded. */
+		STAILQ_FOREACH(fl, &fonts, font_next) {
+			if (strcmp(fl->font_name, argv[1]) == 0)
+				fl->font_flags = FONT_MANUAL;
+		}
+		tems.update_font = true;
+		plat_cons_update_mode(-1);
+		return (CMD_OK);
 	}
 
 	if (argc == 1) {
-		if (fonts->data == &DEFAULT_FONT_DATA)
-			return (rc);
-
-		old = fonts->data;
-		fonts->data = &DEFAULT_FONT_DATA;
+		/*
+		 * Walk entire font list, release any loaded font, and set
+		 * autoload flag. If the font list is empty, the tem will
+		 * get the builtin default.
+		 */
+		STAILQ_FOREACH(fl, &fonts, font_next) {
+			if (fl->font_data->font != NULL) {
+				/* Note the tem is releasing font bytes */
+				for (i = 0; i < VFNT_MAPS; i++)
+					free(fl->font_data->font->vf_map[i]);
+				free(fl->font_data->font);
+				fl->font_data->font = NULL;
+				fl->font_data->uncompressed_size = 0;
+				fl->font_flags = FONT_AUTO;
+			}
+		}
 		tems.update_font = true;
 		plat_cons_update_mode(-1);
-		fp = old->font;
-		for (i = 0; i < VFNT_MAPS; i++)
-			free(fp->vf_map[i]);
-		free(fp);
-		free(old);
 	}
 	return (rc);
 }

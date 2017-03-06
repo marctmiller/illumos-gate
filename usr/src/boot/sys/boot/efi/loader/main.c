@@ -478,6 +478,7 @@ main(int argc, CHAR16 *argv[])
 	if (find_currdev(img) != 0)
 		return (EFI_NOT_FOUND);
 
+	autoload_font();		/* Set up the font list for console. */
 	efi_init_environment();
 	setenv("ISADIR", "amd64", 1);	/* we only build 64bit */
 	bi_isadir();			/* set ISADIR */
