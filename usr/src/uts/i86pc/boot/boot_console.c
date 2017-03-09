@@ -585,8 +585,8 @@ boot_fb(struct xboot_info *xbi, int console)
 		return (CONS_TTY);
 	}
 
-	fb_info.terminal.x = 80;
-	fb_info.terminal.y = 34;
+	fb_info.terminal.x = VGA_TEXT_COLS;
+	fb_info.terminal.y = VGA_TEXT_ROWS;
 	boot_fb_init(CONS_FRAMEBUFFER);
 
 	if (console == CONS_SCREEN_TEXT)
