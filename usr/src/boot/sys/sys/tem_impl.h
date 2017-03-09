@@ -111,7 +111,7 @@ typedef uint32_t tem_char_t;	/* 32bit char to support UTF-8 */
 /*
  * Default number of rows and columns
  */
-#define	TEM_DEFAULT_ROWS	34
+#define	TEM_DEFAULT_ROWS	25
 #define	TEM_DEFAULT_COLS	80
 
 /*
