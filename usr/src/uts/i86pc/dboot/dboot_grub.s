@@ -115,7 +115,6 @@ information_request_tag_start:
 	.long	MULTIBOOT_TAG_TYPE_FRAMEBUFFER
 	.long	MULTIBOOT_TAG_TYPE_BASIC_MEMINFO
 information_request_tag_end:
-	.long	0		/* padding */
 
 #if defined (_BOOT_TARGET_amd64)
 	/*
@@ -161,7 +160,6 @@ console_tag_end:
 	/*
 	 * MB header framebuffer tag
 	 */
-	.align	MULTIBOOT_TAG_ALIGN
 framebuffer_tag_start:
 	.word	MULTIBOOT_HEADER_TAG_FRAMEBUFFER
 	.word	0
@@ -170,6 +168,7 @@ framebuffer_tag_start:
 	.long	0		/* height - no preference */
 	.long	0		/* depth - no preference */
 framebuffer_tag_end:
+	.long 	0		/* padding */
 
 	/*
 	 * Tell the bootloader to load the modules page aligned to
