@@ -709,7 +709,10 @@ vbe_print_mode(void)
 
 	printf("    palette format: %x bits per primary\n", mode >> 8);
 	for (i = 0; i < 16; i++) {
-		biosvbe_palette_data(1, i, &pe);
+		rc = biosvbe_palette_data(1, i, &pe);
+		if (rc != VBE_SUCCESS)
+			break;
+
 		printf("%d: R=%02x, G=%02x, B=%02x\n", i,
 		    pe.Red, pe.Green, pe.Blue);
 	}

@@ -104,7 +104,10 @@ gfx_fb_color_map(uint8_t index)
 
 	if (gfx_fb.framebuffer_common.framebuffer_type !=
 	    MULTIBOOT_FRAMEBUFFER_TYPE_RGB) {
-		return (index);
+		if (index < sizeof (solaris_color_to_pc_color))
+			return (solaris_color_to_pc_color[index]);
+		else
+			return (index);
 	}
 
 	c = cmap4_to_24.red[index];
@@ -332,7 +335,7 @@ gfx_fb_cons_clear(struct vis_consclear *ca)
 	switch (gfx_fb.framebuffer_common.framebuffer_bpp) {
 	case 8:		/* 8 bit */
 		for (i = 0; i < height; i++) {
-			(void) memset(fb + i * pitch, ca->bg_color, pitch);
+			(void) memset(fb + i * pitch, data, pitch);
 		}
 		break;
 	case 15:
@@ -955,7 +958,7 @@ gfx_fb_putimage(png_t *png)
 						break;
 				}
 			}
-			da.data[j] = color;
+			da.data[j] = solaris_color_to_pc_color[color];
 			break;
 		}
 		case 15:

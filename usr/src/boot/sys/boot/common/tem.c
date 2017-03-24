@@ -175,28 +175,6 @@ tem_callbacks_t tem_pix_callbacks = {
 	.tsc_cls = &tem_pix_cls
 };
 
-/* BEGIN CSTYLED */
-/*                                  Bk  Rd  Gr  Br  Bl  Mg  Cy  Wh */
-static text_color_t dim_xlate[] = {  1,  5,  3,  7,  2,  6,  4,  8 };
-static text_color_t brt_xlate[] = {  9, 13, 11, 15, 10, 14, 12,  0 };
-/* END CSTYLED */
-
-text_cmap_t cmap4_to_24 = {
-/* BEGIN CSTYLED */
-/* 0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15
-  Wh+  Bk   Bl   Gr   Cy   Rd   Mg   Br   Wh   Bk+  Bl+  Gr+  Cy+  Rd+  Mg+  Yw */
-  .red = {
- 0xff,0x00,0x00,0x00,0x00,0x80,0x80,0x80,0x80,0x40,0x00,0x00,0x00,0xff,0xff,0xff
-},
-  .green = {
- 0xff,0x00,0x00,0x80,0x80,0x00,0x00,0x80,0x80,0x40,0x00,0xff,0xff,0x00,0x00,0xff
-},
-  .blue = {
- 0xff,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x40,0xff,0x00,0xff,0x00,0xff,0x00
-}
-/* END CSTYLED */
-};
-
 #define	tem_callback_display	(*tems.ts_callbacks->tsc_display)
 #define	tem_callback_copy	(*tems.ts_callbacks->tsc_copy)
 #define	tem_callback_cursor	(*tems.ts_callbacks->tsc_cursor)
@@ -726,9 +704,12 @@ tems_reset_colormap(void)
 	case 8:
 		cm.index = 0;
 		cm.count = 16;
-		cm.red   = cmap4_to_24.red;   /* 8-bits (1/3 of TrueColor 24) */
-		cm.blue  = cmap4_to_24.blue;  /* 8-bits (1/3 of TrueColor 24) */
-		cm.green = cmap4_to_24.green; /* 8-bits (1/3 of TrueColor 24) */
+		/* 8-bits (1/3 of TrueColor 24) */
+		cm.red   = (uint8_t *)cmap4_to_24.red;
+		/* 8-bits (1/3 of TrueColor 24) */
+		cm.blue  = (uint8_t *)cmap4_to_24.blue;
+		/* 8-bits (1/3 of TrueColor 24) */
+		cm.green = (uint8_t *)cmap4_to_24.green;
 		if (tems.ts_hdl != NULL)
 			(void) tems.ts_hdl->c_ioctl(tems.ts_hdl,
 			    VIS_PUTCMAP, &cm);
@@ -2530,9 +2511,12 @@ tem_pix_cursor(struct tem_vt_state *tem, short action)
 
 	switch (tems.ts_pdepth) {
 	case 4:
-	case 8:
 		ca.fg_color.mono = fg;
 		ca.bg_color.mono = bg;
+		break;
+	case 8:
+		ca.fg_color.mono = tems.ts_color_map(fg);
+		ca.bg_color.mono = tems.ts_color_map(bg);
 		break;
 	case 15:
 	case 16:
@@ -2592,6 +2576,9 @@ bit_to_pix8(struct tem_vt_state *tem,
     text_color_t bg_color)
 {
 	uint8_t *dest = (uint8_t *)tem->tvs_pix_data;
+
+	fg_color = (text_color_t)tems.ts_color_map(fg_color);
+	bg_color = (text_color_t)tems.ts_color_map(bg_color);
 	font_bit_to_pix8(&tems.ts_font, dest, c, fg_color, bg_color);
 }
 

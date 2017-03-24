@@ -71,10 +71,6 @@ static int vidc_text_cons_put_cmap(struct vis_cmap *);
 static int vidc_started;
 static uint16_t	*vgatext;
 
-static const unsigned char solaris_color_to_pc_color[16] = {
-	15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
-};
-
 /* mode change callback and argument from tem */
 static vis_modechg_cb_t modechg_cb;
 static struct vis_modechg_arg *modechg_arg;
@@ -539,6 +535,21 @@ vidc_cons_cursor(struct vis_conscursor *cc)
 	}
 }
 
+static uint8_t
+c24_to_vga(uint8_t c, uint8_t mask)
+{
+	switch (c) {
+	case 0x40:
+		return (0x15 & mask);
+	case 0x80:
+		return (0x2A & mask);
+	case 0xFF:
+		return (c & mask);
+	default:
+		return (0);
+	}
+}
+
 static int
 vidc_vbe_cons_put_cmap(struct vis_cmap *cm)
 {
@@ -550,13 +561,14 @@ vidc_vbe_cons_put_cmap(struct vis_cmap *cm)
 	if (rc != VBE_SUCCESS)
 		return (rc);
 
-	bits = 8 - (bits >> 8);
-	pe.Alignment = 0xFF;
+	bits = 0xFF >> (8 - (bits >> 8));
+	pe.Alignment = 0;
 	for (i = 0; i < cm->count; i++) {
-		pe.Red = cm->red[i] >> bits;
-		pe.Green = cm->green[i] >> bits;
-		pe.Blue = cm->blue[i] >> bits;
-		rc = vbe_set_palette(&pe, cm->index + i);
+		pe.Red = c24_to_vga(cm->red[i], bits);
+		pe.Green = c24_to_vga(cm->green[i], bits);
+		pe.Blue = c24_to_vga(cm->blue[i], bits);
+		rc = vbe_set_palette(&pe,
+		    solaris_color_to_pc_color[cm->index + i]);
 		if (rc != 0)
 			break;
 	}
@@ -564,7 +576,7 @@ vidc_vbe_cons_put_cmap(struct vis_cmap *cm)
 }
 
 static int
-vidc_text_cons_put_cmap(struct vis_cmap *cm)
+vidc_text_cons_put_cmap(struct vis_cmap *cm __unused)
 {
 	return (1);
 }

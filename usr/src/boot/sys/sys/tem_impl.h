@@ -161,7 +161,11 @@ typedef struct term_char {
 	tem_char_t	tc_char;
 } term_char_t;
 
-extern text_cmap_t cmap4_to_24;
+/* Color translation tables. */
+extern const uint8_t dim_xlate[8];
+extern const uint8_t brt_xlate[8];
+extern const uint8_t solaris_color_to_pc_color[16];
+extern const text_cmap_t cmap4_to_24;
 
 /*
  * State structure for each virtual terminal emulator
