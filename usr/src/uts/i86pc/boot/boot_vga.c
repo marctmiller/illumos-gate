@@ -32,6 +32,7 @@
 #include <sys/vgareg.h>
 #include <sys/framebuffer.h>
 #include <sys/boot_console.h>
+#include <sys/tem_impl.h>
 #include "boot_console_impl.h"
 
 #include "boot_vga.h"
@@ -84,14 +85,6 @@ set_vga_color(void)
 {
 	int color;
 	uint8_t tmp;
-/* BEGIN CSTYLED */
-/*                              Bk  Rd  Gr  Br  Bl  Mg  Cy  Wh */
-	uint8_t dim_xlate[] = {  1,  5,  3,  7,  2,  6,  4,  8 };
-	uint8_t brt_xlate[] = {  9, 13, 11, 15, 10, 14, 12,  0 };
-	uint8_t solaris_color_to_pc_color[16] = {
-		15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
-	};
-/* END CSTYLED */
 
 	/*
 	 * Now we have two principal cases, black on white and white on black.

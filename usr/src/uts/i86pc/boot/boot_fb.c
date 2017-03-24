@@ -31,29 +31,11 @@
 #include <sys/bootinfo.h>
 #include <sys/boot_console.h>
 #include <sys/bootconf.h>
+#include <sys/tem_impl.h>
+#include <sys/visual_io.h>
 #include "boot_console_impl.h"
 
 #define	P2ROUNDUP(x, align)	(-(-(x) & -(align)))
-/*
- * Simplified visual_io data structures from visual_io.h
- */
-
-struct vis_consdisplay {
-	uint16_t row;		/* Row to display data at */
-	uint16_t col;		/* Col to display data at */
-	uint16_t width;		/* Width of data */
-	uint16_t height;	/* Height of data */
-	uint8_t  *data;		/* Data to display */
-};
-
-struct vis_conscopy {
-	uint16_t s_row;		/* Starting row */
-	uint16_t s_col;		/* Starting col */
-	uint16_t e_row;		/* Ending row */
-	uint16_t e_col;		/* Ending col */
-	uint16_t t_row;		/* Row to move to */
-	uint16_t t_col;		/* Col to move to */
-};
 
 /*
  * We have largest font 16x32 with depth 32. This will allocate 2048
@@ -67,29 +49,6 @@ static struct font	cf_font;
 
 static struct font	boot_fb_font; /* set by set_font() */
 static uint8_t		glyph[MAX_GLYPH];
-
-/* color translation */
-typedef struct {
-	uint8_t red[16];
-	uint8_t green[16];
-	uint8_t blue[16];
-} text_cmap_t;
-
-/* BEGIN CSTYLED */
-/*                             Bk  Rd  Gr  Br  Bl  Mg  Cy  Wh */
-static uint8_t dim_xlate[] = {  1,  5,  3,  7,  2,  6,  4,  8 };
-static uint8_t brt_xlate[] = {  9, 13, 11, 15, 10, 14, 12,  0 };
-/* END CSTYLED */
-
-static text_cmap_t cmap4_to_24 = {
-/* BEGIN CSTYLED */
-/* 0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15
-  Wh+  Bk   Bl   Gr   Cy   Rd   Mg   Br   Wh   Bk+  Bl+  Gr+  Cy+  Rd+  Mg+  Yw */
-  0xff,0x00,0x00,0x00,0x00,0x80,0x80,0x80,0x80,0x40,0x00,0x00,0x00,0xff,0xff,0xff,
-  0xff,0x00,0x00,0x80,0x80,0x00,0x00,0x80,0x80,0x40,0x00,0xff,0xff,0x00,0x00,0xff,
-  0xff,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x40,0xff,0x00,0xff,0x00,0xff,0x00
-/* END CSTYLED */
-};
 
 #define	WHITE		(0)		/* indexed color */
 #define	BLACK		(1)		/* indexed color */
@@ -383,9 +342,9 @@ boot_color_map(uint8_t index)
 	int pos, size;
 	uint32_t color;
 
-	/* 8bit depth is for indexed colors */
+	/* 8bit depth is using indexed colors */
 	if (fb_info.depth == 8)
-		return (index);
+		return (solaris_color_to_pc_color[index]);
 
 	c = cmap4_to_24.red[index];
 	pos = fb_info.rgb.red.pos;

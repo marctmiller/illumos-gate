@@ -31,6 +31,7 @@
 #include <sys/kd.h>
 #include <sys/sunddi.h>
 #include <sys/gfx_private.h>
+#include <sys/tem_impl.h>
 #include "gfxp_fb.h"
 
 #define	MYNAME	"gfxp_bitmap"
@@ -273,19 +274,26 @@ bitmap_color_map(uint8_t index)
 	uint8_t c, mask;
 	uint32_t color = 0;
 
-	c = cmap_rgb16.red[index];
+	if (fb_info.fb_type == FB_TYPE_INDEXED) {
+		if (index < sizeof(solaris_color_to_pc_color))
+			return (solaris_color_to_pc_color[index]);
+		else
+			return (index);
+	}
+
+	c = cmap4_to_24.red[index];
 	mask = (1 << fb_info.rgb.red.size) - 1;
 	c >>= 8 - fb_info.rgb.red.size;
 	c &= mask;
 	color |= c << fb_info.rgb.red.pos;
 
-	c = cmap_rgb16.green[index];
+	c = cmap4_to_24.green[index];
 	mask = (1 << fb_info.rgb.green.size) - 1;
 	c >>= 8 - fb_info.rgb.green.size;
 	c &= mask;
 	color |= c << fb_info.rgb.green.pos;
 
-	c = cmap_rgb16.blue[index];
+	c = cmap4_to_24.blue[index];
 	mask = (1 << fb_info.rgb.blue.size) - 1;
 	c >>= 8 - fb_info.rgb.blue.size;
 	c &= mask;
@@ -476,10 +484,10 @@ bitmap_cons_clear(struct gfxp_fb_softc *softc, struct vis_consclear *ca)
 		for (i = 0; i < console->fb.screen.y; i++) {
 			if (softc->mode == KD_TEXT) {
 				fb = console->fb.fb + i * pitch;
-				(void) memset(fb, ca->bg_color, pitch);
+				(void) memset(fb, data, pitch);
 			}
 			fb = console->fb.shadow_fb + i * pitch;
-			(void) memset(fb, ca->bg_color, pitch);
+			(void) memset(fb, data, pitch);
 		}
 		break;
 	case 15:

@@ -141,6 +141,18 @@ typedef uint32_t tem_char_t;	/* 32bit char to support UTF-8 */
 typedef uint8_t text_color_t;
 typedef uint16_t text_attr_t;
 
+typedef struct {
+	uint8_t red[16];
+	uint8_t green[16];
+	uint8_t blue[16];
+} text_cmap_t;
+
+/* Color translation tables. */
+extern const uint8_t dim_xlate[8];
+extern const uint8_t brt_xlate[8];
+extern const uint8_t solaris_color_to_pc_color[16];
+extern const text_cmap_t cmap4_to_24;
+
 #if !defined(_BOOT)
 typedef struct tem_color {
 	text_color_t	fg_color;
@@ -165,20 +177,12 @@ struct tem_size {
 	screen_size_t	height;
 };
 
-typedef struct {
-	uint8_t red[16];
-	uint8_t green[16];
-	uint8_t blue[16];
-} text_cmap_t;
-
 /* Combined color and 32bit tem char */
 typedef struct term_char {
 	text_color_t	tc_fg_color;
 	text_color_t	tc_bg_color;
 	tem_char_t	tc_char;
 } term_char_t;
-
-extern text_cmap_t cmap4_to_24;
 
 /*
  * State structure for each virtual terminal emulator

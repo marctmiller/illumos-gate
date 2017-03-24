@@ -774,9 +774,12 @@ tems_reset_colormap(cred_t *credp, enum called_from called_from)
 	case 8:
 		cm.index = 0;
 		cm.count = 16;
-		cm.red   = cmap4_to_24.red;   /* 8-bits (1/3 of TrueColor 24) */
-		cm.blue  = cmap4_to_24.blue;  /* 8-bits (1/3 of TrueColor 24) */
-		cm.green = cmap4_to_24.green; /* 8-bits (1/3 of TrueColor 24) */
+		/* 8-bits (1/3 of TrueColor 24) */
+		cm.red   = (uint8_t *)cmap4_to_24.red;
+		/* 8-bits (1/3 of TrueColor 24) */
+		cm.blue  = (uint8_t *)cmap4_to_24.blue;
+		/* 8-bits (1/3 of TrueColor 24) */
+		cm.green = (uint8_t *)cmap4_to_24.green;
 		(void) ldi_ioctl(tems.ts_hdl, VIS_PUTCMAP, (intptr_t)&cm,
 		    FKIOCTL, credp, &rval);
 		break;

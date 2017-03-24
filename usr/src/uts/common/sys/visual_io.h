@@ -138,7 +138,7 @@ struct vis_cmap {
 };
 
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_BOOT)
 /*
  * The following ioctls are used for communication between the layered
  * device and the framebuffer.  The layered driver calls the framebuffer
@@ -319,7 +319,7 @@ struct vis_devinit {
 	struct vis_modechg_arg *modechg_arg; /* Mode change cb arg */
 };
 
-#endif	/* _KERNEL */
+#endif	/* _KERNEL || _BOOT */
 
 #ifdef __cplusplus
 }

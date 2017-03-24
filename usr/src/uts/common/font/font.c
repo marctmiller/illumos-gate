@@ -39,6 +39,40 @@
 #include <sys/sysmacros.h>
 
 /*
+ * To simplify my life, I am "temporarily" collecting the commonly used
+ * color bits here. The bits shared between loader, dboot, early boot, tem.
+ * This data would need some sort of API, but I am in no condition to figure
+ * something out right now.
+ */
+
+/* ANSI color to sun color translation. */
+/* BEGIN CSTYLED */
+/*                            Bk  Rd  Gr  Br  Bl  Mg  Cy  Wh */
+const uint8_t dim_xlate[] = {  1,  5,  3,  7,  2,  6,  4,  8 };
+const uint8_t brt_xlate[] = {  9, 13, 11, 15, 10, 14, 12,  0 };
+
+/* The pc color here is actually referring to standard 16 color VGA map. */
+const uint8_t solaris_color_to_pc_color[16] = {
+    15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
+};
+
+/* 4-bit to 24-bit color translation. */
+const text_cmap_t cmap4_to_24 = {
+/* 0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15
+  Wh+  Bk   Bl   Gr   Cy   Rd   Mg   Br   Wh   Bk+  Bl+  Gr+  Cy+  Rd+  Mg+  Yw */
+  .red = {
+ 0xff,0x00,0x00,0x00,0x00,0x80,0x80,0x80,0x80,0x40,0x00,0x00,0x00,0xff,0xff,0xff
+},
+  .green = {
+ 0xff,0x00,0x00,0x80,0x80,0x00,0x00,0x80,0x80,0x40,0x00,0xff,0xff,0x00,0x00,0xff
+},
+  .blue = {
+ 0xff,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x40,0xff,0x00,0xff,0x00,0xff,0x00
+}
+};
+/* END CSTYLED */
+
+/*
  * Fonts are statically linked with this module. At some point an
  * RFE might be desireable to allow dynamic font loading.  The
  * original intention to facilitate dynamic fonts can be seen
