@@ -215,6 +215,7 @@ bitmap_kdsetmode(struct gfxp_fb_softc *softc, int mode)
 		if (softc->mode == KD_TEXT && softc->silent == 1) {
 			bitmap_kdsettext(softc);
 		}
+		mode = KD_TEXT;
 		break;
 	default:
 		return (EINVAL);

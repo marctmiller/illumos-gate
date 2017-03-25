@@ -464,6 +464,7 @@ vgatext_kdsetmode(struct gfxp_fb_softc *softc, int mode)
 			vgatext_progressbar_stop(softc);
 			vgatext_kdsettext(softc);
 		}
+		mode = KD_TEXT;
 		break;
 
 	default:
