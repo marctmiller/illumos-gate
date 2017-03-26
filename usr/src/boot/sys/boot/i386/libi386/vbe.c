@@ -671,7 +671,8 @@ vbe_print_mode(void)
 		return;
 	}
 
-	if (biosvbe_get_mode_info(mode, vbe_mode) != VBE_SUCCESS) {
+	if (biosvbe_get_mode_info(mode, vbe_mode) != VBE_SUCCESS ||
+	    vbe_mode_is_supported(vbe_mode) == 0) {
 		printf("VBE mode (0x%x) is not framebuffer mode\n", mode);
 		return;
 	}
@@ -830,6 +831,10 @@ command_vesa(int argc, char *argv[])
 			plat_cons_update_mode(1);
 		}
 		return (CMD_OK);
+	} else {
+		sprintf(command_errbuf, "%s: mode %s is not framebuffer mode\n",
+		    argv[0], argv[2]);
+		return (CMD_ERROR);
 	}
 
 usage:
