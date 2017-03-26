@@ -482,24 +482,11 @@ tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 		/*
 		 * The built in font is compressed, to use it, we
 		 * uncompress it into the allocated buffer.
-		 * To use loaded font, we free the allocated buffer
-		 * and assign the loaded buffer.
+		 * To use loaded font, we assign the loaded buffer.
 		 * In case of next load, the previously loaded data
-		 * is freed here, so, the font loader must be careful
-		 * not to introduce double free.
-		 * We can not skip free() there, because we do not know if
-		 * the current font is builtin or loaded.
+		 * is freed by the process of loading the new font.
 		 */
 		tems.update_font = false;
-
-		/*
-		 * If the font bytes pointer has changed, free the old one
-		 * and reset the font data.
-		 */
-		if (tems.ts_font.vf_bytes != font_data->font->vf_bytes) {
-			free(tems.ts_font.vf_bytes);
-			tems.ts_font.vf_bytes = NULL;
-		}
 
 		if (tems.ts_font.vf_bytes == NULL) {
 			for (i = 0; i < VFNT_MAPS; i++) {
@@ -508,8 +495,14 @@ tems_setup_terminal(struct vis_devinit *tp, size_t height, size_t width)
 			}
 
 			if (font_data->compressed_size != 0) {
+				/*
+				 * We only expect this allocation to
+				 * happen at startup, and therefore not to fail.
+				 */
 				tems.ts_font.vf_bytes =
 				    malloc(font_data->uncompressed_size);
+				if (tems.ts_font.vf_bytes == NULL)
+					panic("out of memory\n");
 				(void)lz4_decompress(font_data->compressed_data,
 				    tems.ts_font.vf_bytes,
 				    font_data->compressed_size,

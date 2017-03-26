@@ -1079,15 +1079,25 @@ load_font(char *path)
 			continue;
 
 		if (fl->font_data->font != NULL) {
-			/* The tem is releasing font bytes. */
 			for (i = 0; i < VFNT_MAPS; i++)
 				free(fl->font_data->font->vf_map[i]);
+
+			/* Unset vf_bytes pointer in tem. */
+			if (tems.ts_font.vf_bytes ==
+			    fl->font_data->font->vf_bytes) {
+				tems.ts_font.vf_bytes = NULL;
+			}
+			free(fl->font_data->font->vf_bytes);
 			free(fl->font_data->font);
 			fl->font_data->font = NULL;
 			fl->font_data->uncompressed_size = 0;
 			fl->font_flags = FONT_AUTO;
 		}
 	}
+
+	/* free the uncompressed builtin font data in tem. */
+	free(tems.ts_font.vf_bytes);
+	tems.ts_font.vf_bytes = NULL;
 
 done:
 	close(fd);
