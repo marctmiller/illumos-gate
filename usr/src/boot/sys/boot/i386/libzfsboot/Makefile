@@ -35,11 +35,13 @@ SRCS +=		$(SRC)/common/crypto/skein/skein_iv.c
 SRCS +=		$(SRC)/common/crypto/skein/skein_block.c
 OBJS +=		zfs.o gzip.o edonr.o skein.o skein_iv.o skein_block.o
 
-CPPFLAGS=	-Os -nostdinc -I../../../../include -I../../..
+CPPFLAGS=	-Os -DSTAND -nostdinc -I../../../../include -I../../..
 CPPFLAGS +=	-I../../common -I../../.. -I.. -I.
 CPPFLAGS +=	-I../../../../lib/libstand
 CPPFLAGS +=	-I../../../../lib/libz
 CPPFLAGS +=	-I../../../cddl/boot/zfs
+
+CPPFLAGS +=	-I$(SRC)/uts/common
 
 # Do not unroll skein loops, reduce code size
 CPPFLAGS +=	-DSKEIN_LOOP=111

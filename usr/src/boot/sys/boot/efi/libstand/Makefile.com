@@ -22,7 +22,7 @@ CC=	$(GCC_ROOT)/bin/gcc
 LIB_BASE=	$(SRC)/boot/lib
 LIBSTAND_SRC=	$(LIB_BASE)/libstand
 
-CPPFLAGS =	-nostdinc -I../../../../../include -I${LIBSTAND_SRC}
+CPPFLAGS =	-nostdinc -DSTAND -I../../../../../include -I${LIBSTAND_SRC}
 CPPFLAGS +=	-I../../../..  -I../../../../sys -I. -I$(SRC)/common/bzip2
 
 CFLAGS =	-Os -ffreestanding -Wformat
@@ -35,6 +35,8 @@ $(LIBRARY): $(SRCS) $(OBJS)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 include ${LIBSTAND_SRC}/Makefile.inc
+
+CPPFLAGS +=	-I$(SRC)/uts/common
 
 clean: clobber
 clobber:

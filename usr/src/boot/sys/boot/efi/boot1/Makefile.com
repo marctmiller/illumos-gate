@@ -30,7 +30,7 @@ OBJS=	multiboot.o boot1.o self_reloc.o start.o ufs_module.o zfs_module.o \
 	devopen.o
 
 CFLAGS= -Os
-CPPFLAGS=	-nostdinc
+CPPFLAGS=	-nostdinc -DSTAND
 CPPFLAGS +=	-I.
 CPPFLAGS +=	-I../../include
 CPPFLAGS +=	-I../../include/${MACHINE}
@@ -49,6 +49,8 @@ CPPFLAGS +=	-DEFI_ZFS_BOOT
 CPPFLAGS +=	-I../../../common
 
 include ../../Makefile.inc
+
+CPPFLAGS +=	-I$(SRC)/uts/common
 
 FILES=  ${EFIPROG}
 FILEMODE=	0555

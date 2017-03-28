@@ -29,7 +29,7 @@ all install: $(LIBRARY)
 LIB_BASE=	$(SRC)/boot/lib
 LIBSTAND_SRC=	$(LIB_BASE)/libstand
 
-CPPFLAGS =	-nostdinc -I../../../../include -I${LIBSTAND_SRC}
+CPPFLAGS =	-nostdinc -DSTAND -I../../../../include -I${LIBSTAND_SRC}
 CPPFLAGS +=	-I../../..  -I../../../sys -I. -I$(SRC)/common/bzip2
 
 CFLAGS =	-Os -ffreestanding -Wformat
@@ -41,6 +41,8 @@ CFLAGS +=	-m32 -fno-reorder-functions
 CFLAGS +=	-mpreferred-stack-boundary=2
 
 include ${LIBSTAND_SRC}/Makefile.inc
+
+CPPFLAGS +=	-I$(SRC)/uts/common
 
 # _setjmp/_longjmp
 SRCS += $(LIBSTAND_SRC)/i386/_setjmp.S

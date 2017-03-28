@@ -33,7 +33,7 @@ SRCS +=		$(SRC)/common/crypto/skein/skein_iv.c
 SRCS +=		$(SRC)/common/crypto/skein/skein_block.c
 OBJS +=		zfs.o gzip.o edonr.o skein.o skein_iv.o skein_block.o
 
-CPPFLAGS=	-nostdinc -I../../../../../include -I../../..
+CPPFLAGS=	-nostdinc -DSTAND -I../../../../../include -I../../..
 CPPFLAGS +=	-I../../../common -I../../../.. -I.. -I.
 CPPFLAGS +=	-I../../../../../lib/libstand
 CPPFLAGS +=	-I../../../../../lib/libz
@@ -43,6 +43,8 @@ CPPFLAGS +=	-I../../../../cddl/boot/zfs
 CPPFLAGS +=	-DSKEIN_LOOP=111
 
 include ../../Makefile.inc
+
+CPPFLAGS +=	-I$(SRC)/uts/common
 
 CLEANFILES +=    machine
 
