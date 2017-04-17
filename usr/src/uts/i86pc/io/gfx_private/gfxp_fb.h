@@ -108,6 +108,7 @@ int gfxp_bm_detach(dev_info_t *, ddi_detach_cmd_t, struct gfxp_fb_softc *);
 
 int gfxp_vga_attach(dev_info_t *, ddi_attach_cmd_t, struct gfxp_fb_softc *);
 int gfxp_vga_detach(dev_info_t *, ddi_detach_cmd_t, struct gfxp_fb_softc *);
+int gfxp_vga_scrnmap(int, intptr_t, int, struct gfxp_fb_softc *);
 
 #ifdef __cplusplus
 }

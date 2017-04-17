@@ -1209,6 +1209,13 @@ vgatext_setfont(struct gfxp_fb_softc *softc)
 
 }
 
+int
+/*ARGSUSED*/
+gfxp_vga_scrnmap(int cmd, intptr_t data, int mode, struct gfxp_fb_softc *softc)
+{
+	return (ENXIO);
+}
+
 static void
 vgatext_save_colormap(struct gfxp_fb_softc *softc)
 {
