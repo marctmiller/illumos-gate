@@ -124,6 +124,7 @@
 #include <sys/systeminfo.h>
 #include <sys/multiboot.h>
 #include <sys/ramdisk.h>
+#include <sys/framebuffer.h>
 
 #ifdef	__xpv
 
@@ -2520,6 +2521,11 @@ release_bootstrap(void)
 	PRM_POINT("Unmapping lower boot pages");
 
 	clear_boot_mappings(0, _userlimit);
+
+	if (fb_info.paddr != 0) {
+		clear_boot_mappings(fb_info.paddr,
+		    fb_info.paddr + fb_info.fb_size);
+	}
 
 	postbootkernelbase = kernelbase;
 
