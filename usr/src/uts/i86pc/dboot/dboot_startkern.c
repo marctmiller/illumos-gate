@@ -2050,6 +2050,9 @@ build_page_tables(void)
 		end = start + fb_tagp->framebuffer_common.framebuffer_height *
 		    fb_tagp->framebuffer_common.framebuffer_pitch;
 
+		if (map_debug)
+			dboot_printf("FB 1:1 map pa=%" PRIx64 "..%" PRIx64 "\n",
+			    start, end);
 		pte_bits |= PT_NOCACHE;
 		if (PAT_support != 0)
 			pte_bits |= PT_PAT_4K;
