@@ -121,7 +121,8 @@ kctl_pcache_create(int *nprops)
 	 * fallback on the old "input-device" property.
 	 */
 	(void) strcpy(inputdev, "text");	/* default to screen */
-	if (!preader("console", inputdev, sizeof ((&pnv[0])->kanv_val)))
+	if (!preader("diag-device", inputdev, sizeof ((&pnv[0])->kanv_val)) &&
+	    !preader("console", inputdev, sizeof ((&pnv[0])->kanv_val)))
 		(void) preader("input-device", inputdev,
 		    sizeof ((&pnv[0])->kanv_val));
 
