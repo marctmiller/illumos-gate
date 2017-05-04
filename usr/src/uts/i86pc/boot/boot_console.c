@@ -63,6 +63,7 @@ extern int bcons_ischar_xen(void);
 fb_info_t fb_info;
 static bcons_dev_t bcons_dev;				/* Device callbacks */
 static int console = CONS_SCREEN_TEXT;
+static int diag = CONS_INVALID;
 static int tty_num = 0;
 static int tty_addr[] = {0x3f8, 0x2f8, 0x3e8, 0x2e8};
 static char *boot_line;
@@ -688,11 +689,45 @@ bcons_init_fb(void)
 #endif
 }
 
+/*
+ * Go through the console_devices array trying to match the string
+ * we were given.  The string on the command line must end with
+ * a comma or white space.
+ *
+ * Eventually we need to rework this to process dual console setup.
+ * This function does set tty_num as an side effect.
+ */
+static int
+lookup_console_devices(const char *cons_str)
+{
+	int n, cons;
+	size_t len, cons_len;
+	console_value_t *consolep;
+
+	cons = CONS_INVALID;
+	if (cons_str != NULL) {
+
+		cons_len = strlen(cons_str);
+		for (n = 0; console_devices[n].name != NULL; n++) {
+			consolep = &console_devices[n];
+			len = strlen(consolep->name);
+			if ((len <= cons_len) && ((cons_str[len] == '\0') ||
+			    (cons_str[len] == ',') || (cons_str[len] == '\'') ||
+			    (cons_str[len] == '"') || ISSPACE(cons_str[len])) &&
+			    (strncmp(cons_str, consolep->name, len) == 0)) {
+				cons = consolep->value;
+				if (cons == CONS_TTY)
+					tty_num = n;
+				break;
+			}
+		}
+	}
+	return (cons);
+}
+
 void
 bcons_init(struct xboot_info *xbi)
 {
-	console_value_t *consolep;
-	size_t len, cons_len;
 	const char *cons_str;
 #if !defined(_BOOT)
 	static char console_text[] = "text";
@@ -718,6 +753,15 @@ bcons_init(struct xboot_info *xbi)
 	bcons_init_xen(boot_line);
 #endif /* __xpv */
 
+	/*
+	 * First check for diag-device.
+	 */
+	cons_str = find_boot_prop("diag-device");
+	if (cons_str != NULL) {
+		diag = lookup_console_devices(cons_str);
+		serial_init();
+	}
+
 	cons_str = find_boot_prop("console");
 	if (cons_str == NULL)
 		cons_str = find_boot_prop("output-device");
@@ -727,29 +771,8 @@ bcons_init(struct xboot_info *xbi)
 		cons_str = console_text;
 #endif
 
-	/*
-	 * Go through the console_devices array trying to match the string
-	 * we were given.  The string on the command line must end with
-	 * a comma or white space.
-	 */
-	if (cons_str != NULL) {
-		int n;
-
-		cons_len = strlen(cons_str);
-		for (n = 0; console_devices[n].name != NULL; n++) {
-			consolep = &console_devices[n];
-			len = strlen(consolep->name);
-			if ((len <= cons_len) && ((cons_str[len] == '\0') ||
-			    (cons_str[len] == ',') || (cons_str[len] == '\'') ||
-			    (cons_str[len] == '"') || ISSPACE(cons_str[len])) &&
-			    (strncmp(cons_str, consolep->name, len) == 0)) {
-				console = consolep->value;
-				if (console == CONS_TTY)
-					tty_num = n;
-				break;
-			}
-		}
-	}
+	if (cons_str != NULL)
+		console = lookup_console_devices(cons_str);
 
 #if defined(__xpv)
 	/*
@@ -1177,9 +1200,9 @@ btem_parse(btem_state_t *btem, int c)
 }
 
 static void
-_doputchar(int c)
+_doputchar(int device, int c)
 {
-	switch (console) {
+	switch (device) {
 	case CONS_TTY:
 		serial_putchar(c);
 		return;
@@ -1194,6 +1217,7 @@ _doputchar(int c)
 	case CONS_USBSER:
 		defcons_putchar(c);
 #endif /* _BOOT */
+	default:
 		return;
 	}
 }
@@ -1209,9 +1233,12 @@ bcons_putchar(int c)
 	}
 #endif /* __xpv */
 
-	if (c == '\n')
-		_doputchar('\r');
-	_doputchar(c);
+	if (c == '\n') {
+		_doputchar(console, '\r');
+		_doputchar(diag, '\r');
+	}
+	_doputchar(console, c);
+	_doputchar(diag, c);
 }
 
 /*
@@ -1226,11 +1253,15 @@ bcons_getchar(void)
 		return (bcons_getchar_xen());
 #endif /* __xpv */
 
-	switch (console) {
-	case CONS_TTY:
-		return (serial_getchar());
-	default:
-		return (kb_getchar());
+	while (1) {
+		if (console == CONS_TTY || diag == CONS_TTY) {
+			if (serial_ischar())
+				return (serial_getchar());
+		}
+		if (console != CONS_INVALID || diag != CONS_INVALID) {
+			if (kb_ischar())
+				return (kb_getchar());
+		}
 	}
 }
 
@@ -1239,6 +1270,7 @@ bcons_getchar(void)
 int
 bcons_ischar(void)
 {
+	int c = 0;
 
 #if defined(__xpv)
 	if (!DOMAIN_IS_INITDOMAIN(xen_info) ||
@@ -1248,10 +1280,29 @@ bcons_ischar(void)
 
 	switch (console) {
 	case CONS_TTY:
+		c = serial_ischar();
+
+	case CONS_INVALID:
+		break;
+
+	default:
+		c = kb_ischar();
+	}
+	if (c != 0)
+		return (c);
+
+	switch (diag) {
+	case CONS_TTY:
 		return (serial_ischar());
+
+	case CONS_INVALID:
+		break;
+
 	default:
 		return (kb_ischar());
 	}
+
+	return (c);
 }
 
 #endif /* _BOOT */
