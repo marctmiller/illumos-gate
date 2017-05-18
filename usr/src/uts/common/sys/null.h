@@ -29,10 +29,11 @@
 /*
  * #if ((defined(_KERNEL) || defined(_FAKE_KERNEL)) && !defined(_KMEMUSER)) || \
  *	(defined(_BOOT) && defined(_KMEMUSER))
- * #endif
+ * #if defined(_BOOT)
  */
 
-#if defined(_BOOT)
+#if ((defined(_KERNEL) || defined(_FAKE_KERNEL)) && !defined(_KMEMUSER)) || \
+	(defined(_BOOT) && defined(_KMEMUSER))
 #define	NULL	((void *)0)
 #else
 #if defined(_XPG7) && !defined(__cplusplus)
