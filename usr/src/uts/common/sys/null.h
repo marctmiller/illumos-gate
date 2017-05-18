@@ -26,6 +26,15 @@
  * POSIX.1-2008 compilation environment.
  */
 
+/*
+ * #if ((defined(_KERNEL) || defined(_FAKE_KERNEL)) && !defined(_KMEMUSER)) || \
+ *	(defined(_BOOT) && defined(_KMEMUSER))
+ * #endif
+ */
+
+#if defined(_BOOT)
+#define	NULL	((void *)0)
+#else
 #if defined(_XPG7) && !defined(__cplusplus)
 #define	NULL	((void *)0)
 #else
@@ -46,6 +55,7 @@
 #endif	/* _LP64 */
 #endif	/* C++11 */
 #endif	/* _XPG7 */
+#endif	/* _BOOT */
 
 #endif	/* NULL */
 
