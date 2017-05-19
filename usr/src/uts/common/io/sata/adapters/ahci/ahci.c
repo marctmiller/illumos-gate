@@ -2566,7 +2566,7 @@ ahci_tran_abort(dev_info_t *dip, sata_pkt_t *spkt, int flag)
 	 * perform a COMRESET.
 	 */
 	(void) ahci_restart_port_wait_till_ready(ahci_ctlp,
-	    ahci_portp, port, NULL, NULL);
+	    ahci_portp, port, 0, NULL);
 
 	/*
 	 * Compute which have finished and which need to be retried.
@@ -6168,7 +6168,7 @@ ahci_alloc_rcvd_fis(ahci_ctl_t *ahci_ctlp, ahci_port_t *ahci_portp)
 	    NULL,
 	    (caddr_t *)&ahci_portp->ahciport_rcvd_fis,
 	    &ret_len,
-	    &ahci_portp->ahciport_rcvd_fis_acc_handle) != NULL) {
+	    &ahci_portp->ahciport_rcvd_fis_acc_handle) != DDI_SUCCESS) {
 
 		AHCIDBG(AHCIDBG_INIT, ahci_ctlp,
 		    "rcvd FIS dma mem alloc fail", NULL);
@@ -6260,7 +6260,7 @@ ahci_alloc_cmd_list(ahci_ctl_t *ahci_ctlp, ahci_port_t *ahci_portp)
 	    NULL,
 	    (caddr_t *)&ahci_portp->ahciport_cmd_list,
 	    &ret_len,
-	    &ahci_portp->ahciport_cmd_list_acc_handle) != NULL) {
+	    &ahci_portp->ahciport_cmd_list_acc_handle) != DDI_SUCCESS) {
 
 		AHCIDBG(AHCIDBG_INIT, ahci_ctlp,
 		    "cmd list dma mem alloc fail", NULL);
@@ -6378,7 +6378,7 @@ ahci_alloc_cmd_tables(ahci_ctl_t *ahci_ctlp, ahci_port_t *ahci_portp)
 		    (caddr_t *)&ahci_portp->ahciport_cmd_tables[slot],
 		    &ret_len,
 		    &ahci_portp->ahciport_cmd_tables_acc_handle[slot]) !=
-		    NULL) {
+		    DDI_SUCCESS) {
 
 			AHCIDBG(AHCIDBG_INIT, ahci_ctlp,
 			    "cmd table dma mem alloc fail", NULL);
