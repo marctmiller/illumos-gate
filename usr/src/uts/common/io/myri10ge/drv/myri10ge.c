@@ -34,11 +34,6 @@
  * Copyright (c) 2016 by Delphix. All rights reserved.
  */
 
-#ifndef	lint
-static const char __idstring[] =
-	"@(#)$Id: myri10ge.c,v 1.186 2009-06-29 13:47:22 gallatin Exp $";
-#endif
-
 #define	MXGEFW_NDIS
 #include "myri10ge_var.h"
 #include "rss_eth_z8e.h"
@@ -418,7 +413,7 @@ myri10ge_pull_jpool(struct myri10ge_slice_state *ss)
 	for (i = 0; i < MYRI10GE_MAX_CPUS; i++) {
 		/* take per-CPU free list */
 		putp = (void *)&jpool->cpu[i & MYRI10GE_MAX_CPU_MASK].head;
-		if (*putp == NULL)
+		if (*putp == (uintptr_t)NULL)
 			continue;
 		put = atomic_swap_ulong(putp, 0);
 		jfree = (struct myri10ge_jpool_entry *)put;
@@ -2918,7 +2913,7 @@ myri10ge_pullup(struct myri10ge_slice_state *ss, mblk_t *mp)
 		return (DDI_FAILURE);
 	}
 	MYRI10GE_ATOMIC_SLICE_STAT_INC(xmit_pullup);
-	mac_hcksum_set(mp, start, stuff, NULL, NULL, tx_offload_flags);
+	mac_hcksum_set(mp, start, stuff, 0, 0, tx_offload_flags);
 	if (tx_offload_flags & HW_LSO)
 		DB_LSOMSS(mp) = (uint16_t)mss;
 	lso_info_set(mp, mss, tx_offload_flags);
