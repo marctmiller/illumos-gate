@@ -1184,7 +1184,7 @@ save_boot_info(struct xboot_info *xbi)
 		}
 	} else {
 		saved_mbi.drives_length = 0;
-		saved_mbi.drives_addr = NULL;
+		saved_mbi.drives_addr = (caddr32_t)(uintptr_t)NULL;
 	}
 
 	/*
