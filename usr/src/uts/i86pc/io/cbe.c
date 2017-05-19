@@ -55,10 +55,27 @@ static cpu_t *volatile cbe_xcall_cpu;
 static void *cbe_xcall_farg;
 static cpuset_t cbe_enabled;
 
-static ddi_softint_hdl_impl_t cbe_low_hdl =
-	{0, NULL, NULL, NULL, 0, NULL, NULL, NULL};
-static ddi_softint_hdl_impl_t cbe_clock_hdl =
-	{0, NULL, NULL, NULL, 0, NULL, NULL, NULL};
+static ddi_softint_hdl_impl_t cbe_low_hdl = {
+	.ih_dip = NULL,
+	.ih_pri = 0,
+	.ih_rwlock = NULL,
+	.ih_pending = NULL,
+	.ih_cb_func = NULL,
+	.ih_cb_arg1 = NULL,
+	.ih_cb_arg2 =  NULL,
+	.ih_private =  NULL
+};
+
+static ddi_softint_hdl_impl_t cbe_clock_hdl = {
+	.ih_dip = NULL,
+	.ih_pri = 0,
+	.ih_rwlock = NULL,
+	.ih_pending = NULL,
+	.ih_cb_func = NULL,
+	.ih_cb_arg1 = NULL,
+	.ih_cb_arg2 =  NULL,
+	.ih_private =  NULL
+};
 
 cyclic_id_t cbe_hres_cyclic;
 int cbe_psm_timer_mode = TIMER_ONESHOT;
