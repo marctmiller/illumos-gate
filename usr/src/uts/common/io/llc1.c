@@ -1291,7 +1291,7 @@ llc1_inforeq(queue_t *q, mblk_t *mp)
 			    lld->llc_mac_info->llcp_addrlen);
 		} else {
 			dlp->dl_addr_length = 0; /* not attached yet */
-			dlp->dl_addr_offset = NULL;
+			dlp->dl_addr_offset = 0;
 			dlp->dl_sap_length = 0; /* 1 bytes on end */
 		}
 		dlp->dl_version = DL_VERSION_2;
