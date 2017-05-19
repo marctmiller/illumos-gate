@@ -691,7 +691,7 @@ ecpp_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	(void) sprintf(name, "ecpp%d", instance);
 
 	if (ddi_create_minor_node(dip, name, S_IFCHR, instance,
-	    DDI_NT_PRINTER, NULL) == DDI_FAILURE) {
+	    DDI_NT_PRINTER, 0) == DDI_FAILURE) {
 		ecpp_error(dip, "ecpp_attach: create_minor_node failed\n");
 		goto fail_minor;
 	}
@@ -6203,7 +6203,7 @@ dma8237_read_count(struct ecppunit *pp)
 		break;
 
 	default:
-		return (NULL);
+		return (0);
 	}
 
 	p = (uint16_t *)&pp->uh.m1553.isa_space->isa_reg[c_wcnt];
