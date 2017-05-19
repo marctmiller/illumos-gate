@@ -709,7 +709,8 @@ ntv_getcr4(cmi_hdl_impl_t *hdl)
 	cpu_t *cp = HDLPRIV(hdl);
 	ulong_t val;
 
-	(void) call_func_ntv(cp->cpu_id, ntv_getcr4_xc, (xc_arg_t)&val, NULL);
+	(void) call_func_ntv(cp->cpu_id, ntv_getcr4_xc, (xc_arg_t)&val,
+	    (xc_arg_t)NULL);
 
 	return (val);
 }
@@ -732,7 +733,8 @@ ntv_setcr4(cmi_hdl_impl_t *hdl, ulong_t val)
 {
 	cpu_t *cp = HDLPRIV(hdl);
 
-	(void) call_func_ntv(cp->cpu_id, ntv_setcr4_xc, (xc_arg_t)val, NULL);
+	(void) call_func_ntv(cp->cpu_id, ntv_setcr4_xc, (xc_arg_t)val,
+	    (xc_arg_t)NULL);
 }
 
 volatile uint32_t cmi_trapped_rdmsr;
@@ -839,7 +841,8 @@ ntv_int(cmi_hdl_impl_t *hdl, int int_no)
 {
 	cpu_t *cp = HDLPRIV(hdl);
 
-	(void) call_func_ntv(cp->cpu_id, ntv_int_xc, (xc_arg_t)int_no, NULL);
+	(void) call_func_ntv(cp->cpu_id, ntv_int_xc, (xc_arg_t)int_no,
+	    (xc_arg_t)NULL);
 }
 
 static int
@@ -1702,8 +1705,8 @@ cmi_ntv_hwdisable_mce(cmi_hdl_t hdl)
 		cmi_ntv_hwdisable_mce_xc();
 	} else {
 		CPUSET_ONLY(set, cp->cpu_id);
-		xc_call(NULL, NULL, NULL, CPUSET2BV(set),
-		    (xc_func_t)cmi_ntv_hwdisable_mce_xc);
+		xc_call((xc_arg_t)NULL, (xc_arg_t)NULL, (xc_arg_t)NULL,
+		    CPUSET2BV(set), (xc_func_t)cmi_ntv_hwdisable_mce_xc);
 	}
 }
 
