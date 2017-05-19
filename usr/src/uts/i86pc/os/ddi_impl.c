@@ -1895,10 +1895,10 @@ get_boot_properties(void)
 		if (strcmp(name, "si-machine") == 0) {
 			(void) strncpy(utsname.machine, bop_staging_area,
 			    SYS_NMLN);
-			utsname.machine[SYS_NMLN - 1] = (char)NULL;
+			utsname.machine[SYS_NMLN - 1] = '\0';
 		} else if (strcmp(name, "si-hw-provider") == 0) {
 			(void) strncpy(hw_provider, bop_staging_area, SYS_NMLN);
-			hw_provider[SYS_NMLN - 1] = (char)NULL;
+			hw_provider[SYS_NMLN - 1] = '\0';
 		} else if (strcmp(name, "bios-boot-device") == 0) {
 			copy_boot_str(bop_staging_area, property_val, 50);
 			(void) ndi_prop_update_string(DDI_DEV_T_NONE, devi,
