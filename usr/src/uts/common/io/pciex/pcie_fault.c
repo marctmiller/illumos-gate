@@ -1185,7 +1185,7 @@ const pf_fab_err_tbl_t pcie_pcie_tbl[] = {
 	{PCIE_AER_UCE_UR,	pf_analyse_ca_ur,
 	    PF_AFFECTED_SELF, 0},
 
-	{NULL, NULL, NULL, NULL}
+	{0, NULL, 0, 0}
 };
 
 const pf_fab_err_tbl_t pcie_rp_tbl[] = {
@@ -1226,7 +1226,7 @@ const pf_fab_err_tbl_t pcie_rp_tbl[] = {
 	{PCIE_AER_UCE_UR,	pf_no_panic,
 	    PF_AFFECTED_AER, PF_AFFECTED_CHILDREN},
 
-	{NULL, NULL, NULL, NULL}
+	{0, NULL, 0, 0}
 };
 
 const pf_fab_err_tbl_t pcie_sw_tbl[] = {
@@ -1267,7 +1267,7 @@ const pf_fab_err_tbl_t pcie_sw_tbl[] = {
 	{PCIE_AER_UCE_UR,	pf_analyse_ca_ur,
 	    PF_AFFECTED_AER, PF_AFFECTED_SELF | PF_AFFECTED_CHILDREN},
 
-	{NULL, NULL, NULL, NULL}
+	{0, NULL, 0, 0}
 };
 
 const pf_fab_err_tbl_t pcie_pcie_bdg_tbl[] = {
@@ -1310,7 +1310,7 @@ const pf_fab_err_tbl_t pcie_pcie_bdg_tbl[] = {
 	{PCIE_AER_SUCE_INTERNAL_ERR,	pf_panic,
 	    PF_AFFECTED_SELF | PF_AFFECTED_CHILDREN, 0},
 
-	{NULL, NULL, NULL, NULL}
+	{0, NULL, 0, 0}
 };
 
 const pf_fab_err_tbl_t pcie_pci_bdg_tbl[] = {
@@ -1332,7 +1332,7 @@ const pf_fab_err_tbl_t pcie_pci_bdg_tbl[] = {
 	{PCI_STAT_S_TARG_AB,	pf_analyse_pci,
 	    PF_AFFECTED_SELF, 0},
 
-	{NULL, NULL, NULL, NULL}
+	{0, NULL, 0, 0}
 };
 
 const pf_fab_err_tbl_t pcie_pci_tbl[] = {
@@ -1354,7 +1354,7 @@ const pf_fab_err_tbl_t pcie_pci_tbl[] = {
 	{PCI_STAT_S_TARG_AB,	pf_analyse_pci,
 	    PF_AFFECTED_SELF, 0},
 
-	{NULL, NULL, NULL, NULL}
+	{0, NULL, 0, 0}
 };
 
 #define	PF_MASKED_AER_ERR(pfd_p) \
@@ -1470,7 +1470,7 @@ pf_analyse_error_tbl(ddi_fm_error_t *derr, pf_impl_t *impl,
 	uint16_t flags;
 	uint32_t bit;
 
-	for (row = tbl; err_reg && (row->bit != NULL); row++) {
+	for (row = tbl; err_reg && (row->bit != 0); row++) {
 		bit = row->bit;
 		if (!(err_reg & bit))
 			continue;
@@ -2299,7 +2299,7 @@ pf_hdl_lookup(dev_info_t *dip, uint64_t ena, uint32_t flag, uint64_t addr,
 	ddi_fm_error_t		derr;
 
 	/* If we don't know the addr or rid just return with NOTFOUND */
-	if ((addr == NULL) && !PCIE_CHECK_VALID_BDF(bdf))
+	if ((addr == 0) && !PCIE_CHECK_VALID_BDF(bdf))
 		return (PF_HDL_NOTFOUND);
 
 	/*
@@ -2469,7 +2469,7 @@ pf_hdl_compare(dev_info_t *dip, ddi_fm_error_t *derr, uint32_t flag,
 	 * If a handler isn't found and we know this is the right device mark
 	 * them all failed.
 	 */
-	if ((addr != NULL) && PCIE_CHECK_VALID_BDF(bdf) && (found == 0)) {
+	if ((addr != 0) && PCIE_CHECK_VALID_BDF(bdf) && (found == 0)) {
 		status = pf_hdl_compare(dip, derr, flag, addr, bdf, fcp);
 		if (status == PF_HDL_FOUND)
 			found++;
@@ -2591,7 +2591,7 @@ pf_tlp_decode(pcie_bus_t *bus_p, pf_pcie_adv_err_regs_t *adv_reg_p) {
 	{
 		pcie_cpl_t *cpl_tlp = (pcie_cpl_t *)&adv_reg_p->pcie_ue_hdr[1];
 
-		flt_addr = NULL;
+		flt_addr = 0;
 		flt_bdf = (cpl_tlp->rid > cpl_tlp->cid) ? cpl_tlp->rid :
 		    cpl_tlp->cid;
 
@@ -3220,7 +3220,7 @@ pf_find_busp_by_saer(pf_impl_t *impl, pf_data_t *pfd_p)
 	addr = reg_p->pcie_sue_tgt_addr;
 	bdf = reg_p->pcie_sue_tgt_bdf;
 
-	if (addr != NULL) {
+	if (addr != 0) {
 		temp_bus_p = pf_find_busp_by_addr(impl, addr);
 	} else if (PCIE_CHECK_VALID_BDF(bdf)) {
 		temp_bus_p = pf_find_busp_by_bdf(impl, bdf);
