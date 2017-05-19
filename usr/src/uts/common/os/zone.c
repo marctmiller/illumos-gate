@@ -3826,9 +3826,9 @@ zsched(void *arg)
 	bcopy("zsched", PTOU(pp)->u_psargs, sizeof ("zsched"));
 	bcopy("zsched", PTOU(pp)->u_comm, sizeof ("zsched"));
 	PTOU(pp)->u_argc = 0;
-	PTOU(pp)->u_argv = NULL;
-	PTOU(pp)->u_envp = NULL;
-	PTOU(pp)->u_commpagep = NULL;
+	PTOU(pp)->u_argv = (uintptr_t)NULL;
+	PTOU(pp)->u_envp = (uintptr_t)NULL;
+	PTOU(pp)->u_commpagep = (uintptr_t)NULL;
 	closeall(P_FINFO(pp));
 
 	/*
