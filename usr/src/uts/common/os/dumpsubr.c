@@ -1230,8 +1230,8 @@ dumpinit(vnode_t *vp, char *name, int justchecking)
 				if (IS_SWAPVP(common_specvp(cvp)))
 					error = EBUSY;
 				else if ((error = VOP_IOCTL(cdev_vp,
-				    DKIOCDUMPINIT, NULL, FKIOCTL, kcred,
-				    NULL, NULL)) != 0)
+				    DKIOCDUMPINIT, (uintptr_t)NULL, FKIOCTL,
+				    kcred, NULL, NULL)) != 0)
 					dumpfini();
 			}
 
@@ -1275,8 +1275,8 @@ dumpfini(void)
 	if (is_zfs &&
 	    (cdev_vp = makespecvp(VTOS(dumpvp)->s_dev, VCHR)) != NULL) {
 		if (VOP_OPEN(&cdev_vp, FREAD | FWRITE, kcred, NULL) == 0) {
-			(void) VOP_IOCTL(cdev_vp, DKIOCDUMPFINI, NULL, FKIOCTL,
-			    kcred, NULL, NULL);
+			(void) VOP_IOCTL(cdev_vp, DKIOCDUMPFINI,
+			    (uintptr_t)NULL, FKIOCTL, kcred, NULL, NULL);
 			(void) VOP_CLOSE(cdev_vp, FREAD | FWRITE, 1, 0,
 			    kcred, NULL);
 		}
@@ -2842,7 +2842,7 @@ dumpsys(void)
 		}
 		++dumpcfg.nhelper_used;
 		hp->helper = FREEHELPER;
-		hp->taskqid = NULL;
+		hp->taskqid = 0;
 		hp->ds = ds;
 		bzero(&hp->perpage, sizeof (hp->perpage));
 		if (dumpcfg.clevel >= DUMP_CLEVEL_BZIP2)
