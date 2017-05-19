@@ -2827,7 +2827,7 @@ pcic_set_window(dev_info_t *dip, set_window_t *window)
 				(void) pcmcia_free_mem(memp->res_dip, &res);
 				memp->pcw_status &= ~(PCW_MAPPED|PCW_ENABLED);
 				memp->pcw_hostmem = NULL;
-				memp->pcw_base = NULL;
+				memp->pcw_base = 0;
 				memp->pcw_len = 0;
 			}
 
@@ -2886,7 +2886,7 @@ pcic_set_window(dev_info_t *dip, set_window_t *window)
 				    (window->socket << 16),
 				    (caddr_t *)&memp->pcw_hostmem,
 				    &memp->pcw_handle,
-				    &window->attr, NULL);
+				    &window->attr, 0);
 
 				if (which != DDI_SUCCESS) {
 
