@@ -147,7 +147,7 @@ mptsas_ioc_get_facts(mptsas_t *mpt)
 	/*
 	 * Send get facts messages
 	 */
-	if (mptsas_do_dma(mpt, sizeof (MPI2_IOC_FACTS_REQUEST), NULL,
+	if (mptsas_do_dma(mpt, sizeof (MPI2_IOC_FACTS_REQUEST), 0,
 	    mptsas_ioc_do_get_facts)) {
 		return (DDI_FAILURE);
 	}
@@ -155,7 +155,7 @@ mptsas_ioc_get_facts(mptsas_t *mpt)
 	/*
 	 * Get facts reply messages
 	 */
-	if (mptsas_do_dma(mpt, sizeof (MPI2_IOC_FACTS_REPLY), NULL,
+	if (mptsas_do_dma(mpt, sizeof (MPI2_IOC_FACTS_REPLY), 0,
 	    mptsas_ioc_do_get_facts_reply)) {
 		return (DDI_FAILURE);
 	}
@@ -529,7 +529,7 @@ mptsas_ioc_enable_event_notification(mptsas_t *mpt)
 	/*
 	 * Send enable event notification message
 	 */
-	if (mptsas_do_dma(mpt, sizeof (MPI2_EVENT_NOTIFICATION_REQUEST), NULL,
+	if (mptsas_do_dma(mpt, sizeof (MPI2_EVENT_NOTIFICATION_REQUEST), 0,
 	    mptsas_ioc_do_enable_event_notification)) {
 		return (DDI_FAILURE);
 	}
@@ -537,7 +537,7 @@ mptsas_ioc_enable_event_notification(mptsas_t *mpt)
 	/*
 	 * Get enable event reply message
 	 */
-	if (mptsas_do_dma(mpt, sizeof (MPI2_EVENT_NOTIFICATION_REPLY), NULL,
+	if (mptsas_do_dma(mpt, sizeof (MPI2_EVENT_NOTIFICATION_REPLY), 0,
 	    mptsas_ioc_do_enable_event_notification_reply)) {
 		return (DDI_FAILURE);
 	}
@@ -610,7 +610,7 @@ mptsas_ioc_init(mptsas_t *mpt)
 	/*
 	 * Send ioc init message
 	 */
-	if (mptsas_do_dma(mpt, sizeof (MPI2_IOC_INIT_REQUEST), NULL,
+	if (mptsas_do_dma(mpt, sizeof (MPI2_IOC_INIT_REQUEST), 0,
 	    mptsas_do_ioc_init)) {
 		return (DDI_FAILURE);
 	}
@@ -618,7 +618,7 @@ mptsas_ioc_init(mptsas_t *mpt)
 	/*
 	 * Get ioc init reply message
 	 */
-	if (mptsas_do_dma(mpt, sizeof (MPI2_IOC_INIT_REPLY), NULL,
+	if (mptsas_do_dma(mpt, sizeof (MPI2_IOC_INIT_REPLY), 0,
 	    mptsas_do_ioc_init_reply)) {
 		return (DDI_FAILURE);
 	}
