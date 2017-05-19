@@ -30,8 +30,6 @@
  * Copyright (C) 2003-2005 Chelsio Communications.  All rights reserved.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/cmn_err.h>
@@ -1185,7 +1183,7 @@ free_cmdQ_buffers(pesge *sge, struct cmdQ *Q, unsigned int credits_pend)
 				ce->ce_dh = NULL;	/* may not be needed */
 			}
 			skb = ce->ce_mp;
-			if (skb && ((ce->ce_flg & CH_ARP) == NULL)) {
+			if (skb && ((ce->ce_flg & CH_ARP) == 0)) {
 				freemsg(skb);
 			}
 			ce->ce_mp = NULL;
@@ -1198,7 +1196,7 @@ free_cmdQ_buffers(pesge *sge, struct cmdQ *Q, unsigned int credits_pend)
 				ce->ce_dh = NULL;	/* may not be needed */
 			}
 			skb = ce->ce_mp;
-			if (skb && ((ce->ce_flg & CH_ARP) == NULL)) {
+			if (skb && ((ce->ce_flg & CH_ARP) == 0)) {
 				freemsg(skb);
 			}
 			ce->ce_mp = NULL;
@@ -1224,7 +1222,7 @@ free_cmdQ_buffers(pesge *sge, struct cmdQ *Q, unsigned int credits_pend)
 		}
 
 		skb = ce->ce_mp;
-		if (skb && ((ce->ce_flg & CH_ARP) == NULL)) {
+		if (skb && ((ce->ce_flg & CH_ARP) == 0)) {
 			freemsg(skb);
 		}
 		ce->ce_mp = NULL;
