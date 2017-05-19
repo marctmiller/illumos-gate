@@ -764,7 +764,7 @@ dr_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 
 			minor_num = DR_MAKE_MINOR(instance, bd);
 			rv = ddi_create_minor_node(dip, name, S_IFCHR,
-			    minor_num, DDI_NT_SBD_ATTACHMENT_POINT, NULL);
+			    minor_num, DDI_NT_SBD_ATTACHMENT_POINT, 0);
 			if (rv != DDI_SUCCESS)
 				rv = DDI_FAILURE;
 		}
