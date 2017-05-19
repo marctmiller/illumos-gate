@@ -7141,7 +7141,7 @@ nv_sgp_cleanup(nv_ctl_t *nvc)
 		cb->sgpio_cr0 = SGP_CR0_ENABLE_MASK;
 		(void) nv_sgp_write_data(nvc);
 
-		cb->sgpio_sr = NULL;
+		cb->sgpio_sr = 0;
 
 		/* zero out the CBP to cmn mapping */
 		for (i = 0; i < NV_MAX_CBPS; i++) {
