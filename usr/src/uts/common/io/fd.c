@@ -488,7 +488,7 @@ fd_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 		sig_minor = drive_num << 3;
 		for (dmdp = fd_minor; dmdp->name != NULL; dmdp++) {
 			if (ddi_create_minor_node(dip, dmdp->name, dmdp->type,
-			    sig_minor | dmdp->minor, DDI_NT_FD, NULL)
+			    sig_minor | dmdp->minor, DDI_NT_FD, 0)
 			    == DDI_FAILURE) {
 				ddi_remove_minor_node(dip, NULL);
 				goto no_attach;
