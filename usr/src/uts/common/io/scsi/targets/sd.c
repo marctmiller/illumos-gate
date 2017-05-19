@@ -10465,7 +10465,7 @@ sdclose(dev_t dev, int flag, int otyp, cred_t *cred_p)
 
 	cp = &un->un_ocmap.chkd[0];
 	while (cp < &un->un_ocmap.chkd[OCSIZE]) {
-		if (*cp != NULL) {
+		if (*cp != '\0') {
 			break;
 		}
 		cp++;
@@ -22614,7 +22614,8 @@ skip_ready_valid:
 
 	case MHIOCGRP_INKEYS:
 		SD_TRACE(SD_LOG_IOCTL, un, "MHIOCGRP_INKEYS\n");
-		if (((err = drv_priv(cred_p)) != EPERM) && arg != NULL) {
+		if (((err = drv_priv(cred_p)) != EPERM) &&
+		    arg != (uintptr_t)NULL) {
 			if (un->un_reservation_type == SD_SCSI2_RESERVATION) {
 				err = ENOTSUP;
 			} else {
@@ -22626,7 +22627,8 @@ skip_ready_valid:
 
 	case MHIOCGRP_INRESV:
 		SD_TRACE(SD_LOG_IOCTL, un, "MHIOCGRP_INRESV\n");
-		if (((err = drv_priv(cred_p)) != EPERM) && arg != NULL) {
+		if (((err = drv_priv(cred_p)) != EPERM) &&
+		    arg != (uintptr_t)NULL) {
 			if (un->un_reservation_type == SD_SCSI2_RESERVATION) {
 				err = ENOTSUP;
 			} else {
@@ -22640,7 +22642,7 @@ skip_ready_valid:
 		if ((err = drv_priv(cred_p)) != EPERM) {
 			if (un->un_reservation_type == SD_SCSI2_RESERVATION) {
 				err = ENOTSUP;
-			} else if (arg != NULL) {
+			} else if (arg != (uintptr_t)NULL) {
 				mhioc_register_t reg;
 				if (ddi_copyin((void *)arg, &reg,
 				    sizeof (mhioc_register_t), flag) != 0) {
@@ -22662,7 +22664,7 @@ skip_ready_valid:
 		if ((err = drv_priv(cred_p)) != EPERM) {
 			if (un->un_reservation_type == SD_SCSI2_RESERVATION) {
 				err = ENOTSUP;
-			} else if (arg != NULL) {
+			} else if (arg != (uintptr_t)NULL) {
 				mhioc_register_t reg;
 				if (ddi_copyin((void *)arg, &reg,
 				    sizeof (mhioc_register_t), flag) != 0) {
@@ -22684,7 +22686,7 @@ skip_ready_valid:
 		if ((err = drv_priv(cred_p)) != EPERM) {
 			if (un->un_reservation_type == SD_SCSI2_RESERVATION) {
 				err = ENOTSUP;
-			} else if (arg != NULL) {
+			} else if (arg != (uintptr_t)NULL) {
 				mhioc_resv_desc_t resv_desc;
 				if (ddi_copyin((void *)arg, &resv_desc,
 				    sizeof (mhioc_resv_desc_t), flag) != 0) {
@@ -22706,7 +22708,7 @@ skip_ready_valid:
 		if ((err = drv_priv(cred_p)) != EPERM) {
 			if (un->un_reservation_type == SD_SCSI2_RESERVATION) {
 				err = ENOTSUP;
-			} else if (arg != NULL) {
+			} else if (arg != (uintptr_t)NULL) {
 				mhioc_preemptandabort_t preempt_abort;
 				if (ddi_copyin((void *)arg, &preempt_abort,
 				    sizeof (mhioc_preemptandabort_t),
@@ -22729,7 +22731,7 @@ skip_ready_valid:
 		if ((err = drv_priv(cred_p)) != EPERM) {
 			if (un->un_reservation_type == SD_SCSI2_RESERVATION) {
 				err = ENOTSUP;
-			} else if (arg != NULL) {
+			} else if (arg != (uintptr_t)NULL) {
 				mhioc_registerandignorekey_t r_and_i;
 				if (ddi_copyin((void *)arg, (void *)&r_and_i,
 				    sizeof (mhioc_registerandignorekey_t),
