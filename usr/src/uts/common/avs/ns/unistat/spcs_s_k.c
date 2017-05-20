@@ -441,7 +441,7 @@ spcs_s_copyoutf(spcs_s_info_t *kstatus_a, spcs_s_info_t ustatus)
 		scopyout((spcs_s_pinfo_t *)*kstatus_a,
 		    (spcs_s_pinfo_t *)ustatus);
 	spcs_s_kfree(*kstatus_a);
-	*kstatus_a = NULL;
+	*kstatus_a = 0;
 #ifdef UNISTAT_TRACE
 	cmn_err(CE_WARN, "!spcs_s_copyoutf exit");
 #endif
@@ -610,7 +610,7 @@ spcs_s_ocopyoutf(spcs_s_info_t *kstatus_a,
 		scopyout(p, (spcs_s_pinfo_t *)ustatus);
 	}
 	spcs_s_kfree((spcs_s_info_t)p);
-	*kstatus_a = NULL;
+	*kstatus_a = 0;
 #ifdef UNISTAT_TRACE
 	cmn_err(CE_WARN, "!spcs_s_ocopyoutf exit");
 #endif
