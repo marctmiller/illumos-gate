@@ -891,7 +891,7 @@ sdbc_get_cd_blk(_sdbc_ioctl_t *args, int mode)
 				cmn_err(CE_WARN,
 				    "!sdbc(sdbc_get_cd_blk) kmem_alloc failed."
 				    " cannot get write data");
-				info.ci_write = NULL;
+				info.ci_write = 0;
 				rc = EFAULT;
 			} else if (SSOP_READ_CBLOCK(sdbc_safestore,
 			    cc_ent->cc_write->sc_res, taddr,

@@ -2694,7 +2694,7 @@ setup:
 	if (flag & NSC_RDAHEAD) { /* _sd_prefetch_opt == 0 */
 		/* CKD prefetch: bufvec not req'd, use placeholder */
 		bufvec->bufaddr = NULL;
-		bufvec->bufvmeaddr = NULL;
+		bufvec->bufvmeaddr = 0;
 		bufvec->buflen  = 0;
 		bufvec = _prefetch_sb_vec;
 	}
