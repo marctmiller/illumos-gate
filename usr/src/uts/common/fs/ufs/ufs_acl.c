@@ -649,7 +649,7 @@ ufs_acl_access(struct inode *ip, int mode, cred_t *cr)
 	sp = ip->i_ufs_acl;
 
 	ismask = sp->aclass.acl_ismask ?
-	    sp->aclass.acl_ismask : NULL;
+	    sp->aclass.acl_ismask : 0;
 
 	if (ismask)
 		mask = sp->aclass.acl_maskbits;
