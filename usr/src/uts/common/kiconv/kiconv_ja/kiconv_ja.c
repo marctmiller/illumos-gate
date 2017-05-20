@@ -24,8 +24,6 @@
  * Use is subject to license terms.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysmacros.h>
@@ -526,7 +524,7 @@ _do_kiconvstr_fr_eucjp(char *inbuf, size_t *inbytesleft, char *outbuf,
 
 	boolean_t do_not_ignore_null;
 
-	if ((inbuf == NULL) || (*inbuf == NULL)) {
+	if ((inbuf == NULL) || (*inbuf == '\0')) {
 		return (0);
 	}
 
@@ -676,7 +674,7 @@ _do_kiconvstr_to_eucjp(char *inbuf, size_t *inbytesleft, char *outbuf,
 
 	boolean_t do_not_ignore_null;
 
-	if ((inbuf == NULL) || (*inbuf == NULL)) {
+	if ((inbuf == NULL) || (*inbuf == '\0')) {
 		return (0);
 	}
 
@@ -1135,7 +1133,7 @@ _do_kiconvstr_fr_sjis(char *inbuf, size_t *inbytesleft, char *outbuf,
 
 	boolean_t do_not_ignore_null;
 
-	if ((inbuf == NULL) || (*inbuf == NULL)) {
+	if ((inbuf == NULL) || (*inbuf == '\0')) {
 		return (0);
 	}
 
@@ -1369,7 +1367,7 @@ _do_kiconvstr_to_sjis(char *inbuf, size_t *inbytesleft, char *outbuf,
 
 	boolean_t do_not_ignore_null;
 
-	if ((inbuf == NULL) || (*inbuf == NULL)) {
+	if ((inbuf == NULL) || (*inbuf == '\0')) {
 		return (0);
 	}
 
