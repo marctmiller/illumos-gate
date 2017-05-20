@@ -1300,13 +1300,13 @@ rdsv3_ib_free_hdrs(ib_device_t *dev, struct rdsv3_ib_connection *ic)
 	ASSERT(ic->i_mr != NULL);
 
 	ic->i_send_hdrs = NULL;
-	ic->i_send_hdrs_dma = NULL;
+	ic->i_send_hdrs_dma = 0;
 
 	ic->i_recv_hdrs = NULL;
-	ic->i_recv_hdrs_dma = NULL;
+	ic->i_recv_hdrs_dma = 0;
 
 	ic->i_ack = NULL;
-	ic->i_ack_dma = NULL;
+	ic->i_ack_dma = 0;
 
 	(void) ibt_deregister_mr(ib_get_ibt_hca_hdl(dev), ic->i_mr->hdl);
 
