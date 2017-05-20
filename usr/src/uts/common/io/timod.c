@@ -927,7 +927,7 @@ timodrproc(queue_t *q, mblk_t *mp)
 						return (1);
 					}
 					ASSERT(tp->tim_mymaxlen >= 0);
-					if (tp->tim_mymaxlen != NULL) {
+					if (tp->tim_mymaxlen != 0) {
 						kmem_free(tp->tim_myname,
 						    tp->tim_mymaxlen);
 					}
