@@ -228,7 +228,7 @@ mapexec_brand(vnode_t *vp, uarg_t *args, Ehdr *ehdr, Addr *uphdr_vaddr,
 	intptr_t	minaddr;
 
 	if (lddatap != NULL)
-		*lddatap = NULL;
+		*lddatap = (uintptr_t)NULL;
 
 	if (error = execpermissions(vp, &vat, args)) {
 		uprintf("%s: Cannot execute %s\n", exec_file, args->pathname);
@@ -913,8 +913,9 @@ elfexec(vnode_t *vp, execa_t *uap, uarg_t *args, intpdata_t *idatap,
 		 * Add the comm page auxv entry, mapping it in if needed.
 		 */
 #if defined(__amd64)
-		if (args->commpage != NULL ||
-		    (args->commpage = (uintptr_t)comm_page_mapin()) != NULL) {
+		if (args->commpage != (uintptr_t)NULL ||
+		    (args->commpage = (uintptr_t)comm_page_mapin()) !=
+		    (uintptr_t)NULL) {
 			ADDAUX(aux, AT_SUN_COMMPAGE, args->commpage)
 		} else {
 			/*
@@ -1931,7 +1932,7 @@ top:
 	 */
 	nshdrs = 0;
 	if (content & (CC_CONTENT_CTF | CC_CONTENT_SYMTAB)) {
-		(void) process_scns(content, p, credp, NULL, NULL, NULL, 0,
+		(void) process_scns(content, p, credp, NULL, NULL, 0, 0,
 		    NULL, &nshdrs);
 	}
 	AS_LOCK_EXIT(as);
