@@ -1740,7 +1740,7 @@ ud_uncompress(int32_t in_len, int32_t *out_len,
 		 * Get rid of invalid characters
 		 */
 		if ((w2_char == SLASH) ||
-		    (w2_char == NULL)) {
+		    (w2_char == 0)) {
 			make_crc = 1;
 			if (((comp_id == 8) &&
 			    (lic != (index - 1))) ||

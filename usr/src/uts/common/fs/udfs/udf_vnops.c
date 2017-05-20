@@ -1302,7 +1302,7 @@ udf_symlink(
 			}
 		}
 
-		while (*target != NULL) {
+		while (*target != '\0') {
 			sp = target;
 			while ((*target != '/') && (*target != '\0')) {
 				target ++;
@@ -1347,7 +1347,7 @@ udf_symlink(
 			while (*target == '/') {
 				target++;
 			}
-			if (*target == NULL) {
+			if (*target == '\0') {
 				break;
 			}
 		}
