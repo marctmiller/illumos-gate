@@ -470,9 +470,8 @@ rrip_namecopy(
 	}
 
 
-	ret_val = parse_sua((uchar_t *)to, &size, &change_flag,
-			dirp, last_offset,
-			hdp, fsp, (uchar_t *)NULL, NULL);
+	ret_val = parse_sua((uchar_t *)to, &size, &change_flag, dirp,
+	    last_offset, hdp, fsp, NULL, 0);
 
 	if (IS_NAME_BIT_SET(change_flag, RRIP_NAME_CHANGE) && !ret_val)
 		return (size);
