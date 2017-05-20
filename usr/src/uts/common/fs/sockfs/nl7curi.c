@@ -926,7 +926,7 @@ add:
 	ruri->hit = 0;
 	ruri->expire = -1;
 	ruri->response.sz = 0;
-	ruri->proc = (struct sonode *)~NULL;
+	ruri->proc = (struct sonode *)~0;
 	cv_init(&ruri->waiting, NULL, CV_DEFAULT, NULL);
 	mutex_init(&ruri->proclock, NULL, MUTEX_DEFAULT, NULL);
 	uri_add(ruri, RW_READER, nonblocking);

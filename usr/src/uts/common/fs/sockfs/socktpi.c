@@ -6198,7 +6198,7 @@ socktpi_plumbioctl(struct vnode *vp, int cmd, intptr_t arg, int mode,
 		STRUCT_DECL(str_list, ustrlist);
 		STRUCT_INIT(ustrlist, mode);
 
-		if (arg == NULL) {
+		if (arg == (intptr_t)NULL) {
 			error = strioctl(vp, cmd, arg, mode, U_TO_K, cr, rvalp);
 			if (error == 0)
 				(*rvalp)++;	/* Add one for sockmod */

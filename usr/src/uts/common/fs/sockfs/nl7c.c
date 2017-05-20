@@ -279,7 +279,7 @@ atou(const char *p)
 	int v = 0;
 
 	/* Shift and add digit by digit */
-	while ((c = *p++) != NULL && isdigit(c)) {
+	while ((c = *p++) != 0 && isdigit(c)) {
 		v *= 10;
 		v += c - '0';
 	}
@@ -417,7 +417,7 @@ ncaportconf_read(void)
 					parse = EOL;
 				}
 			} else if (c == '=') {
-				if (*tok != NULL) {
+				if (*tok != '\0') {
 					/* Only know one token, skip */
 					parse = EOL;
 					break;
@@ -435,7 +435,7 @@ ncaportconf_read(void)
 		case ADDR:
 			if (c == '/') {
 				/* addr/port separator, end of addr */
-				*stringp = NULL;
+				*stringp = '\0';
 				if (inet_atob(string, addrp)) {
 					/* Bad addr, skip */
 					parse = EOL;
@@ -470,7 +470,7 @@ ncaportconf_read(void)
 				break;
 			} else if (c == '#' || isspace(c)) {
 				/* End of port number, convert */
-				*stringp = NULL;
+				*stringp = '\0';
 				addrp->port = ntohs(atou(string));
 
 				/* End of parse, add entry */
@@ -582,7 +582,7 @@ ncakmodconf_read(void)
 				 * Found EOL, if tok found done,
 				 * else start on next-line.
 				 */
-				if (*tok == NULL) {
+				if (*tok == '\0') {
 					nl7c_enabled = B_TRUE;
 					goto done;
 				}
@@ -721,11 +721,11 @@ ncalogdconf_read(void)
 				 * Found tok separator, if tok found get
 				 * tok text, else skip rest of line.
 				 */
-				if (tokstatusp != NULL && *tokstatusp == NULL)
+				if (tokstatusp != NULL && *tokstatusp == '\0')
 					tok = tokstatus;
-				else if (toksizep != NULL && *toksizep == NULL)
+				else if (toksizep != NULL && *toksizep == '\0')
 					tok = toksize;
-				else if (tokfilep != NULL && *tokfilep == NULL)
+				else if (tokfilep != NULL && *tokfilep == '\0')
 					tok = tokfile;
 				if (tok != NULL)
 					parse = TEXT;
@@ -746,7 +746,7 @@ ncalogdconf_read(void)
 				 * (if any) and start on next line.
 				 */
 				if (tok == tokstatus) {
-					if (*++tokstatusp == NULL)
+					if (*++tokstatusp == '\0')
 						nl7c_logd_enabled = B_TRUE;
 				} else if (tok == toksize) {
 					file_size = sz;
@@ -761,7 +761,7 @@ ncalogdconf_read(void)
 				}
 				parse = START;
 			} else if (tok == tokstatus) {
-				if (! isalpha(c) || *++tokstatusp == NULL ||
+				if (! isalpha(c) || *++tokstatusp == '\0' ||
 				    c != *tokstatusp) {
 					/* Not enabled, skip line */
 					parse = EOL;
