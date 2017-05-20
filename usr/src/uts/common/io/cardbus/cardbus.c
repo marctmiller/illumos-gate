@@ -29,8 +29,6 @@
  * From "@(#)pcicfg.c   1.31    99/06/18 SMI"
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 /*
  * Cardbus module
  */
@@ -1443,7 +1441,7 @@ find_token(char **cp, int *l, char *endc)
 	}
 
 	*endc = **cp;
-	**cp = NULL;
+	**cp = '\0';
 
 	return (cpp);
 }
@@ -1605,7 +1603,7 @@ cardbus_parse_devprop(cbus_t *cbp, char *cp)
 	int	length;
 	char	*token = "beginning of line";
 	char	*ptoken = NULL, *quote;
-	char	eq = NULL;
+	char	eq = '\0';
 	struct cb_deviceset_props *cdsp;
 
 	cdsp = (struct cb_deviceset_props *)kmem_zalloc(sizeof (*cdsp),
@@ -1634,7 +1632,7 @@ cardbus_parse_devprop(cbus_t *cbp, char *cp)
 
 			l++;
 
-			*cpp = NULL;
+			*cpp = '\0';
 		} /* PARSE_ESCAPE */
 
 		/*
@@ -1645,7 +1643,7 @@ cardbus_parse_devprop(cbus_t *cbp, char *cp)
 			if (qm) {
 				quote = cp + 1;
 			} else {
-				*cp = NULL;
+				*cp = '\0';
 				if (state == PT_STATE_CHECK) {
 					if (strcmp(token, cb_nnamestr) == 0) {
 						cdsp->nodename = kmem_alloc(
