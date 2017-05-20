@@ -94,12 +94,12 @@ ldi_get_dev_t_from_path(char *path)
 
 	/* Validate parameters */
 	if (path == NULL)
-		return (NULL);
+		return ((dev_t)NULL);
 
 	/* Lookup path */
 	vp = NULL;
 	if (lookupname(path, UIO_SYSSPACE, FOLLOW, NULLVPP, &vp))
-		return (NULL);
+		return ((dev_t)NULL);
 
 	/* Validate resulting vnode */
 	if ((vp) && (vp->v_type == VCHR))
@@ -501,7 +501,7 @@ _raw_strategy(struct buf *bp)
 	if (cd == -1 || _nsc_raw_files[cd].major == NULL) {
 		bioerror(bp, ENXIO);
 		biodone(bp);
-		return (NULL);
+		return (0);
 	}
 
 	return ((*_nsc_raw_files[cd].major->strategy)(bp));
