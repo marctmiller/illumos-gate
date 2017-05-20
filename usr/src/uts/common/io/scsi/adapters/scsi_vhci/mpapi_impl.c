@@ -1686,7 +1686,7 @@ vhci_get_prop_lb_list(struct scsi_vhci *vhci, mp_iocdata_t *mpioc,
 	int		rval = 0;
 	uint64_t	*oid_list = (uint64_t *)(output_data);
 
-	oid_list[0] = NULL;
+	oid_list[0] = 0;
 
 	if (ddi_copyout(output_data, (void *)mpioc->mp_obuf,
 	    (sizeof (uint64_t)), mode) != 0) {

@@ -751,7 +751,7 @@ vhci_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	 * power management of the phci and client
 	 */
 	if (ddi_prop_create(DDI_DEV_T_NONE, dip, DDI_PROP_CANSLEEP,
-	    "pm-want-child-notification?", NULL, NULL) != DDI_PROP_SUCCESS) {
+	    "pm-want-child-notification?", NULL, 0) != DDI_PROP_SUCCESS) {
 		cmn_err(CE_WARN,
 		    "%s%d fail to create pm-want-child-notification? prop",
 		    ddi_driver_name(dip), ddi_get_instance(dip));
@@ -2964,7 +2964,7 @@ vhci_do_prin(struct vhci_pkt **intr_vpkt)
 		 * Dispatch the retry command
 		 */
 		if (taskq_dispatch(vhci->vhci_taskq, vhci_dispatch_scsi_start,
-		    (void *) new_vpkt, KM_NOSLEEP) == NULL) {
+		    (void *) new_vpkt, KM_NOSLEEP) == 0) {
 			if (path_holder) {
 				vpkt->vpkt_path = path_holder;
 				mdi_hold_path(path_holder);
