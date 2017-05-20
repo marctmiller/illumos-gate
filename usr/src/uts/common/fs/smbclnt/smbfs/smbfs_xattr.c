@@ -338,7 +338,7 @@ smbfs_xa_findopen(struct smbfs_fctx *ctx, struct smbnode *dnp,
 	(void) mb_init(mbp);
 	(void) mb_put_uint16le(mbp, SMB_QFILEINFO_STREAM_INFO);
 	(void) mb_put_uint32le(mbp, 0);
-	error = smbfs_fullpath(mbp, vcp, pnp, NULL, NULL, 0);
+	error = smbfs_fullpath(mbp, vcp, pnp, NULL, 0, 0);
 	if (error)
 		goto out;
 	t2p->t2_maxpcount = 2;
