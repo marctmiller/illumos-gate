@@ -705,7 +705,7 @@ amd8111s_odlInit(struct LayerPointers *pLayerPointers)
 			pmem_set_array++;
 			*(pmem_set_array) = (unsigned long) kmem_zalloc(
 			    *(pmem_req_array), KM_NOSLEEP);
-			if (*pmem_set_array == NULL)
+			if (*pmem_set_array == 0)
 				goto odl_init_failure;
 			break;
 		}
@@ -720,7 +720,7 @@ amd8111s_odlInit(struct LayerPointers *pLayerPointers)
 
 	/* Allocate Rx/Tx descriptors */
 	if (amd8111s_allocate_descriptors(pLayerPointers) != B_TRUE) {
-		*pmem_set_array = NULL;
+		*pmem_set_array = 0;
 		goto odl_init_failure;
 	}
 
@@ -730,7 +730,7 @@ amd8111s_odlInit(struct LayerPointers *pLayerPointers)
 	 */
 	if (amd8111s_allocate_buffers(pLayerPointers) == B_FALSE) {
 		amd8111s_free_descriptors(pLayerPointers);
-		*pmem_set_array = NULL;
+		*pmem_set_array = 0;
 		goto odl_init_failure;
 	}
 	milInitGlbds(pLayerPointers);
