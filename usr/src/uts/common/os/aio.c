@@ -1750,7 +1750,7 @@ alio_cleanup(aio_t *aiop, aiocb_t **cbp, int nent, int run_mode)
 			caddr32_t *cbp32;
 
 			cbp32 = (caddr32_t *)cbp;
-			if (cbp32[i] == NULL)
+			if (cbp32[i] == 0)
 				continue;
 			if (run_mode == AIO_32) {
 				aiocb_32 = (aiocb32_t *)(uintptr_t)cbp32[i];
