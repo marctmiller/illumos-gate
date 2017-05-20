@@ -703,7 +703,7 @@ sysevent_attach(dev_info_t *devi, ddi_attach_cmd_t cmd)
 	}
 
 	if (ddi_create_minor_node(devi, "sysevent", S_IFCHR,
-	    0, DDI_PSEUDO, NULL) == DDI_FAILURE) {
+	    0, DDI_PSEUDO, 0) == DDI_FAILURE) {
 		ddi_remove_minor_node(devi, NULL);
 		return (DDI_FAILURE);
 	}
@@ -740,8 +740,9 @@ static struct cb_ops sysevent_cb_ops = {
 	nodev,			/* segmap */
 	nochpoll,		/* poll */
 	ddi_prop_op,		/* prop_op */
-	0,			/* streamtab  */
+	NULL,			/* streamtab  */
 	D_NEW|D_MP,		/* flag */
+	CB_REV,			/* rev */
 	NULL,			/* aread */
 	NULL			/* awrite */
 };
