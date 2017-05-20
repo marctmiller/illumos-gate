@@ -31,8 +31,6 @@
  * DAMAGE.
  */
 
-#pragma	ident	"@(#)usbgem.c 1.6     12/02/09"
-
 /*
  * Change log
  */
@@ -1007,7 +1005,7 @@ usbgem_tx_watcher_stop(struct usbgem_dev *dp)
 		dp->tx_watcher_stop = 1;
 		cv_signal(&dp->tx_watcher_cv);
 		thread_join(dp->tx_watcher_did);
-		dp->tx_watcher_did = NULL;
+		dp->tx_watcher_did = 0;
 	}
 }
 
