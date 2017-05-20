@@ -102,7 +102,7 @@ struct krb5_keytypes krb5_enctypes_list[] = {
       "des-cbc-raw", "DES cbc mode raw",
       &krb5int_enc_des, NULL,
       krb5_raw_encrypt_length, krb5_raw_encrypt, krb5_raw_decrypt,
-      NULL,
+      0,
 #ifndef _KERNEL
       krb5int_des_string_to_key,
 #else
@@ -117,7 +117,7 @@ struct krb5_keytypes krb5_enctypes_list[] = {
       "des3-cbc-raw", "Triple DES cbc mode raw",
       &krb5int_enc_des3, NULL,
       krb5_raw_encrypt_length, krb5_raw_encrypt, krb5_raw_decrypt,
-      NULL,
+      0,
 #ifndef _KERNEL
       krb5int_dk_string_to_key,
 #else
@@ -192,7 +192,7 @@ struct krb5_keytypes krb5_enctypes_list[] = {
       "des-hmac-sha1", "DES with HMAC/sha1",
       &krb5int_enc_des, &krb5int_hash_sha1,
       krb5_dk_encrypt_length, krb5_dk_encrypt, krb5_dk_decrypt,
-      NULL,
+      0,
 #ifndef _KERNEL
       krb5int_dk_string_to_key,
 #else

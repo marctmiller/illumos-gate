@@ -38,7 +38,7 @@
 const struct krb5_cksumtypes krb5_cksumtypes_list[] = {
     { CKSUMTYPE_CRC32, KRB5_CKSUMFLAG_NOT_COLL_PROOF,
       "crc32", "CRC-32",
-      NULL, NULL, &krb5int_hash_crc32, 0,
+      0, NULL, &krb5int_hash_crc32, 0,
 #ifdef _KERNEL
       NULL,
       CRYPTO_MECH_INVALID
@@ -48,7 +48,7 @@ const struct krb5_cksumtypes krb5_cksumtypes_list[] = {
     { CKSUMTYPE_DESCBC, 0,
       "des-cbc", "DES cbc mode",
       ENCTYPE_DES_CBC_CRC, &krb5int_keyhash_descbc,
-      NULL,  NULL,
+      NULL, 0,
 #ifdef _KERNEL
       NULL,
       CRYPTO_MECH_INVALID
@@ -57,7 +57,7 @@ const struct krb5_cksumtypes krb5_cksumtypes_list[] = {
 
     { CKSUMTYPE_RSA_MD5, 0,
       "md5", "RSA-MD5",
-      NULL, NULL, &krb5int_hash_md5, 0,
+      0, NULL, &krb5int_hash_md5, 0,
 #ifdef _KERNEL
       SUN_CKM_MD5,
       CRYPTO_MECH_INVALID
@@ -66,7 +66,7 @@ const struct krb5_cksumtypes krb5_cksumtypes_list[] = {
     { CKSUMTYPE_RSA_MD5_DES, 0,
       "md5-des", "RSA-MD5 with DES cbc mode",
       ENCTYPE_DES_CBC_CRC, &krb5int_keyhash_md5des,
-      NULL, NULL,
+      NULL, 0,
 #ifdef _KERNEL
       SUN_CKM_MD5,
       CRYPTO_MECH_INVALID
@@ -75,7 +75,7 @@ const struct krb5_cksumtypes krb5_cksumtypes_list[] = {
 
     { CKSUMTYPE_NIST_SHA, 0,
       "sha", "NIST-SHA",
-      NULL, NULL, &krb5int_hash_sha1, 0,
+      0, NULL, &krb5int_hash_sha1, 0,
 #ifdef _KERNEL
       SUN_CKM_SHA1,
       CRYPTO_MECH_INVALID
@@ -84,7 +84,7 @@ const struct krb5_cksumtypes krb5_cksumtypes_list[] = {
 
     { CKSUMTYPE_HMAC_SHA1_DES3, KRB5_CKSUMFLAG_DERIVE,
       "hmac-sha1-des3", "HMAC-SHA1 DES3 key",
-      NULL, NULL, &krb5int_hash_sha1, 0,
+      0, NULL, &krb5int_hash_sha1, 0,
 #ifdef _KERNEL
       SUN_CKM_SHA1_HMAC,
       CRYPTO_MECH_INVALID
@@ -92,7 +92,7 @@ const struct krb5_cksumtypes krb5_cksumtypes_list[] = {
  },
     { CKSUMTYPE_HMAC_SHA1_DES3, KRB5_CKSUMFLAG_DERIVE,
       "hmac-sha1-des3-kd", "HMAC-SHA1 DES3 key", /* alias */
-      NULL, NULL, &krb5int_hash_sha1, 0,
+      0, NULL, &krb5int_hash_sha1, 0,
 #ifdef _KERNEL
       SUN_CKM_SHA1_HMAC,
       CRYPTO_MECH_INVALID
@@ -128,7 +128,7 @@ const struct krb5_cksumtypes krb5_cksumtypes_list[] = {
 
     { CKSUMTYPE_HMAC_SHA1_96_AES128, KRB5_CKSUMFLAG_DERIVE,
       "hmac-sha1-96-aes128", "HMAC-SHA1 AES128 key",
-	NULL, NULL, &krb5int_hash_sha1, 12,
+	0, NULL, &krb5int_hash_sha1, 12,
 #ifdef _KERNEL
       SUN_CKM_SHA1_HMAC,
       CRYPTO_MECH_INVALID
