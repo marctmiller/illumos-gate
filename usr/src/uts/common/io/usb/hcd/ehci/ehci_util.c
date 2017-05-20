@@ -1076,7 +1076,7 @@ ehci_init_hardware(ehci_state_t	*ehcip)
 			 * always keep a dummy QH on the list.
 			 */
 			ehci_qh_t *dummy_async_qh =
-			    ehci_alloc_qh(ehcip, NULL, NULL);
+			    ehci_alloc_qh(ehcip, NULL, 0);
 
 			Set_QH(dummy_async_qh->qh_link_ptr,
 			    ((ehci_qh_cpu_to_iommu(ehcip, dummy_async_qh) &

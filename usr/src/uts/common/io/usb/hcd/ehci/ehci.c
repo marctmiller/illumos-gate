@@ -946,7 +946,7 @@ ehci_hcdi_pipe_open(
 	mutex_exit(&ph->p_mutex);
 
 	/* Allocate the host controller endpoint descriptor */
-	pp->pp_qh = ehci_alloc_qh(ehcip, ph, NULL);
+	pp->pp_qh = ehci_alloc_qh(ehcip, ph, 0);
 
 	/* Initialize the halting flag */
 	pp->pp_halt_state = EHCI_HALT_STATE_FREE;
