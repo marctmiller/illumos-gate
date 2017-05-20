@@ -563,8 +563,7 @@ usba_hcdi_cb(usba_pipe_handle_data_t *ph_data, usb_opaque_t req,
 			iface = 0;
 		}
 		if (taskq_dispatch(usba_device->usb_shared_taskq[iface],
-		    hcdi_shared_cb_thread, req_wrp, TQ_NOSLEEP) ==
-		    NULL) {
+		    hcdi_shared_cb_thread, req_wrp, TQ_NOSLEEP) == 0) {
 			usba_req_exc_cb(req_wrp,
 			    USB_CR_NO_RESOURCES, USB_CB_ASYNC_REQ_FAILED);
 		}
