@@ -1341,7 +1341,7 @@ boolean_t BnxeFcoePrvPoll(dev_info_t * pDev)
     if (pUM == NULL || pUM->pDev != pDev)
     {
         BnxeLogWarn(NULL, "%s: dev_info_t match failed", __func__);
-        return B_FALSE;
+        return (B_FALSE);
     }
 
     VERIFY_FCOE_BINDING(pUM);
@@ -1351,14 +1351,14 @@ boolean_t BnxeFcoePrvPoll(dev_info_t * pDev)
     if (pRxQ->inPollMode == B_FALSE)
     {
         BnxeLogWarn(pUM, "Polling on FCoE ring %d when NOT in poll mode!", idx);
-        return NULL;
+        return (B_FALSE);
     }
 
     pRxQ->pollCnt++;
 
     BnxePollRxRingFCOE(pUM);
 
-    return B_TRUE;
+    return (B_TRUE);
 }
 
 
