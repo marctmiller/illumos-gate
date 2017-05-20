@@ -675,7 +675,7 @@ sv_get_state(const dev_t udev, sv_dev_t **svpp)
 
 	/* Get major hash table */
 	if ((maj = sv_getmajor(udev)) == NULL)
-		return (NULL);
+		return (0);
 
 	/* Determine which minor hash table */
 	umin = getminor(udev);
@@ -787,7 +787,7 @@ sv_free(sv_dev_t *svp, const int error)
 
 	/* Get major hash table */
 	if ((maj = sv_getmajor(svp->sv_dev)) == NULL)
-		return (NULL);
+		return (0);
 
 	svp->sv_state = SV_PENDING;
 	svp->sv_pending = curthread;
