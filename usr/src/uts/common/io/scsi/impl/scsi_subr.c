@@ -1186,7 +1186,7 @@ scsi_generic_errmsg(struct scsi_device *devp, char *label, int severity,
 		    (decode_fru != NULL)) {
 			(*decode_fru)(devp, buf, SCSI_ERRMSG_BUF_LEN,
 			    fru_code);
-			if (buf[0] != NULL) {
+			if (buf[0] != '\0') {
 				bzero(buf1, SCSI_ERRMSG_BUF_LEN);
 				(void) sprintf(&buf1[strlen(buf1)],
 				    "ASC: 0x%x (%s)", asc,

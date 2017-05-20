@@ -6545,7 +6545,7 @@ done:		ASSERT(child);
 		 * detect new device_insert.
 		 */
 		if ((sdchild->sd_inq == NULL) ||
-		    ((pi == NULL) && ndi_devi_device_isremoved(child))) {
+		    ((pi == 0) && ndi_devi_device_isremoved(child))) {
 
 			/* hotplug_node can only be revived via hotplug. */
 			if ((se == SE_HP) || !ndi_dev_is_hotplug_node(child)) {
