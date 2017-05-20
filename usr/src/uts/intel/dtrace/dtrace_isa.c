@@ -84,7 +84,7 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 		}
 
 		if (aframes > 0) {
-			if (--aframes == 0 && caller != NULL) {
+			if (--aframes == 0 && caller != 0) {
 				/*
 				 * We've just run out of artificial frames,
 				 * and we have a valid caller -- fill it in
@@ -92,7 +92,7 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 				 */
 				ASSERT(depth < pcstack_limit);
 				pcstack[depth++] = (pc_t)caller;
-				caller = NULL;
+				caller = 0;
 			}
 		} else {
 			if (depth < pcstack_limit)
@@ -101,7 +101,7 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 
 		if (last) {
 			while (depth < pcstack_limit)
-				pcstack[depth++] = NULL;
+				pcstack[depth++] = 0;
 			return;
 		}
 
@@ -262,7 +262,7 @@ dtrace_getupcstack(uint64_t *pcstack, int pcstack_limit)
 
 zero:
 	while (pcstack_limit-- > 0)
-		*pcstack++ = NULL;
+		*pcstack++ = 0;
 }
 
 int
@@ -406,7 +406,7 @@ dtrace_getufpstack(uint64_t *pcstack, uint64_t *fpstack, int pcstack_limit)
 
 zero:
 	while (pcstack_limit-- > 0)
-		*pcstack++ = NULL;
+		*pcstack++ = 0;
 }
 
 /*ARGSUSED*/
