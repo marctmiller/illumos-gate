@@ -827,7 +827,7 @@ rsm_attach(dev_info_t *devi, ddi_attach_cmd_t cmd)
 	ASSERT(rnum == RSM_DRIVER_MINOR);
 
 	if (ddi_create_minor_node(devi, DRIVER_NAME, S_IFCHR,
-	    rnum, DDI_PSEUDO, NULL) == DDI_FAILURE) {
+	    rnum, DDI_PSEUDO, 0) == DDI_FAILURE) {
 		DBG_PRINTF((category, RSM_ERR,
 		    "rsm: rsm_attach - unable to allocate "
 		    "minor #\n"));
