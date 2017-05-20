@@ -2035,7 +2035,7 @@ si_alloc_sgbpool(si_ctl_state_t *si_ctlp, int port)
 	    NULL,
 	    (caddr_t *)&si_portp->siport_sgbpool,
 	    &ret_len,
-	    &si_portp->siport_sgbpool_acc_handle) != NULL) {
+	    &si_portp->siport_sgbpool_acc_handle) != DDI_SUCCESS) {
 
 		/*  error.. free the dma handle. */
 		ddi_dma_free_handle(&si_portp->siport_sgbpool_dma_handle);
@@ -2114,7 +2114,7 @@ si_alloc_prbpool(si_ctl_state_t *si_ctlp, int port)
 	    NULL,
 	    (caddr_t *)&si_portp->siport_prbpool,
 	    &ret_len,
-	    &si_portp->siport_prbpool_acc_handle) != NULL) {
+	    &si_portp->siport_prbpool_acc_handle) != DDI_SUCCESS) {
 
 		/* error.. free the dma handle. */
 		ddi_dma_free_handle(&si_portp->siport_prbpool_dma_handle);
