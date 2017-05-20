@@ -3502,7 +3502,7 @@ sbd_update_zfs_prop(sbd_lu_t *sl)
 		num = (*dp) & 0xF;
 		*ah_meta++ = (num < 10) ? (num + '0') : (num + ('a' - 10));
 	}
-	*ah_meta = NULL;
+	*ah_meta = '\0';
 	file = sbd_get_zvol_name(sl);
 	if (sbd_zvolset(file, (char *)ptr)) {
 		ret = SBD_META_CORRUPTED;

@@ -3685,7 +3685,7 @@ sbd_flush_data_cache(sbd_lu_t *sl, int fsync_done)
 over_fsync:
 	if (((sl->sl_data_vtype == VCHR) || (sl->sl_data_vtype == VBLK)) &&
 	    ((sl->sl_flags & SL_NO_DATA_DKIOFLUSH) == 0)) {
-		ret = VOP_IOCTL(sl->sl_data_vp, DKIOCFLUSHWRITECACHE, NULL,
+		ret = VOP_IOCTL(sl->sl_data_vp, DKIOCFLUSHWRITECACHE, 0,
 		    FKIOCTL, kcred, &r, NULL);
 		if ((ret == ENOTTY) || (ret == ENOTSUP)) {
 			mutex_enter(&sl->sl_lock);
