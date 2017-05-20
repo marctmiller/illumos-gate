@@ -522,7 +522,7 @@ ibnex_attach(dev_info_t *dip, ddi_attach_cmd_t cmd)
 	 * power management of the phci and client
 	 */
 	if (ddi_prop_create(DDI_DEV_T_NONE, dip, DDI_PROP_CANSLEEP,
-	    "pm-want-child-notification?", NULL, NULL) != DDI_PROP_SUCCESS) {
+	    "pm-want-child-notification?", NULL, 0) != DDI_PROP_SUCCESS) {
 		IBTF_DPRINTF_L2("ibnex",
 		    "_attach: create pm-want-child-notification failed");
 		(void) ddi_remove_minor_node(dip, NULL);

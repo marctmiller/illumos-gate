@@ -2947,7 +2947,7 @@ out:
 	(x)->hca_driver_instance	= (instance);			\
 									\
 	(x)->hca_device_path = ((device_path_alloc_sz) >= (device_path_len)) \
-	    ? (device_path) : NULL;					\
+	    ? (device_path) : (uintptr_t)NULL;					\
 	(x)->hca_device_path_len	= (device_path_len);		\
 }
 
