@@ -25,8 +25,6 @@
  * Copyright (c) 2016 by Delphix. All rights reserved.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 /*
  * This module implements the services provided by the rlogin daemon
  * after the connection is set up.  Mainly this means responding to
@@ -888,7 +886,7 @@ rlmodrmsg(queue_t *q, mblk_t *mp)
 				if ((pullupmsg(newmp, -1)) == 0) {
 					sz = msgdsize(newmp);
 					recover(q, newmp, sz);
-					return (NULL);
+					return (0);
 				}
 				/*
 				 * pullupmsg results in newmp consuming
@@ -944,7 +942,7 @@ rlmodrmsg(queue_t *q, mblk_t *mp)
 					if (rlwinsetup(q, mp, tmp) == NULL) {
 						sz = msgdsize(mp);
 						recover(q, mp, sz);
-						return (NULL);
+						return (0);
 					}
 					/*
 					 * We have successfully consumed the
@@ -978,7 +976,7 @@ out:
 	if (newmp) {
 		if (!canputnext(q)) {
 			(void) putbq(q, newmp);
-			return (NULL);
+			return (0);
 		} else {
 			putnext(q, newmp);
 		}
@@ -1054,7 +1052,7 @@ rlwinsetup(queue_t *q, mblk_t *mp, unsigned char *blk)
 	win.ws_ypixel = ntohs(win.ws_ypixel);
 	bcopy(&win, mp1->b_rptr, sizeof (struct winsize));
 
-	if ((rlwinctl(q, mp1)) == NULL) {
+	if ((rlwinctl(q, mp1)) == 0) {
 		freeb(mp1);
 		return (0);
 	}
@@ -1249,7 +1247,7 @@ rlmodwioctl(queue_t *q, mblk_t *mp)
 		else
 			rmip->flags &= ~RL_IOCPASSTHRU;
 
-		miocack(q, mp, NULL, 0);
+		miocack(q, mp, 0, 0);
 		break;
 
 	default:
