@@ -667,7 +667,7 @@ rdcstatus(_rdc_ioctl_t *args, int mode)
 static int
 rdcioctl(dev_t dev, int cmd, intptr_t arg, int mode, cred_t *crp, int *rvp)
 {
-	spcs_s_info_t kstatus = NULL;
+	spcs_s_info_t kstatus = 0;
 	_rdc_ioctl_t args;
 	int error;
 	int rc = 0;
