@@ -1094,7 +1094,7 @@ iscsi_sess_state_machine(iscsi_sess_t *isp, iscsi_sess_event_t event,
 
 	/* Audit event */
 	idm_sm_audit_event(&isp->sess_state_audit,
-	    SAS_ISCSI_SESS, isp->sess_state, event, NULL);
+	    SAS_ISCSI_SESS, isp->sess_state, event, (uintptr_t)NULL);
 
 	isp->sess_prev_state = isp->sess_state;
 	isp->sess_state_lbolt = ddi_get_lbolt();

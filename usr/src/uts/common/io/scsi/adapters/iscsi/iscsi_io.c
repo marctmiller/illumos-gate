@@ -3394,7 +3394,7 @@ iscsi_wd_thread(iscsi_thread_t *thread, void *arg)
 
 	ASSERT(isp != NULL);
 
-	while (rc != NULL) {
+	while (rc != 0) {
 
 		iscsi_timeout_checks(isp);
 		iscsi_nop_checks(isp);
