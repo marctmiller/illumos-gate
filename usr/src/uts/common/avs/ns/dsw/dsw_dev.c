@@ -1172,7 +1172,7 @@ _ii_config(intptr_t arg, int ilp32, int *rvp, int iflags)
 	    char *, uconf.shadow_vol, char *, uconf.bitmap_vol);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (_ii_shutting_down)
@@ -2302,7 +2302,7 @@ _ii_disable(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!uparms.shadow_vol[0])
@@ -2433,7 +2433,7 @@ _ii_stat(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!ustat.shadow_vol[0])
@@ -2526,7 +2526,7 @@ _ii_list(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	cf32p = (dsw_config32_t *)(unsigned long)ulist32.list;
@@ -2694,7 +2694,7 @@ _ii_offline(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!uparms.shadow_vol[0])
@@ -2757,7 +2757,7 @@ _ii_wait(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!uparms.shadow_vol[0])
@@ -2852,7 +2852,7 @@ _ii_reset(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!uparms.shadow_vol[0])
@@ -3146,7 +3146,7 @@ _ii_copyparm(intptr_t arg, int ilp32, int *rvp)
 			return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!copyp.shadow_vol[0])
@@ -3422,7 +3422,7 @@ _ii_suspend(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!uparms.shadow_vol[0])
@@ -3486,7 +3486,7 @@ _ii_abort(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!uabort.shadow_vol[0])
@@ -3552,7 +3552,7 @@ _ii_segment(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (usegment.shadow_vol[0]) {
@@ -3651,7 +3651,7 @@ _ii_bitmap(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!ubitmap.shadow_vol[0])
@@ -3728,7 +3728,7 @@ _ii_export(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!uparms.shadow_vol[0])
@@ -3776,7 +3776,7 @@ _ii_export(intptr_t arg, int ilp32, int *rvp)
 	if (ip->bi_shdfd) {
 		if (ip->bi_shdrsrv) {
 			nsc_release(ip->bi_shdfd);
-			ip->bi_shdrsrv = NULL;
+			ip->bi_shdrsrv = 0;
 		}
 		fd = ip->bi_shdfd;
 		ip->bi_shdfd = NULL;
@@ -3788,7 +3788,7 @@ _ii_export(intptr_t arg, int ilp32, int *rvp)
 	if (ip->bi_shdrfd) {
 		if (ip->bi_shdrrsrv) {
 			nsc_release(ip->bi_shdrfd);
-			ip->bi_shdrrsrv = NULL;
+			ip->bi_shdrrsrv = 0;
 		}
 		fd = ip->bi_shdrfd;
 		ip->bi_shdrfd = NULL;
@@ -3854,7 +3854,7 @@ _ii_join(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!ubitmap.shadow_vol[0])
@@ -3963,7 +3963,7 @@ _ii_ocreate(intptr_t arg, int ilp32, int *rvp)
 
 	overflow_vol = uioctl.shadow_vol;
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!overflow_vol[0])
@@ -4056,7 +4056,7 @@ _ii_oattach(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!uconfig.shadow_vol[0])
@@ -4166,7 +4166,7 @@ _ii_odetach(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!ubitmap.shadow_vol[0])
@@ -4255,7 +4255,7 @@ _ii_gc_list(intptr_t arg, int ilp32, int *rvp, kmutex_t *mutex,
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	mutex_enter(mutex);
@@ -4344,7 +4344,7 @@ _ii_olist(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	i = 0;
@@ -4405,7 +4405,7 @@ _ii_ostat(intptr_t arg, int ilp32, int *rvp, int is_iost_2)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 	if (!ustat.overflow_vol[0])
 		return (spcs_s_ocopyoutf(&kstatus, ustat.status, DSW_EEMPTY));
@@ -4475,7 +4475,7 @@ _ii_move_grp(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!umove.shadow_vol[0])
@@ -4560,7 +4560,7 @@ _ii_change_tag(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!umove.shadow_vol[0])
@@ -4900,7 +4900,7 @@ _ii_copy(intptr_t arg, int ilp32, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!ucopy.shadow_vol[0])
@@ -4945,7 +4945,7 @@ _ii_mass_copy(_ii_info_t **ipa, dsw_aioctl_t *ucopy, int wait)
 	spcs_s_info_t kstatus;
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	/* Check copy validitity */
@@ -5246,7 +5246,7 @@ _ii_acopy(intptr_t arg, int ilp32, int *rvp)
 
 	kstatus = spcs_s_kcreate();
 
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	nptr = (char *)arg + name_offset;
@@ -5308,7 +5308,7 @@ _ii_bitsset(intptr_t arg, int ilp32, int cmd, int *rvp)
 		return (EFAULT);
 
 	kstatus = spcs_s_kcreate();
-	if (kstatus == NULL)
+	if (kstatus == 0)
 		return (ENOMEM);
 
 	if (!ubitsset.shadow_vol[0])
@@ -9296,7 +9296,7 @@ _ii_alloc_buf(ii_fd_t *bfd, nsc_off_t pos, nsc_size_t len, int flag,
 	if ((rc = _ii_rsrv_devs(ip, h->ii_rsrv, II_EXTERNAL)) != 0) {
 		rw_exit(&ip->bi_linkrw);
 		rw_ent = 0;
-		h->ii_rsrv = NULL;
+		h->ii_rsrv = 0;
 		goto error;
 	}
 
@@ -9454,7 +9454,7 @@ error:
 			 * Release temporary reserve - reserved above.
 			 */
 			_ii_rlse_devs(ip, h->ii_rsrv);
-			h->ii_rsrv = NULL;
+			h->ii_rsrv = 0;
 		}
 		if (rw_ent)
 			rw_exit(&ip->bi_linkrw);
@@ -9503,7 +9503,7 @@ _ii_free_buf(ii_buf_t *h)
 		h->ii_bufh.sb_error = 0;
 		h->ii_bufh.sb_pos = 0;
 		h->ii_bufh.sb_len = 0;
-		h->ii_rsrv = NULL;
+		h->ii_rsrv = 0;
 	}
 
 	/*
@@ -9737,7 +9737,7 @@ _ii_alloc_handle(void (*d_cb)(), void (*r_cb)(), void (*w_cb)(), ii_fd_t *bfd)
 	h->ii_bufp2 = NULL;
 	h->ii_bufh.sb_flag = NSC_HALLOCATED;
 	h->ii_fd = bfd;
-	h->ii_rsrv = NULL;
+	h->ii_rsrv = 0;
 
 	return ((nsc_buf_t *)h);
 }
