@@ -26,8 +26,6 @@
 #ifndef _CIS_H
 #define	_CIS_H
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 /*
  * This is the Card Services Card Information Structure (CIS) interpreter
  *	header file.  CIS information in this file is based on the
@@ -216,7 +214,7 @@ typedef struct cisptr_t {
 #define	NEXT_CIS_ADDR(ptr)	\
 			(((ptr->flags&CISTPLF_AM_SPACE)?(ptr->offset += 2): \
 				(ptr->offset++)),	\
-				((ptr->offset > ptr->size)?(NULL):ptr->offset))
+				((ptr->offset > ptr->size)?(0):ptr->offset))
 #define	GET_CIS_DATA(ptr)	csx_Get8(ptr->handle, ptr->offset)
 #define	GET_CIS_ADDR(tp)	((cisdata_t *)(uintptr_t)(tp)->offset)
 #define	BAD_CIS_ADDR	0x080000000 /* read past end of mapped CIS error */
