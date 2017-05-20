@@ -805,7 +805,7 @@ usbvc_read(dev_t dev, struct uio *uio_p, cred_t *cred_p)
 
 	/* start polling if it is not started yet */
 	if (strm_if->start_polling != 1) {
-		if (usbvc_start_isoc_polling(usbvcp, strm_if, NULL) !=
+		if (usbvc_start_isoc_polling(usbvcp, strm_if, 0) !=
 		    USB_SUCCESS) {
 			USB_DPRINTF_L2(PRINT_MASK_READ,
 			    usbvcp->usbvc_log_handle,
