@@ -641,7 +641,7 @@ usbms_rserv_vuid_event_wheel(queue_t		*q,
 			fep->id = vuid_id_addr(vuid_first(VUID_WHEEL)) |
 			    vuid_id_offset(id);
 			fep->pair_type = FE_PAIR_NONE;
-			fep->pair = NULL;
+			fep->pair = 0;
 			fep->value = mi->mi_z;
 			fep->time = mi->mi_time;
 			*bpaddr = tmp;
@@ -2222,8 +2222,8 @@ usbms_setup_abs_mouse_event()
 		fep = (Firm_event *)mb->b_wptr;
 		fep->id = MOUSE_TYPE_ABSOLUTE;
 		fep->pair_type = FE_PAIR_NONE;
-		fep->pair = NULL;
-		fep->value = NULL;
+		fep->pair = 0;
+		fep->value = 0;
 		mb->b_wptr += sizeof (Firm_event);
 	} else {
 		USB_DPRINTF_L3(PRINT_MASK_ALL, usbms_log_handle,
