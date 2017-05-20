@@ -6166,7 +6166,7 @@ i_mac_group_allocate_rings(mac_impl_t *mip, mac_ring_type_t ring_type,
 	/*
 	 * First find the rings to allocate to the group.
 	 */
-	if (share != NULL) {
+	if (share != 0) {
 		/* get rings through ms_squery() */
 		mip->mi_share_capab.ms_squery(share, ring_type, NULL, &nrings);
 		ASSERT(nrings != 0);
@@ -6275,7 +6275,7 @@ i_mac_group_allocate_rings(mac_impl_t *mip, mac_ring_type_t ring_type,
 	}
 
 	/* add group to share */
-	if (share != NULL)
+	if (share != 0)
 		mip->mi_share_capab.ms_sadd(share, new_group->mrg_driver);
 
 bail:
@@ -6464,7 +6464,7 @@ mac_reserve_rx_group(mac_client_impl_t *mcip, uint8_t *mac_addr, boolean_t move)
 					gclient = mac_get_grp_primary(grp);
 				ASSERT(gclient != NULL);
 				gmrp = MCIP_RESOURCE_PROPS(gclient);
-				if (gclient->mci_share == NULL &&
+				if (gclient->mci_share == 0 &&
 				    (gmrp->mrp_mask & MRP_RX_RINGS) == 0 &&
 				    (unspec ||
 				    (grp->mrg_cur_count + donor_grp_rcnt >=
@@ -6511,7 +6511,7 @@ mac_reserve_rx_group(mac_client_impl_t *mcip, uint8_t *mac_addr, boolean_t move)
 				 * the rings from the driver, let's populate
 				 * the property for the client now.
 				 */
-				if (share != NULL) {
+				if (share != 0) {
 					mac_client_set_rings(
 					    (mac_client_handle_t)mcip,
 					    grp->mrg_cur_count, -1);
@@ -6598,7 +6598,7 @@ mac_reserve_rx_group(mac_client_impl_t *mcip, uint8_t *mac_addr, boolean_t move)
 				 * the rings from the driver, let's populate
 				 * the property for the client now.
 				 */
-				if (share != NULL) {
+				if (share != 0) {
 					mac_client_set_rings(
 					    (mac_client_handle_t)mcip,
 					    grp->mrg_cur_count, -1);
@@ -6661,7 +6661,7 @@ mac_release_rx_group(mac_client_impl_t *mcip, mac_group_t *group)
 	}
 
 	/* remove group from share */
-	if (mcip->mci_share != NULL) {
+	if (mcip->mci_share != 0) {
 		mip->mi_share_capab.ms_sremove(mcip->mci_share,
 		    group->mrg_driver);
 	}
@@ -7002,7 +7002,7 @@ mac_reserve_tx_group(mac_client_impl_t *mcip, boolean_t move)
 				if (gclient == NULL)
 					gclient = mac_get_grp_primary(grp);
 				gmrp = MCIP_RESOURCE_PROPS(gclient);
-				if (gclient->mci_share == NULL &&
+				if (gclient->mci_share == 0 &&
 				    (gmrp->mrp_mask & MRP_TX_RINGS) == 0 &&
 				    (unspec ||
 				    (grp->mrg_cur_count + defnrings) >=
@@ -7070,7 +7070,7 @@ mac_reserve_tx_group(mac_client_impl_t *mcip, boolean_t move)
 				 * the rings from the driver, let's populate
 				 * the property for the client now.
 				 */
-				if (share != NULL) {
+				if (share != 0) {
 					mac_client_set_rings(
 					    (mac_client_handle_t)mcip, -1,
 					    grp->mrg_cur_count);
@@ -7104,7 +7104,7 @@ mac_reserve_tx_group(mac_client_impl_t *mcip, boolean_t move)
 	 * For a share i_mac_group_allocate_rings gets the rings from the
 	 * driver, let's populate the property for the client now.
 	 */
-	if (share != NULL) {
+	if (share != 0) {
 		mac_client_set_rings((mac_client_handle_t)mcip, -1,
 		    grp->mrg_cur_count);
 	}
@@ -7138,7 +7138,7 @@ mac_release_tx_group(mac_client_impl_t *mcip, mac_group_t *grp)
 			mac_srs_stat_delete(srs);
 		}
 	}
-	if (share != NULL)
+	if (share != 0)
 		mip->mi_share_capab.ms_sremove(share, grp->mrg_driver);
 
 	/* move the ring back to the pool */
