@@ -24,8 +24,6 @@
  * Use is subject to license terms.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 /*
  * This module implements the "fast path" processing for the telnet protocol.
  * Since it only knows a very small number of the telnet protocol options,
@@ -965,7 +963,7 @@ rcv_parse(queue_t *q, mblk_t *mp)
 		 */
 		if (!(tmip->flags & TEL_BINARY_IN) &&
 		    (tmip->flags & TEL_CRRCV)) {
-			if ((*mp->b_rptr == '\n') || (*mp->b_rptr == NULL)) {
+			if ((*mp->b_rptr == '\n') || (*mp->b_rptr == '\0')) {
 				if (mp->b_wptr == (mp->b_rptr + 1)) {
 					tmip->flags &= ~TEL_CRRCV;
 					if (prevmp) {
@@ -1082,7 +1080,7 @@ rcv_parse(queue_t *q, mblk_t *mp)
 				 * LF/NULL and realign the message block.
 				 */
 				if ((tmp[0] == '\r') && ((tmp[1] == '\n') ||
-				    (tmp[1] == NULL))) {
+				    (tmp[1] == '\0'))) {
 					/*
 					 * If CR is in the middle of a block,
 					 * we need to get rid of LF and join
@@ -1154,7 +1152,7 @@ snd_parse(queue_t *q, mblk_t *mp)
 		if (!(tmip->flags & TEL_BINARY_OUT) &&
 			(tmip->flags & TEL_CRSND)) {
 			if (*(mp->b_rptr) != '\n')
-				*tmp1++ = NULL;
+				*tmp1++ = '\0';
 			tmip->flags &= ~TEL_CRSND;
 		}
 		tmp = mp->b_rptr;
@@ -1173,7 +1171,7 @@ snd_parse(queue_t *q, mblk_t *mp)
 					break;
 				}
 				if ((tmp[0] == '\r') && (tmp[1] != '\n')) {
-					*tmp1++ = NULL;
+					*tmp1++ = '\0';
 				}
 			} else
 				*tmp1++ = *tmp;
