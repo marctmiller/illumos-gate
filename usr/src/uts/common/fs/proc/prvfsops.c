@@ -61,8 +61,8 @@
 static int prinit();
 
 static mntopts_t proc_mntopts = {
-	NULL,
-	0
+	0,
+	NULL
 };
 
 static vfsdef_t vfw = {

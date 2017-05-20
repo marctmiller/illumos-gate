@@ -1863,7 +1863,7 @@ prioctl32(
 
 	case PIOCOPENM:		/* open mapped object for reading */
 		if (cmaddr == NULL)
-			un32.va = NULL;
+			un32.va = 0;
 		else if (copyin(cmaddr, &un32.va, sizeof (un32.va)))
 			error = EFAULT;
 		break;
