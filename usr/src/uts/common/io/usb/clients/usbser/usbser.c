@@ -901,7 +901,7 @@ usbser_create_port_minor_nodes(usbser_state_t *usp, int port_num)
 	minor = USBSER_MAKEMINOR(instance, port_num, 0);
 
 	if (ddi_create_minor_node(usp->us_dip, name,
-	    S_IFCHR, minor, DDI_NT_SERIAL, NULL) != DDI_SUCCESS) {
+	    S_IFCHR, minor, DDI_NT_SERIAL, 0) != DDI_SUCCESS) {
 
 		return (USB_FAILURE);
 	}
@@ -913,7 +913,7 @@ usbser_create_port_minor_nodes(usbser_state_t *usp, int port_num)
 	minor = USBSER_MAKEMINOR(instance, port_num, OUTLINE);
 
 	if (ddi_create_minor_node(usp->us_dip, name,
-	    S_IFCHR, minor, DDI_NT_SERIAL_DO, NULL) != DDI_SUCCESS) {
+	    S_IFCHR, minor, DDI_NT_SERIAL_DO, 0) != DDI_SUCCESS) {
 
 		return (USB_FAILURE);
 	}
