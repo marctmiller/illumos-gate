@@ -244,9 +244,9 @@ tnf_attach(dev_info_t *devi, ddi_attach_cmd_t cmd)
 	if (cmd != DDI_ATTACH)
 		return (DDI_FAILURE);
 	if ((ddi_create_minor_node(devi, "tnfctl", S_IFCHR, TNFCTL_MINOR,
-	    DDI_PSEUDO, NULL) == DDI_FAILURE) ||
+	    DDI_PSEUDO, 0) == DDI_FAILURE) ||
 	    (ddi_create_minor_node(devi, "tnfmap", S_IFCHR, TNFMAP_MINOR,
-	    DDI_PSEUDO, NULL) == DDI_FAILURE)) {
+	    DDI_PSEUDO, 0) == DDI_FAILURE)) {
 		ddi_remove_minor_node(devi, NULL);
 		return (DDI_FAILURE);
 	}
