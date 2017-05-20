@@ -725,7 +725,7 @@ ncallgetnodes(intptr_t uaddr, int mode, int *rvalp)
 	 * maximum, so space can be correctly allocated.
 	 */
 
-	if (uaddr == NULL) {
+	if (uaddr == (intptr_t)NULL) {
 		*rvalp = nodecnt;
 		return (0);
 	}
