@@ -728,7 +728,7 @@ hidparser_get_main_item_data_descr_main(entity_item_t *parser_handle,
 		}
 	}
 
-	*main_item_descr_value = (uint_t)NULL;
+	*main_item_descr_value = 0;
 
 	return (HIDPARSER_NOT_FOUND);
 }
