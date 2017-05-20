@@ -157,7 +157,7 @@ kcf_soft_config_init(void)
 	    "CKM_SHA1_RSA_PKCS", "CKM_SHA256_RSA_PKCS", "CKM_SHA384_RSA_PKCS",
 	    "CKM_SHA512_RSA_PKCS", ""};
 	static crypto_mech_name_t	swrand_mechs[] = {
-	    "random", NULL};
+	    "random", 0 };
 	static initial_soft_config_entry_t
 	    initial_soft_config_entry[] = {
 		"des", des_mechs,
