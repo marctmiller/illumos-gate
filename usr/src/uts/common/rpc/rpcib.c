@@ -3592,7 +3592,7 @@ rib_addreplylist(rib_qp_t *qp, uint32_t msgid)
 		return (NULL);
 	}
 	rep->xid = msgid;
-	rep->vaddr_cq = NULL;
+	rep->vaddr_cq = 0;
 	rep->bytes_xfer = 0;
 	rep->status = (uint_t)REPLY_WAIT;
 	rep->prev = NULL;
@@ -3672,7 +3672,7 @@ rib_registermem(CONN *conn,  caddr_t adsp, caddr_t buf, uint_t buflen,
 		buf_handle->mrc_lmr = (uint32_t)mr_desc.md_lkey;
 		buf_handle->mrc_rmr = (uint32_t)mr_desc.md_rkey;
 	} else {
-		buf_handle->mrc_linfo = NULL;
+		buf_handle->mrc_linfo = 0;
 		buf_handle->mrc_lmr = 0;
 		buf_handle->mrc_rmr = 0;
 	}
@@ -3754,7 +3754,7 @@ rib_registermemsync(CONN *conn,  caddr_t adsp, caddr_t buf, uint_t buflen,
 		buf_handle->mrc_rmr = (uint32_t)mr_desc.md_rkey;
 		*sync_handle = (RIB_SYNCMEM_HANDLE)mr_hdl;
 	} else {
-		buf_handle->mrc_linfo = NULL;
+		buf_handle->mrc_linfo = 0;
 		buf_handle->mrc_lmr = 0;
 		buf_handle->mrc_rmr = 0;
 	}
@@ -5041,7 +5041,7 @@ rib_get_cache_buf(CONN *conn, uint32_t len)
 	cache_avl_struct_t	cas, *rcas;
 	rib_hca_t	*hca = (ctoqp(conn))->hca;
 	rib_lrc_entry_t *reply_buf;
-	avl_index_t where = NULL;
+	avl_index_t where = (avl_index_t)NULL;
 	uint64_t c_alloc = 0;
 
 	if (!hca->avl_init)
@@ -5152,7 +5152,7 @@ static void
 rib_free_cache_buf(CONN *conn, rib_lrc_entry_t *reg_buf)
 {
 	cache_avl_struct_t    cas, *rcas;
-	avl_index_t where = NULL;
+	avl_index_t where = (avl_index_t)NULL;
 	rib_hca_t	*hca = (ctoqp(conn))->hca;
 
 	if (!hca->avl_init)
@@ -5205,7 +5205,7 @@ rib_registermem_via_hca(rib_hca_t *hca, caddr_t adsp, caddr_t buf,
 		buf_handle->mrc_lmr = (uint32_t)mr_desc.md_lkey;
 		buf_handle->mrc_rmr = (uint32_t)mr_desc.md_rkey;
 	} else {
-		buf_handle->mrc_linfo = NULL;
+		buf_handle->mrc_linfo = 0;
 		buf_handle->mrc_lmr = 0;
 		buf_handle->mrc_rmr = 0;
 	}
