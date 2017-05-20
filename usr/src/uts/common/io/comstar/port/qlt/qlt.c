@@ -6043,7 +6043,7 @@ qlt_dump_el_trace_buffer(qlt_state_t *qlt)
 	mutex_enter(&qlt->el_trace_desc->mutex);
 
 	rval = qlt_validate_trace_desc(qlt);
-	if (rval != NULL) {
+	if (rval != 0) {
 		cmn_err(CE_CONT, "qlt(%d) Dump EL trace - invalid desc\n",
 		    qlt->instance);
 	} else if ((dump_start = qlt_find_trace_start(qlt)) != NULL) {
@@ -6073,7 +6073,7 @@ qlt_dump_el_trace_buffer(qlt_state_t *qlt)
 				    dump_current) {
 					break;
 				}
-			} else if (*dump_current == NULL) {
+			} else if (*dump_current == '\0') {
 				break;
 			}
 		}
@@ -6138,7 +6138,7 @@ qlt_find_trace_start(qlt_state_t *qlt)
 	    (qlt->el_trace_desc->trace_buffer +
 	    qlt->el_trace_desc->trace_buffer_size)) {
 		trace_start = qlt->el_trace_desc->trace_buffer;
-	} else if (*trace_next != NULL) {
+	} else if (*trace_next != '\0') {
 		trace_start = trace_next + (strlen(trace_next) + 1);
 	} else {
 		trace_start = qlt->el_trace_desc->trace_buffer;
