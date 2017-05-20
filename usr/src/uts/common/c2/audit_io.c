@@ -812,7 +812,7 @@ audit_async_start(label_t *jb, au_event_t event, int sorf)
 	if (sorf & AUM_FAIL)
 		failure = kctx->auk_info.ai_namask.as_failure & estate;
 
-	if ((success | failure) == NULL)
+	if ((success | failure) == 0)
 		return (1);
 
 	ASSERT(tad->tad_errjmp == NULL);
