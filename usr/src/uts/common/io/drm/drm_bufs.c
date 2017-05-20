@@ -820,8 +820,8 @@ drm_mapbufs(DRM_IOCTL_ARGS)
 		size = round_page(dma->byte_count);
 		foff = 0;
 	}
-	request.virtual = drm_smmap(NULL, size, PROT_READ | PROT_WRITE,
-	    MAP_SHARED, request.fd, foff);
+	request.virtual = drm_smmap((uintptr_t)NULL, size,
+	    PROT_READ | PROT_WRITE, MAP_SHARED, request.fd, foff);
 	if (request.virtual == NULL) {
 		DRM_ERROR("drm_mapbufs: request.virtual is NULL");
 		return (EINVAL);
