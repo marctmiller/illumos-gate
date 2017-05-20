@@ -1080,8 +1080,8 @@ ohci_polled_save_state(ohci_polled_t	*ohci_polledp)
 		/*
 		 * Reset the HCCA done head and ohci done head register.
 		 */
-		Set_HCCA(ohcip->ohci_hccap->HccaDoneHead, NULL);
-		Set_OpReg(hcr_done_head, (uint32_t)0x0);
+		Set_HCCA(ohcip->ohci_hccap->HccaDoneHead, 0);
+		Set_OpReg(hcr_done_head, 0);
 
 		/*
 		 * Clear the  WriteDoneHead interrupt bit in the ohci interrupt
@@ -1385,7 +1385,7 @@ ohci_polled_restore_state(ohci_polled_t	*ohci_polledp)
 			td = next_td;
 		}
 		/* Reset the HCCA done head list to NULL */
-		Set_HCCA(ohcip->ohci_hccap->HccaDoneHead, NULL);
+		Set_HCCA(ohcip->ohci_hccap->HccaDoneHead, 0);
 
 		/*
 		 * Replace the hcr_done_head register field with the saved copy
@@ -1539,7 +1539,7 @@ ohci_polled_check_done_list(ohci_polled_t	*ohci_polledp)
 		}
 	} else {
 		/* Reset the done head to NULL */
-		Set_HCCA(ohcip->ohci_hccap->HccaDoneHead, NULL);
+		Set_HCCA(ohcip->ohci_hccap->HccaDoneHead, 0);
 	}
 
 	/* Sync ED and TD pool */
