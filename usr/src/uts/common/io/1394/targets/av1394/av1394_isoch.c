@@ -318,7 +318,7 @@ av1394_isoch_create_minor_node(av1394_inst_t *avp)
 
 	ret = ddi_create_minor_node(avp->av_dip, "isoch",
 	    S_IFCHR, AV1394_ISOCH_INST2MINOR(avp->av_instance),
-	    DDI_NT_AV_ISOCH, NULL);
+	    DDI_NT_AV_ISOCH, 0);
 	if (ret != DDI_SUCCESS) {
 		TNF_PROBE_0(av1394_isoch_create_minor_node_error,
 		    AV1394_TNF_ISOCH_ERROR, "");
