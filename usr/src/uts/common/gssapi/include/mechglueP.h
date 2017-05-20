@@ -721,7 +721,7 @@ struct	kgss_ctx {
 	(((ctx) == GSS_C_NO_CONTEXT) ? (gssd_ctx_id_t)(uintptr_t)(ctx) : \
 	KCTX_TO_GSSD_CTX(ctx))
 #define	KGSS_CTX_TO_GSSD_CTXV(ctx)	\
-	(((ctx) == GSS_C_NO_CONTEXT) ? (NULL) : KCTX_TO_CTXV(ctx))
+	(((ctx) == GSS_C_NO_CONTEXT) ? (0) : KCTX_TO_CTXV(ctx))
 
 #ifdef _KERNEL
 #define	KCTX_TO_I_CTX(ctx)	(KCTX_TO_KGSS_CTX(ctx)->gssd_i_ctx)

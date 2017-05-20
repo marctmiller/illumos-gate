@@ -200,7 +200,7 @@ kgss_acquire_cred_wrapped(minor_status,
 		if (minor_status != NULL)
 			*minor_status = DEFAULT_MINOR_STAT;
 		if (output_cred_handle != NULL)
-			*output_cred_handle = NULL;
+			*output_cred_handle = 0;
 		if (actual_mechs != NULL)
 			*actual_mechs = NULL;
 		if (time_rec != NULL)
@@ -555,7 +555,7 @@ kgss_release_cred_wrapped(minor_status,
 		if (minor_status != NULL)
 			*minor_status = DEFAULT_MINOR_STAT;
 		if (cred_handle != NULL)
-			*cred_handle = NULL;
+			*cred_handle = 0;
 
 		killgssd_handle(clnt);
 		GSSLOG0(1, "kgss_release_cred: RPC call times out\n");
@@ -565,7 +565,7 @@ kgss_release_cred_wrapped(minor_status,
 	/* if the release succeeded, null out the cred_handle */
 
 	if (res.status == GSS_S_COMPLETE && cred_handle != NULL)
-		*cred_handle = NULL;
+		*cred_handle = 0;
 
 	/* copy the rpc results into the return arguments */
 
@@ -1297,7 +1297,7 @@ kgss_delete_sec_context_wrapped(void *private,
 		if (minor_status != NULL)
 			*minor_status = DEFAULT_MINOR_STAT;
 		if (context_handle != NULL)
-			*context_handle = NULL;
+			*context_handle = 0;
 		if (output_token != NULL)
 			output_token->length = 0;
 
@@ -1312,7 +1312,7 @@ kgss_delete_sec_context_wrapped(void *private,
 		*minor_status = res.minor_status;
 
 	if (res.context_handle.GSS_CTX_ID_T_len == 0)
-		*context_handle = NULL;
+		*context_handle = 0;
 	else
 		*context_handle =
 		    *((gssd_ctx_id_t *)res.context_handle.GSS_CTX_ID_T_val);
@@ -1421,7 +1421,7 @@ kgss_export_sec_context_wrapped(minor_status,
 		if (minor_status != NULL)
 			*minor_status = DEFAULT_MINOR_STAT;
 		if (context_handle != NULL)
-			*context_handle = NULL;
+			*context_handle = 0;
 		if (output_token != NULL)
 			output_token->length = 0;
 		killgssd_handle(clnt);
@@ -1436,7 +1436,7 @@ kgss_export_sec_context_wrapped(minor_status,
 		*minor_status = res.minor_status;
 
 	if (res.context_handle.GSS_CTX_ID_T_len == 0)
-		*context_handle = NULL;
+		*context_handle = 0;
 	else
 		*context_handle =
 		    *((gssd_ctx_id_t *)res.context_handle.GSS_CTX_ID_T_val);
