@@ -312,7 +312,7 @@ clist_deregister(CONN *conn, struct clist *cl)
 				    (void *)(uintptr_t)c->c_ssynchandle,
 				    (void *)c->rb_longbuf.rb_private);
 				c->c_smemhandle.mrc_rmr = 0;
-				c->c_ssynchandle = NULL;
+				c->c_ssynchandle = 0;
 			}
 			break;
 		case CLIST_REG_DST:
@@ -323,7 +323,7 @@ clist_deregister(CONN *conn, struct clist *cl)
 				    (void *)(uintptr_t)c->c_dsynchandle,
 				    (void *)c->rb_longbuf.rb_private);
 				c->c_dmemhandle.mrc_rmr = 0;
-				c->c_dsynchandle = NULL;
+				c->c_dsynchandle = 0;
 			}
 			break;
 		default:

@@ -372,7 +372,7 @@ loopb_u2t(const char *ua, struct netbuf *addr)
 
 	univp = ua;
 	transp = addr->buf;
-	while (*univp != NULL) {
+	while (*univp != '\0') {
 		if (*univp == '\\' && *(univp+1) == '\\') {
 			*transp = '\\';
 			univp += 2;
@@ -597,7 +597,7 @@ rpcbind_getaddr(struct knetconfig *config, rpcprog_t prog, rpcvers_t vers,
 		clnt_destroy(client);
 
 		if (status == RPC_SUCCESS) {
-			if (ua == NULL || *ua == NULL) {
+			if (ua == NULL || *ua == '\0') {
 				status = RPC_PROGNOTREGISTERED;
 				continue;
 			}

@@ -1784,7 +1784,7 @@ endpnt_reap_dispatch(void *a)
 	 * endpoint.
 	 */
 	if (taskq_dispatch(endpnt_taskq, (task_func_t *)endpnt_reap, etp,
-	    TQ_NOSLEEP) == NULL)
+	    TQ_NOSLEEP) == 0)
 		return;
 	mutex_enter(&etp->e_ilock);
 	etp->e_async_count++;
