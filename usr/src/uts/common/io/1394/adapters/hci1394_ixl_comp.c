@@ -24,8 +24,6 @@
  * Use is subject to license terms.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 /*
  * hci1394_ixl_comp.c
  *    Isochronous IXL Compiler.
@@ -179,7 +177,7 @@ hci1394_compile_ixl_init(hci1394_comp_ixl_vars_t *wvp,
 	wvp->ctxtp = ctxtp;
 
 	/* init/clear ctxtp values */
-	ctxtp->dma_mem_execp = NULL;
+	ctxtp->dma_mem_execp = 0;
 	ctxtp->dma_firstp = NULL;
 	ctxtp->dma_last_time = 0;
 	ctxtp->xcs_firstp = NULL;
@@ -2386,7 +2384,7 @@ hci1394_set_next_xfer_buf(hci1394_comp_ixl_vars_t *wvp, uint32_t bufp,
 	    HCI1394_TNF_HAL_STACK_ISOCH, "");
 
 	/* error if buffer pointer is null (size may be 0) */
-	if (bufp == NULL) {
+	if (bufp == 0) {
 
 		wvp->dma_bld_error = IXL1394_ENULL_BUFFER_ADDR;
 
@@ -2575,7 +2573,7 @@ hci1394_alloc_storevalue_dma_mem(hci1394_comp_ixl_vars_t *wvp)
 		    tnf_opaque, ixl_commandp, wvp->ixl_cur_cmdp);
 		TNF_PROBE_0_DEBUG(hci1394_alloc_storevalue_dma_mem_exit,
 		    HCI1394_TNF_HAL_STACK_ISOCH, "");
-		return (NULL);
+		return (0);
 	}
 
 	TNF_PROBE_0_DEBUG(hci1394_alloc_storevalue_dma_mem_exit,

@@ -23,8 +23,6 @@
  * Use is subject to license terms.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 /*
  * hci1394_ixl_update.c
  *    Isochronous IXL update routines.
@@ -1012,7 +1010,7 @@ hci1394_ixl_update_prep_recv_pkt(hci1394_ixl_update_vars_t *uvp)
 	}
 
 	/* if new IXL buffer addrs are null, return error */
-	if ((new_xfer_pkt_ixlp->ixl_buf.ixldmac_addr == NULL) ||
+	if ((new_xfer_pkt_ixlp->ixl_buf.ixldmac_addr == 0) ||
 	    (new_xfer_pkt_ixlp->mem_bufp == NULL)) {
 
 		uvp->upd_status = IXL1394_EXFER_BUF_MISSING;
@@ -1151,7 +1149,7 @@ hci1394_ixl_update_prep_recv_buf(hci1394_ixl_update_vars_t *uvp)
 	}
 
 	/* if new IXL buffer addrs are null, return error */
-	if ((new_xfer_buf_ixlp->ixl_buf.ixldmac_addr == NULL) ||
+	if ((new_xfer_buf_ixlp->ixl_buf.ixldmac_addr == 0) ||
 	    (new_xfer_buf_ixlp->mem_bufp == NULL)) {
 
 		uvp->upd_status = IXL1394_EXFER_BUF_MISSING;
@@ -1260,7 +1258,7 @@ hci1394_ixl_update_prep_send_pkt(hci1394_ixl_update_vars_t *uvp)
 	}
 
 	/* if new ixl buffer addrs are null, return error */
-	if ((new_xfer_pkt_ixlp->ixl_buf.ixldmac_addr == NULL) ||
+	if ((new_xfer_pkt_ixlp->ixl_buf.ixldmac_addr == 0) ||
 	    (new_xfer_pkt_ixlp->mem_bufp == NULL)) {
 
 		uvp->upd_status = IXL1394_EXFER_BUF_MISSING;
@@ -1426,7 +1424,7 @@ hci1394_ixl_update_prep_send_buf(hci1394_ixl_update_vars_t *uvp)
 	}
 
 	/* if new IXL buffer addresses are null, return error */
-	if ((new_xfer_buf_ixlp->ixl_buf.ixldmac_addr == NULL) ||
+	if ((new_xfer_buf_ixlp->ixl_buf.ixldmac_addr == 0) ||
 	    (new_xfer_buf_ixlp->mem_bufp == NULL)) {
 
 		uvp->upd_status = IXL1394_EXFER_BUF_MISSING;
