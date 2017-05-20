@@ -974,7 +974,7 @@ ibmf_saa_utils_pack_payload(uchar_t *structs_payload, size_t
 
 	if (structs_payload_length == 0) {
 
-		*buf_payload_lengthp = NULL;
+		*buf_payload_lengthp = 0;
 		*buf_payloadp = NULL;
 
 		return (IBMF_SUCCESS);
