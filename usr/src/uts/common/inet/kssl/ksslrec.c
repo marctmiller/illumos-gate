@@ -2488,7 +2488,7 @@ kssl_free_context(ssl_t *ssl)
 	 * might submit a new cryto request.
 	 */
 	do {
-		if (ssl->job.kjob != NULL) {
+		if (ssl->job.kjob != 0) {
 			/*
 			 * Drop the lock before canceling the request;
 			 * otherwise we might deadlock if the completion
@@ -2500,7 +2500,7 @@ kssl_free_context(ssl_t *ssl)
 			mutex_enter(&ssl->kssl_lock);
 
 			/* completion callback might have done the cleanup */
-			if (ssl->job.kjob != NULL) {
+			if (ssl->job.kjob != 0) {
 				kmem_free(ssl->job.buf, ssl->job.buflen);
 				ssl->job.kjob = 0;
 				ssl->job.buf = NULL;
@@ -2509,7 +2509,7 @@ kssl_free_context(ssl_t *ssl)
 		}
 		while (ssl->async_ops_pending > 0)
 			cv_wait(&ssl->async_cv, &ssl->kssl_lock);
-	} while (ssl->job.kjob != NULL);
+	} while (ssl->job.kjob != 0);
 
 	kssl_mblksfree(ssl);
 	kssl_specsfree(ssl);
