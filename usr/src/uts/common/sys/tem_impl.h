@@ -187,19 +187,25 @@ struct tem_vt_state {
 };
 _NOTE(MUTEX_PROTECTS_DATA(tem_vt_state::tvs_lock, tem_vt_state))
 
-typedef struct tem_safe_callbacks {
-	void (*tsc_display)(struct tem_vt_state *, unsigned char *, int,
+typedef	void (*tsc_display_t)(struct tem_vt_state *, unsigned char *, int,
 	    screen_pos_t, screen_pos_t, unsigned char, unsigned char,
 	    cred_t *, enum called_from);
-	void (*tsc_copy)(struct tem_vt_state *,
+typedef	void (*tsc_copy_t)(struct tem_vt_state *,
 	    screen_pos_t, screen_pos_t, screen_pos_t, screen_pos_t,
 	    screen_pos_t, screen_pos_t, cred_t *, enum called_from);
-	void (*tsc_cursor)(struct tem_vt_state *, short, cred_t *,
+typedef	void (*tsc_cursor_t)(struct tem_vt_state *, short, cred_t *,
 	    enum called_from);
-	void (*tsc_bit2pix)(struct tem_vt_state *, unsigned char,
+typedef	void (*tsc_bit2pix_t)(struct tem_vt_state *, unsigned char,
 	    unsigned char, unsigned char);
-	void (*tsc_cls)(struct tem_vt_state *, int,
+typedef	void (*tsc_cls_t)(struct tem_vt_state *, int,
 	    screen_pos_t, screen_pos_t, cred_t *, enum called_from);
+
+typedef struct tem_safe_callbacks {
+	tsc_display_t tsc_display;
+	tsc_copy_t tsc_copy;
+	tsc_cursor_t tsc_cursor;
+	tsc_bit2pix_t tsc_bit2pix;
+	tsc_cls_t tsc_cls;
 } tem_safe_callbacks_t;
 
 /*
