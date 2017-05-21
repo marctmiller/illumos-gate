@@ -30164,7 +30164,7 @@ sd_faultinjection_ioctl(int cmd, intptr_t arg,  struct sd_lun *un)
 			kmem_free(un->sd_fi_fifo_pkt[i],
 			    sizeof (struct sd_fi_pkt));
 		}
-		if (arg != NULL) {
+		if (arg != 0) {
 			un->sd_fi_fifo_pkt[i] =
 			    kmem_alloc(sizeof (struct sd_fi_pkt), KM_NOSLEEP);
 			if (un->sd_fi_fifo_pkt[i] == NULL) {
@@ -30198,7 +30198,7 @@ sd_faultinjection_ioctl(int cmd, intptr_t arg,  struct sd_lun *un)
 			    sizeof (struct sd_fi_xb));
 			un->sd_fi_fifo_xb[i] = NULL;
 		}
-		if (arg != NULL) {
+		if (arg != 0) {
 			un->sd_fi_fifo_xb[i] =
 			    kmem_alloc(sizeof (struct sd_fi_xb), KM_NOSLEEP);
 			if (un->sd_fi_fifo_xb[i] == NULL) {
@@ -30233,7 +30233,7 @@ sd_faultinjection_ioctl(int cmd, intptr_t arg,  struct sd_lun *un)
 			    sizeof (struct sd_fi_un));
 			un->sd_fi_fifo_un[i] = NULL;
 		}
-		if (arg != NULL) {
+		if (arg != 0) {
 			un->sd_fi_fifo_un[i] =
 			    kmem_alloc(sizeof (struct sd_fi_un), KM_NOSLEEP);
 			if (un->sd_fi_fifo_un[i] == NULL) {
@@ -30268,7 +30268,7 @@ sd_faultinjection_ioctl(int cmd, intptr_t arg,  struct sd_lun *un)
 			    sizeof (struct sd_fi_arq));
 			un->sd_fi_fifo_arq[i] = NULL;
 		}
-		if (arg != NULL) {
+		if (arg != 0) {
 			un->sd_fi_fifo_arq[i] =
 			    kmem_alloc(sizeof (struct sd_fi_arq), KM_NOSLEEP);
 			if (un->sd_fi_fifo_arq[i] == NULL) {
@@ -30294,7 +30294,7 @@ sd_faultinjection_ioctl(int cmd, intptr_t arg,  struct sd_lun *un)
 		/* Push stored xb, pkt, un, and arq onto fifo */
 		sd_fault_injection_on = 0;
 
-		if (arg != NULL) {
+		if (arg != 0) {
 			rval = ddi_copyin((void *)arg, &i, sizeof (uint_t), 0);
 			if (rval != -1 &&
 			    un->sd_fi_fifo_end + i < SD_FI_MAX_ERROR) {
@@ -30329,7 +30329,7 @@ sd_faultinjection_ioctl(int cmd, intptr_t arg,  struct sd_lun *un)
 			 * arg is possibly invalid setting
 			 * it to NULL for return
 			 */
-			arg = NULL;
+			arg = 0;
 		}
 		break;
 	}
