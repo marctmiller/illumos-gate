@@ -2122,7 +2122,7 @@ dump_ttrace(void)
 
 	for (i = 0; i < n; i++) {
 		ttc = &trap_trace_ctl[i];
-		if (ttc->ttc_first == NULL)
+		if (ttc->ttc_first == 0)
 			continue;
 
 		current = ttc->ttc_next - sizeof (trap_trace_rec_t);
@@ -2138,7 +2138,7 @@ dump_ttrace(void)
 				current =
 				    ttc->ttc_limit - sizeof (trap_trace_rec_t);
 
-			if (current == NULL)
+			if (current == 0)
 				continue;
 
 			rec = (trap_trace_rec_t *)current;
