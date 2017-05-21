@@ -85,7 +85,7 @@ rdc_k_info_winit(mdb_walk_state_t *wsp)
 	winfo->start = (uintptr_t)rdc_k_info;
 	winfo->end = (uintptr_t)(rdc_k_info + rdc_max_sets);
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		wsp->walk_addr = winfo->start;
 
 	wsp->walk_data = winfo;
@@ -99,7 +99,7 @@ rdc_k_info_wstep(mdb_walk_state_t *wsp)
 	struct rdc_kinfo_winfo *winfo = wsp->walk_data;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (wsp->walk_addr >= winfo->end)
@@ -154,7 +154,7 @@ rdc_u_info_winit(mdb_walk_state_t *wsp)
 	winfo->start = (uintptr_t)rdc_u_info;
 	winfo->end = (uintptr_t)(rdc_u_info + rdc_max_sets);
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		wsp->walk_addr = winfo->start;
 
 	wsp->walk_data = winfo;
@@ -168,7 +168,7 @@ rdc_u_info_wstep(mdb_walk_state_t *wsp)
 	struct rdc_uinfo_winfo *winfo = wsp->walk_data;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (wsp->walk_addr >= winfo->end)
@@ -196,7 +196,7 @@ rdc_u_info_wfini(mdb_walk_state_t *wsp)
 static int
 rdc_if_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL &&
+	if (wsp->walk_addr == 0 &&
 	    mdb_readvar(&wsp->walk_addr, "rdc_if_top") == -1) {
 		mdb_warn("unable to read 'rdc_if_top'");
 		return (WALK_ERR);
@@ -213,7 +213,7 @@ rdc_if_wstep(mdb_walk_state_t *wsp)
 {
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (mdb_vread(wsp->walk_data,

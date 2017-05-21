@@ -388,7 +388,7 @@ queue(uintptr_t addr, uint_t flags, int argc, const mdb_arg_t *argv)
 	 * If any of the filtering flags is specified, don't print anything
 	 * except the matching pointer.
 	 */
-	if (flag != NULL || not_flag != NULL || mod != NULL || syncq != NULL)
+	if (flag != NULL || not_flag != NULL || mod != NULL || syncq != 0)
 		quiet = TRUE;
 
 	if (DCMD_HDRSPEC(flags) && !quiet) {
@@ -414,7 +414,7 @@ queue(uintptr_t addr, uint_t flags, int argc, const mdb_arg_t *argv)
 		return (DCMD_ERR);
 	}
 
-	for (maddr = (uintptr_t)q.q_first; maddr != NULL; nblks++) {
+	for (maddr = (uintptr_t)q.q_first; maddr != 0; nblks++) {
 		if (mdb_vread(&mblk, sizeof (mblk), maddr) == -1) {
 			mdb_warn("couldn't read mblk %p for queue %p",
 			    maddr, addr);
@@ -889,7 +889,7 @@ syncq2q(uintptr_t addr, uint_t flags, int argc, const mdb_arg_t *argv)
 int
 queue_walk_init(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL &&
+	if (wsp->walk_addr == 0 &&
 	    mdb_readvar(&wsp->walk_addr, "qhead") == -1) {
 		mdb_warn("failed to read 'qhead'");
 		return (WALK_ERR);
@@ -904,7 +904,7 @@ queue_link_step(mdb_walk_state_t *wsp)
 {
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (mdb_vread(wsp->walk_data, sizeof (queue_t), wsp->walk_addr) == -1) {
@@ -924,7 +924,7 @@ queue_next_step(mdb_walk_state_t *wsp)
 {
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (mdb_vread(wsp->walk_data, sizeof (queue_t), wsp->walk_addr) == -1) {
@@ -950,7 +950,7 @@ str_walk_init(mdb_walk_state_t *wsp)
 {
 	stdata_t s;
 
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 		mdb_warn("walk must begin at address of stdata_t\n");
 		return (WALK_ERR);
 	}
@@ -972,7 +972,7 @@ strr_walk_step(mdb_walk_state_t *wsp)
 	queue_t *rq = wsp->walk_data, *wq = rq + 1;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (mdb_vread(wsp->walk_data, sizeof (queue_t) * 2,
@@ -999,7 +999,7 @@ strw_walk_step(mdb_walk_state_t *wsp)
 	queue_t *rq = wsp->walk_data, *wq = rq + 1;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (mdb_vread(wsp->walk_data, sizeof (queue_t) * 2,
@@ -1106,7 +1106,7 @@ b_cont_step(mdb_walk_state_t *wsp)
 {
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (mdb_vread(wsp->walk_data, sizeof (mblk_t), wsp->walk_addr) == -1) {
@@ -1126,7 +1126,7 @@ b_next_step(mdb_walk_state_t *wsp)
 {
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (mdb_vread(wsp->walk_data, sizeof (mblk_t), wsp->walk_addr) == -1) {
@@ -1438,7 +1438,7 @@ strftblk_step(mdb_walk_state_t *wsp)
 	ftblk_t *ftbp;
 	int status = WALK_NEXT;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	ftd = (ftblkdata_t *)wsp->walk_data;

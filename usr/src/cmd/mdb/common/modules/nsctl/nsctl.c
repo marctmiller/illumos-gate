@@ -176,7 +176,7 @@ static int complex_hdr;
 static int
 nsc_io_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL &&
+	if (wsp->walk_addr == 0 &&
 	    mdb_readvar(&wsp->walk_addr, "_nsc_io_top") == -1) {
 		mdb_warn("unable to read '_nsc_io_top'");
 		return (WALK_ERR);
@@ -192,7 +192,7 @@ nsc_io_wstep(mdb_walk_state_t *wsp)
 	uintptr_t next;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	status = wsp->walk_callback(wsp->walk_addr, wsp->walk_data,
@@ -219,7 +219,7 @@ nsc_io_wstep(mdb_walk_state_t *wsp)
 static int
 nsc_dev_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL &&
+	if (wsp->walk_addr == 0 &&
 	    mdb_readvar(&wsp->walk_addr, "_nsc_dev_top") == -1) {
 		mdb_warn("unable to read '_nsc_dev_top'");
 		return (WALK_ERR);
@@ -235,7 +235,7 @@ nsc_dev_wstep(mdb_walk_state_t *wsp)
 	uintptr_t next;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	status = wsp->walk_callback(wsp->walk_addr, wsp->walk_data,
@@ -271,7 +271,7 @@ nsc_dev_wfini(mdb_walk_state_t *wsp)
 static int
 nsc_devval_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL &&
+	if (wsp->walk_addr == 0 &&
 	    mdb_readvar(&wsp->walk_addr, "_nsc_devval_top") == -1) {
 		mdb_warn("unable to read '_nsc_devval_top'");
 		return (WALK_ERR);
@@ -315,7 +315,7 @@ nsc_devval_wstep(mdb_walk_state_t *wsp)
 static int
 nsc_fd_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 		mdb_warn("nsc_fd doesn't support global walks");
 		return (WALK_ERR);
 	}
@@ -358,7 +358,7 @@ nsc_fd_wstep(mdb_walk_state_t *wsp)
 static int
 nsc_iodev_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 		mdb_warn("nsc_iodev doesn't support global walks");
 		return (WALK_ERR);
 	}
@@ -399,7 +399,7 @@ nsc_iodev_wstep(mdb_walk_state_t *wsp)
 static int
 nsc_service_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL &&
+	if (wsp->walk_addr == 0 &&
 	    mdb_readvar(&wsp->walk_addr, "_nsc_services") == -1) {
 		mdb_warn("unable to read '_nsc_services'");
 		return (WALK_ERR);
@@ -443,7 +443,7 @@ nsc_service_wstep(mdb_walk_state_t *wsp)
 static int
 nsc_svc_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 		mdb_warn("nsc_svc does not support global walks");
 		return (WALK_ERR);
 	}
@@ -486,7 +486,7 @@ nsc_svc_wstep(mdb_walk_state_t *wsp)
 static int
 nsc_val_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 		mdb_warn("nsc_val doesn't support global walks");
 		return (WALK_ERR);
 	}
@@ -529,7 +529,7 @@ nsc_val_wstep(mdb_walk_state_t *wsp)
 static int
 nstset_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL &&
+	if (wsp->walk_addr == 0 &&
 	    mdb_readvar(&wsp->walk_addr, "nst_sets") == -1) {
 		mdb_warn("unable to read 'nst_sets'");
 		return (WALK_ERR);
@@ -573,7 +573,7 @@ nstset_wstep(mdb_walk_state_t *wsp)
 static int
 nsthread_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 		mdb_warn("nsthread does not support global walks");
 		return (WALK_ERR);
 	}
@@ -616,7 +616,7 @@ nsthread_wstep(mdb_walk_state_t *wsp)
 static int
 nst_free_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 		mdb_warn("nst_free does not support global walks");
 		return (WALK_ERR);
 	}
@@ -674,7 +674,7 @@ nst_free_wstep(mdb_walk_state_t *wsp)
 static int
 nsc_mem_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL &&
+	if (wsp->walk_addr == 0 &&
 	    mdb_readvar(&wsp->walk_addr, "_nsc_mem_top") == -1) {
 		mdb_warn("unable to read '_nsc_mem_top'");
 		return (WALK_ERR);
@@ -1232,7 +1232,7 @@ nsc_iodev_dev(uintptr_t addr, const void *data, void *cbdata)
 
 	/* walk iodev chains */
 
-	if (iodev != NULL) {
+	if (iodev != 0) {
 		if (mdb_pwalk_dcmd("nsctl`nsc_iodev", "nsctl`nsc_iodev",
 		    iodevall->argc, iodevall->argv, iodev) == -1)
 			return (WALK_ERR);
@@ -1662,7 +1662,7 @@ nst_thr_set(uintptr_t addr, const void *data, void *cbdata)
 
 	/* walk thread chains */
 
-	if (tp != NULL) {
+	if (tp != 0) {
 		if (mdb_pwalk_dcmd("nsctl`nsthread", "nsctl`nsthread",
 		    thrall->argc, thrall->argv, tp) == -1)
 			return (WALK_ERR);

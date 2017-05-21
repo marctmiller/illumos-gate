@@ -776,7 +776,7 @@ sdbc_cctl_winit(mdb_walk_state_t *wsp)
 
 	winfo = mdb_zalloc(sizeof (struct walk_info), UM_SLEEP);
 
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 		/*
 		 * we get the "first" cctl from memory and then traverse
 		 * the cc_link_list_dm pointers.
@@ -805,7 +805,7 @@ sdbc_cctl_wstep(mdb_walk_state_t *wsp)
 	_sd_cctl_t centry;
 	int status;
 
-	if (wsp->walk_addr == NULL) /* should not happen */
+	if (wsp->walk_addr == 0)	/* should not happen */
 		return (WALK_DONE);
 
 	/*
@@ -842,7 +842,7 @@ sdbc_cctl_wfini(mdb_walk_state_t *wsp)
 static int
 sdbc_cchain_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_ERR);
 
 	wsp->walk_data = mdb_zalloc(sizeof (_sd_cctl_t), UM_SLEEP);
@@ -855,7 +855,7 @@ sdbc_cchain_wstep(mdb_walk_state_t *wsp)
 {
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (mdb_vread(wsp->walk_data, sizeof (_sd_cctl_t), wsp->walk_addr)
@@ -887,7 +887,7 @@ sdbc_cchain_wfini(mdb_walk_state_t *wsp)
 static int
 sdbc_dchain_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_ERR);
 
 	wsp->walk_data = mdb_zalloc(sizeof (_sd_cctl_t), UM_SLEEP);
@@ -909,7 +909,7 @@ sdbc_dchain_wstep(mdb_walk_state_t *wsp)
 	_sd_cctl_t centry;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	status = wsp->walk_callback(wsp->walk_addr, wsp->walk_data,
@@ -927,7 +927,7 @@ sdbc_dchain_wstep(mdb_walk_state_t *wsp)
 		(uintptr_t)(centry.cc_dirty_next);
 
 	/* end of dirty_next chain?  start on subsequent dirty_link */
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 		wsp->walk_addr =
 		(uintptr_t)(((_sd_cctl_t *)(wsp->walk_data))->cc_dirty_link);
 
@@ -966,7 +966,7 @@ sdbc_dchain_wfini(mdb_walk_state_t *wsp)
 static int
 sdbc_dmchain_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_ERR);
 
 	wsp->walk_data = (void *)GET_HEAD_DM;
@@ -980,7 +980,7 @@ sdbc_dmchain_wstep(mdb_walk_state_t *wsp)
 	_sd_cctl_t centry;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (mdb_vread(&centry, sizeof (_sd_cctl_t), wsp->walk_addr)
@@ -1017,7 +1017,7 @@ static int
 sdbc_hashchain_winit(mdb_walk_state_t *wsp)
 {
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_ERR);
 
 
@@ -1031,7 +1031,7 @@ sdbc_hashchain_wstep(mdb_walk_state_t *wsp)
 	_sd_hash_hd_t hash_entry;
 
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	status = wsp->walk_callback(wsp->walk_addr, wsp->walk_data,
@@ -1068,7 +1068,7 @@ sdbc_lru_winit(mdb_walk_state_t *wsp)
 	winfo = mdb_zalloc(sizeof (struct walk_info), UM_SLEEP);
 
 	/* if called without an address, start at the head of the queue */
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 
 		if (mdb_lookup_by_obj("sdbc", "_sd_lru_q", &sym) == -1) {
 			mdb_warn("failed to lookup _sd_lru_q symbol");
@@ -1093,7 +1093,7 @@ sdbc_lru_wstep(mdb_walk_state_t *wsp)
 	_sd_cctl_t centry;
 	int status;
 
-	if (wsp->walk_addr == NULL) /* should not happen */
+	if (wsp->walk_addr == 0)	/* should not happen */
 		return (WALK_DONE);
 
 	/*
@@ -1275,7 +1275,7 @@ sdbc_cdinfo_winit(mdb_walk_state_t *wsp)
 	}
 
 	/* if called without an address, start at the head of the queue */
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 		/* address of first _sd_cd_info_t */
 		wsp->walk_addr = (uintptr_t)(_sd_cache_files_addr);
 	}
@@ -1406,7 +1406,7 @@ sdbc_handle_winit(mdb_walk_state_t *wsp)
 	}
 
 	/* if called without an address, start at first element in list */
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		wsp->walk_addr = (uintptr_t)(hl.hl_top.bh_next);
 
 	winfo = mdb_zalloc(sizeof (struct walk_info), UM_SLEEP);
@@ -1424,7 +1424,7 @@ sdbc_handle_wstep(mdb_walk_state_t *wsp)
 	_sd_buf_handle_t handle;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (wsp->walk_addr == winfo->w_end)
@@ -1477,7 +1477,7 @@ sdbc_glcinfo_winit(mdb_walk_state_t *wsp)
 		return (WALK_ERR);
 	}
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		wsp->walk_addr = (uintptr_t)(gl_centry_info);
 
 
@@ -1494,7 +1494,7 @@ sdbc_glcinfo_wstep(mdb_walk_state_t *wsp)
 	struct walk_info *winfo = wsp->walk_data;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (wsp->walk_addr >= winfo->w_end)
@@ -1533,7 +1533,7 @@ sdbc_glfinfo_winit(mdb_walk_state_t *wsp)
 	}
 
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		wsp->walk_addr = (uintptr_t)(gl_file_info);
 
 	/* get the number of volumes */
@@ -1556,7 +1556,7 @@ sdbc_glfinfo_wstep(mdb_walk_state_t *wsp)
 	struct walk_info *winfo = wsp->walk_data;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (wsp->walk_addr >= winfo->w_end)

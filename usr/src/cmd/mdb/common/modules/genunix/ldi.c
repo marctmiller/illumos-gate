@@ -24,8 +24,6 @@
  * Use is subject to license terms.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 #include <sys/types.h>
 #include <sys/sysmacros.h>
 #include <sys/dditypes.h>
@@ -104,7 +102,7 @@ ldi_handle_walk_step(mdb_walk_state_t *wsp)
 	int		status;
 
 	/* check if we need to go to the next hash bucket */
-	while (wsp->walk_addr == NULL) {
+	while (wsp->walk_addr == 0) {
 
 		/* advance to the next bucket */
 		if (++(lhwp->index) >= LH_HASH_SZ)
@@ -172,7 +170,7 @@ ldi_ident_walk_step(mdb_walk_state_t *wsp)
 	int		status;
 
 	/* check if we need to go to the next hash bucket */
-	while (wsp->walk_addr == NULL) {
+	while (wsp->walk_addr == 0) {
 
 		/* advance to the next bucket */
 		if (++(liwp->index) >= LI_HASH_SZ)

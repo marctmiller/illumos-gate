@@ -73,7 +73,7 @@ sv_dev_winit(mdb_walk_state_t *wsp)
 	winfo->start = (uintptr_t)sv_devs;
 	winfo->end = (uintptr_t)(sv_devs + sv_max_devices);
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		wsp->walk_addr = winfo->start;
 
 	wsp->walk_data = winfo;
@@ -87,7 +87,7 @@ sv_dev_wstep(mdb_walk_state_t *wsp)
 	struct sv_dev_winfo *winfo = wsp->walk_data;
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (wsp->walk_addr >= winfo->end)
@@ -116,7 +116,7 @@ sv_dev_wfini(mdb_walk_state_t *wsp)
 static int
 sv_hash_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_ERR);
 
 	wsp->walk_data = mdb_zalloc(sizeof (sv_dev_t), UM_SLEEP);
@@ -130,7 +130,7 @@ sv_hash_wstep(mdb_walk_state_t *wsp)
 {
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (mdb_vread(wsp->walk_data,
@@ -164,7 +164,7 @@ sv_maj_t *sv_majors[SV_MAJOR_HASH_CNT + 1] = {0};
 static int
 sv_maj_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL) {
+	if (wsp->walk_addr == 0) {
 		if (mdb_readvar(&sv_majors, "sv_majors") == -1) {
 			mdb_warn("failed to read 'sv_majors'");
 			return (WALK_ERR);
@@ -186,7 +186,7 @@ sv_maj_wstep(mdb_walk_state_t *wsp)
 	uintptr_t addr;
 	int status = DCMD_OK;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (wsp->walk_addr >= (uintptr_t)&sv_majors[SV_MAJOR_HASH_CNT])
@@ -228,7 +228,7 @@ sv_maj_wfini(mdb_walk_state_t *wsp)
 static int
 sv_gclient_winit(mdb_walk_state_t *wsp)
 {
-	if (wsp->walk_addr == NULL &&
+	if (wsp->walk_addr == 0 &&
 	    mdb_readvar(&wsp->walk_addr, "sv_gclients") == -1) {
 		mdb_warn("unable to read 'sv_gclients'");
 		return (WALK_ERR);
@@ -245,7 +245,7 @@ sv_gclient_wstep(mdb_walk_state_t *wsp)
 {
 	int status;
 
-	if (wsp->walk_addr == NULL)
+	if (wsp->walk_addr == 0)
 		return (WALK_DONE);
 
 	if (mdb_vread(wsp->walk_data,

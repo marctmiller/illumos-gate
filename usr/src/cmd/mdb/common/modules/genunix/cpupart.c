@@ -93,7 +93,7 @@ cpupart_disp_threads(disp_t *disp)
 	for (i = npri - 1; i >= 0; i--) {
 		uintptr_t taddr = (uintptr_t)dq[i].dq_first;
 
-		while (taddr != NULL) {
+		while (taddr != 0) {
 			if (mdb_vread(&t, sizeof (t), taddr) == -1) {
 				mdb_warn("failed to read kthread_t at %p",
 				    taddr);
