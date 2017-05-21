@@ -47,7 +47,7 @@ extern "C" {
 	(ndi_port_type(dip, B_TRUE, DEVI_PORT_TYPE_PCI) ? \
 	PCIE_DIP2UPBUS(dip) : \
 	ndi_port_type(dip, B_FALSE, DEVI_PORT_TYPE_PCI) ? \
-	PCIE_DIP2DOWNBUS(dip) : NULL)
+	PCIE_DIP2DOWNBUS(dip) : (pcie_bus_t *)NULL)
 
 #define	PCIE_DIP2UPBUS(dip) \
 	((pcie_bus_t *)ndi_get_bus_private(dip, B_TRUE))

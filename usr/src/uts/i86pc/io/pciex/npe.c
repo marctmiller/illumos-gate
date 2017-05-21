@@ -85,36 +85,36 @@ uint32_t	npe_aer_ce_mask = 0;
 uint32_t	npe_aer_suce_mask = PCIE_AER_SUCE_RCVD_MA;
 
 struct bus_ops npe_bus_ops = {
-	BUSO_REV,
-	npe_bus_map,
-	NULL,
-	NULL,
-	NULL,
-	i_ddi_map_fault,
-	NULL,
-	ddi_dma_allochdl,
-	ddi_dma_freehdl,
-	ddi_dma_bindhdl,
-	ddi_dma_unbindhdl,
-	ddi_dma_flush,
-	ddi_dma_win,
-	ddi_dma_mctl,
-	npe_ctlops,
-	ddi_bus_prop_op,
-	0,			/* (*bus_get_eventcookie)();	*/
-	0,			/* (*bus_add_eventcall)();	*/
-	0,			/* (*bus_remove_eventcall)();	*/
-	0,			/* (*bus_post_event)();		*/
-	0,			/* (*bus_intr_ctl)(); */
-	0,			/* (*bus_config)(); */
-	0,			/* (*bus_unconfig)(); */
-	npe_fm_init,		/* (*bus_fm_init)(); */
-	NULL,			/* (*bus_fm_fini)(); */
-	NULL,			/* (*bus_fm_access_enter)(); */
-	NULL,			/* (*bus_fm_access_exit)(); */
-	NULL,			/* (*bus_power)(); */
-	npe_intr_ops,		/* (*bus_intr_op)(); */
-	pcie_hp_common_ops	/* (*bus_hp_op)(); */
+	.busops_rev = BUSO_REV,
+	.bus_map = npe_bus_map,
+	.bus_get_intrspec = 0,
+	.bus_add_intrspec = 0,
+	.bus_remove_intrspec = 0,
+	.bus_map_fault = i_ddi_map_fault,
+	.bus_dma_map = 0,
+	.bus_dma_allochdl = ddi_dma_allochdl,
+	.bus_dma_freehdl = ddi_dma_freehdl,
+	.bus_dma_bindhdl = ddi_dma_bindhdl,
+	.bus_dma_unbindhdl = ddi_dma_unbindhdl,
+	.bus_dma_flush = ddi_dma_flush,
+	.bus_dma_win = ddi_dma_win,
+	.bus_dma_ctl = ddi_dma_mctl,
+	.bus_ctl = npe_ctlops,
+	.bus_prop_op = ddi_bus_prop_op,
+	.bus_get_eventcookie = 0,	/* (*bus_get_eventcookie)();	*/
+	.bus_add_eventcall = 0,	/* (*bus_add_eventcall)();	*/
+	.bus_remove_eventcall = 0,	/* (*bus_remove_eventcall)();	*/
+	.bus_post_event = 0,		/* (*bus_post_event)();		*/
+	.bus_intr_ctl = 0,		/* (*bus_intr_ctl)(); */
+	.bus_config = 0,		/* (*bus_config)(); */
+	.bus_unconfig = 0,		/* (*bus_unconfig)(); */
+	.bus_fm_init = npe_fm_init,	/* (*bus_fm_init)(); */
+	.bus_fm_fini = 0,		/* (*bus_fm_fini)(); */
+	.bus_fm_access_enter = 0,	/* (*bus_fm_access_enter)(); */
+	.bus_fm_access_exit = 0,	/* (*bus_fm_access_exit)(); */
+	.bus_power = 0,		/* (*bus_power)(); */
+	.bus_intr_op = npe_intr_ops,	/* (*bus_intr_op)(); */
+	.bus_hp_op = pcie_hp_common_ops	/* (*bus_hp_op)(); */
 };
 
 static int	npe_open(dev_t *, int, int, cred_t *);
@@ -161,7 +161,7 @@ struct dev_ops npe_ops = {
 	nulldev,		/* reset */
 	&npe_cb_ops,		/* driver operations */
 	&npe_bus_ops,		/* bus operations */
-	NULL,			/* power */
+	0,			/* power */
 	ddi_quiesce_not_needed,		/* quiesce */
 };
 
@@ -270,7 +270,6 @@ npe_info(dev_info_t *dip, ddi_info_cmd_t cmd, void *arg, void **result)
 	return (ret);
 }
 
-/*ARGSUSED*/
 static int
 npe_attach(dev_info_t *devi, ddi_attach_cmd_t cmd)
 {
