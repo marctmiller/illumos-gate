@@ -268,7 +268,7 @@ ibmf_i_handle_send_completion(ibmf_ci_t *cip, ibt_wc_t *wcp)
 
 	_NOTE(NOW_INVISIBLE_TO_OTHER_THREADS(*send_wqep))
 
-	ASSERT(wcp->wc_id != NULL);
+	ASSERT(wcp->wc_id != 0);
 
 	ASSERT(IBMF_IS_SEND_WR_ID(wcp->wc_id));
 
