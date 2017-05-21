@@ -322,7 +322,7 @@ pci_msi_unconfigure(dev_info_t *rdip, int type, int inum)
 		}
 
 		DDI_INTR_NEXDBG((CE_CONT, "pci_msi_unconfigure: msi_ctrl "
-		    "= %x\n", PCI_CAP_GET16(h, NULL, caps_ptr, PCI_MSI_CTRL)));
+		    "= %x\n", PCI_CAP_GET16(h, 0, caps_ptr, PCI_MSI_CTRL)));
 
 	} else if (type == DDI_INTR_TYPE_MSIX) {
 		uintptr_t	off;
