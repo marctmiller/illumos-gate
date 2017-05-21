@@ -692,7 +692,7 @@ uint_t taskq_smtbf = UINT_MAX;    /* mean time between injected failures */
 	taskq_random = (taskq_random * 2416 + 374441) % 1771875;\
 	if ((flag & TQ_NOSLEEP) &&				\
 	    taskq_random < 1771875 / taskq_dmtbf) {		\
-		return (NULL);					\
+		return (0);					\
 	}
 
 #define	TASKQ_S_RANDOM_DISPATCH_FAILURE(tq, flag)		\
@@ -702,7 +702,7 @@ uint_t taskq_smtbf = UINT_MAX;    /* mean time between injected failures */
 	    (tq->tq_nalloc > tq->tq_minalloc)) &&		\
 	    (taskq_random < (1771875 / taskq_smtbf))) {		\
 		mutex_exit(&tq->tq_lock);			\
-		return (NULL);					\
+		return (0);					\
 	}
 #else
 #define	TASKQ_S_RANDOM_DISPATCH_FAILURE(tq, flag)
