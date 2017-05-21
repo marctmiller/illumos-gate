@@ -549,7 +549,7 @@ ath_rx_handler(ath_t *asc)
 			mutex_exit(&asc->asc_rxbuflock);
 			break;
 		}
-		ASSERT(bf->bf_dma.cookie.dmac_address != NULL);
+		ASSERT(bf->bf_dma.cookie.dmac_address != 0);
 		ds = bf->bf_desc;
 		if (ds->ds_link == bf->bf_daddr) {
 			/*
