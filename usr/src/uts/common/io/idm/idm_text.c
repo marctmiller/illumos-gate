@@ -1546,7 +1546,7 @@ idm_pdu_list_to_nvlist(list_t *pdu_list, nvlist_t **nvlist,
 				goto cleanup;
 			}
 
-			ASSERT(split_kvbuflen != NULL);
+			ASSERT(split_kvbuflen != 0);
 			kmem_free(split_kvbuf, split_kvbuflen);
 
 			/* Now handle the remainder of the PDU as normal */
