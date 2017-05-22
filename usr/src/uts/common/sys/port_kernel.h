@@ -27,8 +27,6 @@
 #ifndef	_SYS_PORT_KERNEL_H
 #define	_SYS_PORT_KERNEL_H
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 #include <sys/vnode.h>
 #include <sys/list.h>
 
@@ -49,6 +47,8 @@ extern "C" {
  * The port_kevent_t struct represents the kernel internal port event.
  * Every event is associated to a port (portkev_port).
  */
+typedef	int (*portkev_cb_t)(void *, int *, pid_t, int, void *);
+
 typedef	struct	port_kevent {
 	kmutex_t	portkev_lock;	/* used by PORT_SOURCE_FD source */
 	int	portkev_source;		/* event: source */
@@ -57,7 +57,7 @@ typedef	struct	port_kevent {
 	pid_t	portkev_pid;		/* pid of process using this struct */
 	long	portkev_object;		/* event: object */
 	void	*portkev_user;		/* event: user-defined value */
-	int	(*portkev_callback)(void *, int *, pid_t, int, void *);
+	portkev_cb_t portkev_callback;
 	void	*portkev_arg;		/* event source callback arg */
 	struct	port *portkev_port;	/* associated port */
 	list_node_t portkev_node;	/* pointer to neighbor events */
@@ -160,7 +160,7 @@ void	port_pollwkdone(struct port *);
 void	port_send_event(port_kevent_t *);
 void	port_free_event(port_kevent_t *);
 void	port_init_event(port_kevent_t *, uintptr_t, void *,
-    int (*)(void *, int *, pid_t, int, void *), void *);
+    portkev_cb_t, void *);
 int	port_dup_event(port_kevent_t *, port_kevent_t **, int);
 int	port_associate_fd(struct port *, int, uintptr_t, int, void *);
 int	port_dissociate_fd(struct port *, uintptr_t);

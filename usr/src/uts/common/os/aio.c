@@ -68,6 +68,8 @@ static int kaio(ulong_t *, rval_t *);
 /*
  * implementation specific functions (private)
  */
+typedef int (*aio_func_t)(vnode_t *, struct aio_req *, cred_t *);
+
 #ifdef _LP64
 static int alio(int, aiocb_t **, int, struct sigevent *);
 #endif
@@ -75,8 +77,7 @@ static int aionotify(void);
 static int aioinit(void);
 static int aiostart(void);
 static void alio_cleanup(aio_t *, aiocb_t **, int, int);
-static int (*check_vp(struct vnode *, int))(vnode_t *, struct aio_req *,
-    cred_t *);
+static aio_func_t check_vp(struct vnode *, int);
 static void lio_set_error(aio_req_t *, int portused);
 static aio_t *aio_aiop_alloc();
 static int aio_req_alloc(aio_req_t **, aio_result_t *);
@@ -1211,7 +1212,7 @@ alio(
 	aiocb_t		**ucbp;
 	struct sigevent sigevk;
 	sigqueue_t	*sqp;
-	int		(*aio_func)();
+	aio_func_t	aio_func;
 	int		mode;
 	int		error = 0;
 	int		aio_errors = 0;
@@ -1291,7 +1292,7 @@ alio(
 				error = EAGAIN;
 				goto done;
 			}
-			sqp->sq_func = NULL;
+			sqp->sq_func = (void (*)(struct sigqueue *))NULL;
 			sqp->sq_next = NULL;
 			sqp->sq_info.si_code = SI_ASYNCIO;
 			sqp->sq_info.si_pid = curproc->p_pid;
@@ -1311,7 +1312,7 @@ alio(
 			 */
 			port_init_event(pkevtp, (uintptr_t)sigev,
 			    (void *)(uintptr_t)pnotify.portnfy_user,
-			    NULL, head);
+			    (portkev_cb_t)NULL, head);
 			pkevtp->portkev_events = AIOLIO;
 			head->lio_portkev = pkevtp;
 			head->lio_port = pnotify.portnfy_port;
@@ -1475,8 +1476,7 @@ alio(
 				aio_zerolen(reqp);
 				continue;
 			}
-			error = (*aio_func)(vp, (aio_req_t *)&reqp->aio_req,
-			    CRED());
+			error = (*aio_func)(vp, &reqp->aio_req, CRED());
 		}
 
 		/*
@@ -1947,7 +1947,7 @@ arw(
 	struct vnode	*vp;
 	aio_req_t	*reqp;
 	aio_t		*aiop;
-	int		(*aio_func)();
+	aio_func_t	aio_func;
 #ifdef _LP64
 	aiocb_t		aiocb;
 #else
@@ -2011,7 +2011,7 @@ arw(
 	/*
 	 * send the request to driver.
 	 */
-	error = (*aio_func)(vp, (aio_req_t *)&reqp->aio_req, CRED());
+	error = (*aio_func)(vp, &reqp->aio_req, CRED());
 	/*
 	 * the fd is stored in the aio_req_t by aio_req_setup(), and
 	 * is released by the aio_cleanup_thread() when the IO has
@@ -2054,7 +2054,7 @@ aiorw(
 	struct vnode	*vp;
 	aio_req_t	*reqp;
 	aio_t		*aiop;
-	int		(*aio_func)();
+	aio_func_t	aio_func;
 	aio_result_t	*resultp;
 	struct	sigevent *sigev;
 	model_t		model;
@@ -2210,7 +2210,7 @@ aiorw(
 			aio_zerolen(reqp);
 			return (0);
 		}
-		error = (*aio_func)(vp, (aio_req_t *)&reqp->aio_req, CRED());
+		error = (*aio_func)(vp, &reqp->aio_req, CRED());
 	}
 
 	/*
@@ -2408,7 +2408,7 @@ aio_req_setup(
 		sqp = kmem_zalloc(sizeof (sigqueue_t), KM_NOSLEEP);
 		if (sqp == NULL)
 			return (EAGAIN);
-		sqp->sq_func = NULL;
+		sqp->sq_func = (void (*)(struct sigqueue *))NULL;
 		sqp->sq_next = NULL;
 		sqp->sq_info.si_code = SI_ASYNCIO;
 		sqp->sq_info.si_pid = curproc->p_pid;
@@ -2766,15 +2766,14 @@ aio_hash_insert(
 	return (0);
 }
 
-static int
-(*check_vp(struct vnode *vp, int mode))(vnode_t *, struct aio_req *,
-    cred_t *)
+static aio_func_t
+check_vp(struct vnode *vp, int mode)
 {
 	struct snode *sp;
 	dev_t		dev;
 	struct cb_ops  	*cb;
 	major_t		major;
-	int		(*aio_func)();
+	aio_func_t	aio_func;
 
 	dev = vp->v_rdev;
 	major = getmajor(dev);
@@ -2786,29 +2785,29 @@ static int
 	if (vp->v_type == VCHR) {
 		/* no stream device for kaio */
 		if (STREAMSTAB(major)) {
-			return (NULL);
+			return ((aio_func_t)NULL);
 		}
 	} else {
-		return (NULL);
+		return ((aio_func_t)NULL);
 	}
 
 	/*
 	 * Check old drivers which do not have async I/O entry points.
 	 */
 	if (devopsp[major]->devo_rev < 3)
-		return (NULL);
+		return ((aio_func_t)NULL);
 
 	cb = devopsp[major]->devo_cb_ops;
 
 	if (cb->cb_rev < 1)
-		return (NULL);
+		return ((aio_func_t)NULL);
 
 	/*
 	 * Check whether this device is a block device.
 	 * Kaio is not supported for devices like tty.
 	 */
 	if (cb->cb_strategy == nodev || cb->cb_strategy == NULL)
-		return (NULL);
+		return ((aio_func_t)NULL);
 
 	/*
 	 * Clustering: If vnode is a PXFS vnode, then the device may be remote.
@@ -2822,17 +2821,20 @@ static int
 		else
 			return (clpxfs_aio_write);
 	}
-	if (mode & FREAD)
-		aio_func = (cb->cb_aread == nodev) ? NULL : driver_aio_read;
-	else
-		aio_func = (cb->cb_awrite == nodev) ? NULL : driver_aio_write;
+	if (mode & FREAD) {
+		aio_func = (cb->cb_aread == nodev) ?
+		    (aio_func_t)NULL : driver_aio_read;
+	} else {
+		aio_func = (cb->cb_awrite == nodev) ?
+		    (aio_func_t)NULL : driver_aio_write;
+	}
 
 	/*
 	 * Do we need this ?
 	 * nodev returns ENXIO anyway.
 	 */
 	if (aio_func == nodev)
-		return (NULL);
+		return ((aio_func_t)NULL);
 
 	sp = VTOS(vp);
 	smark(sp, SACC);
@@ -2999,7 +3001,7 @@ alioLF(
 				error = EAGAIN;
 				goto done;
 			}
-			sqp->sq_func = NULL;
+			sqp->sq_func = (void (*)(struct sigqueue *))NULL;
 			sqp->sq_next = NULL;
 			sqp->sq_info.si_code = SI_ASYNCIO;
 			sqp->sq_info.si_pid = curproc->p_pid;
@@ -3020,7 +3022,7 @@ alioLF(
 			 */
 			port_init_event(pkevtp, (uintptr_t)sigev,
 			    (void *)(uintptr_t)pnotify.portnfy_user,
-			    NULL, head);
+			    (portkev_cb_t)NULL, head);
 			pkevtp->portkev_events = AIOLIO64;
 			head->lio_portkev = pkevtp;
 			head->lio_port = pnotify.portnfy_port;
@@ -3305,7 +3307,7 @@ aio_req_setupLF(
 		sqp = kmem_zalloc(sizeof (sigqueue_t), KM_NOSLEEP);
 		if (sqp == NULL)
 			return (EAGAIN);
-		sqp->sq_func = NULL;
+		sqp->sq_func = (void (*)(struct sigqueue *))NULL;
 		sqp->sq_next = NULL;
 		sqp->sq_info.si_code = SI_ASYNCIO;
 		sqp->sq_info.si_pid = curproc->p_pid;
@@ -3484,7 +3486,7 @@ alio32(
 				error = EAGAIN;
 				goto done;
 			}
-			sqp->sq_func = NULL;
+			sqp->sq_func = (void (*)(struct sigqueue *))NULL;
 			sqp->sq_next = NULL;
 			sqp->sq_info.si_code = SI_ASYNCIO;
 			sqp->sq_info.si_pid = curproc->p_pid;
@@ -3505,7 +3507,7 @@ alio32(
 			 */
 			port_init_event(pkevtp, (uintptr_t)sigev,
 			    (void *)(uintptr_t)pnotify.portnfy_user,
-			    NULL, head);
+			    (portkev_cb_t)NULL, head);
 			pkevtp->portkev_events = AIOLIO;
 			head->lio_portkev = pkevtp;
 			head->lio_port = pnotify.portnfy_port;
