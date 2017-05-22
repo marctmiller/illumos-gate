@@ -401,24 +401,30 @@ typedef enum {
 	DDI_RESET_FORCE = 0
 } ddi_reset_cmd_t;
 
-typedef	int	(*devo_power_t)(dev_info_t *, int, int);
+typedef	int (*devo_getinfo_t)(dev_info_t *, ddi_info_cmd_t, void *, void **);
+typedef	int (*devo_identify_t)(dev_info_t *);
+typedef	int (*devo_probe_t)(dev_info_t *);
+typedef	int (*devo_attach_t)(dev_info_t *, ddi_attach_cmd_t);
+typedef	int (*devo_detach_t)(dev_info_t *, ddi_detach_cmd_t);
+typedef	int (*devo_reset_t)(dev_info_t *, ddi_reset_cmd_t);
+typedef	int (*devo_power_t)(dev_info_t *, int, int);
+typedef	int (*devo_quiesce_t)(dev_info_t *);
 
 struct dev_ops  {
 	int		devo_rev;	/* Driver build version		*/
 	int		devo_refcnt;	/* device reference count	*/
 
-	int		(*devo_getinfo)(dev_info_t *dip,
-			    ddi_info_cmd_t infocmd, void *arg, void **result);
-	int		(*devo_identify)(dev_info_t *dip);
-	int		(*devo_probe)(dev_info_t *dip);
-	int		(*devo_attach)(dev_info_t *dip, ddi_attach_cmd_t cmd);
-	int		(*devo_detach)(dev_info_t *dip, ddi_detach_cmd_t cmd);
-	int		(*devo_reset)(dev_info_t *dip, ddi_reset_cmd_t cmd);
+	devo_getinfo_t	devo_getinfo;
+	devo_identify_t	devo_identify;
+	devo_probe_t	devo_probe;
+	devo_attach_t	devo_attach;
+	devo_detach_t	devo_detach;
+	devo_reset_t	devo_reset;
 
 	struct cb_ops	*devo_cb_ops;	/* cb_ops pointer for leaf drivers   */
 	struct bus_ops	*devo_bus_ops;	/* bus_ops pointer for nexus drivers */
 	devo_power_t	devo_power;
-	int		(*devo_quiesce)(dev_info_t *dip);
+	devo_quiesce_t	devo_quiesce;
 };
 
 /*
@@ -477,7 +483,7 @@ static struct cb_ops cb_##XXname = {					\
 static struct dev_ops XXname = {					\
 	DEVO_REV,		/* devo_rev */				\
 	0,			/* devo_refcnt */			\
-	(XXgetinfo),		/* devo_getinfo */			\
+	(devo_getinfo_t)(XXgetinfo),	/* devo_getinfo */		\
 	(XXidentify),		/* devo_identify */			\
 	(XXprobe),		/* devo_probe */			\
 	(XXattach),		/* devo_attach */			\
@@ -485,7 +491,7 @@ static struct dev_ops XXname = {					\
 	(XXreset),		/* devo_reset */			\
 	&(cb_##XXname),		/* devo_cb_ops */			\
 	(struct bus_ops *)NULL,	/* devo_bus_ops */			\
-	NULL,			/* devo_power */			\
+	(devo_power_t)NULL,	/* devo_power */			\
 	(XXquiesce)		/* devo_quiesce */			\
 }
 
