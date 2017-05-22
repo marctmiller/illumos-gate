@@ -25,8 +25,6 @@
  *
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 #include <sys/types.h>
 #include <sys/cmn_err.h>
 #include <sys/kmem.h>
@@ -74,14 +72,14 @@ fdb_init()
 {
 	fdb_cache = kmem_cache_create("fdb_cache", sizeof (fdbuffer_t),
 	    0, fdb_cache_constructor, fdb_cache_destructor,
-	    NULL, NULL, NULL, 0);
+	    (void (*)(void *))NULL, NULL, NULL, 0);
 }
 
 static void
 fdb_prepare(fdbuffer_t *fdb)
 {
 	fdb->fd_holes = NULL;
-	fdb->fd_iofunc = NULL;
+	fdb->fd_iofunc = (fdb_iodone_t)NULL;
 	fdb->fd_iargp = NULL;
 	fdb->fd_parentbp = NULL;
 	fdb->fd_resid = 0;
@@ -409,8 +407,7 @@ fdb_iosetup(fdbuffer_t *fdb, u_offset_t off, size_t len, struct vnode *vp,
 	};
 
 	bp = bioclone(fdb->fd_parentbp, off, len, 0, 0,
-	    (b_flags & B_ASYNC) ? (int (*)())fdb_iodone : NULL,
-	    NULL, KM_SLEEP);
+	    (b_flags & B_ASYNC) ? fdb_iodone : (biodone_t)NULL, NULL, KM_SLEEP);
 
 	bp->b_forw = (struct buf *)fdb;
 
@@ -460,7 +457,7 @@ fdb_ioerrdone(fdbuffer_t *fdb, int error)
 	fdb->fd_iofunc(fdb, fdb->fd_iargp, NULL);
 }
 
-void
+int
 fdb_iodone(buf_t *bp)
 {
 	fdbuffer_t *fdb = (fdbuffer_t *)bp->b_forw;
@@ -526,4 +523,5 @@ fdb_iodone(buf_t *bp)
 	}
 
 	freerbuf(bp);
+	return (0);
 }
