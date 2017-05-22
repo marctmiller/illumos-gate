@@ -251,16 +251,16 @@ dtrace_enable_nullop(void)
 }
 
 static dtrace_pops_t	dtrace_provider_ops = {
-	(void (*)(void *, const dtrace_probedesc_t *))dtrace_nullop,
-	(void (*)(void *, struct modctl *))dtrace_nullop,
-	(int (*)(void *, dtrace_id_t, void *))dtrace_enable_nullop,
-	(void (*)(void *, dtrace_id_t, void *))dtrace_nullop,
-	(void (*)(void *, dtrace_id_t, void *))dtrace_nullop,
-	(void (*)(void *, dtrace_id_t, void *))dtrace_nullop,
-	NULL,
-	NULL,
-	NULL,
-	(void (*)(void *, dtrace_id_t, void *))dtrace_nullop
+	(dtps_provide_t)dtrace_nullop,
+	(dtps_provide_module_t)dtrace_nullop,
+	(dtps_enable_t)dtrace_enable_nullop,
+	(dtps_disable_t)dtrace_nullop,
+	(dtps_suspend_t)dtrace_nullop,
+	(dtps_resume_t)dtrace_nullop,
+	(dtps_getargdesc_t)NULL,
+	(dtps_getargval_t)NULL,
+	(dtps_mode_t)NULL,
+	(dtps_destroy_t)dtrace_nullop
 };
 
 static dtrace_id_t	dtrace_probeid_begin;	/* special BEGIN probe */
@@ -13655,7 +13655,8 @@ dtrace_state_create(dev_t *devp, cred_t *cr)
 
 	(void) snprintf(c, sizeof (c), "dtrace_aggid_%d", minor);
 	state->dts_aggid_arena = vmem_create(c, (void *)1, UINT32_MAX, 1,
-	    NULL, NULL, NULL, 0, VM_SLEEP | VMC_IDENTIFIER);
+	    (vmem_alloc_t *)NULL, (vmem_free_t *)NULL, NULL, 0,
+	    VM_SLEEP | VMC_IDENTIFIER);
 
 	if (devp != NULL) {
 		major = getemajor(*devp);
@@ -14307,7 +14308,7 @@ dtrace_state_stop(dtrace_state_t *state, processorid_t *cpu)
 		state->dts_cred.dcr_cred->cr_zone->zone_dtrace_getf--;
 
 		if (--dtrace_getf == 0)
-			dtrace_closef = NULL;
+			dtrace_closef = (void (*)())NULL;
 	}
 
 	return (0);
@@ -15961,10 +15962,11 @@ dtrace_attach(dev_info_t *devi, ddi_attach_cmd_t cmd)
 	ASSERT(MUTEX_HELD(&cpu_lock));
 
 	dtrace_arena = vmem_create("dtrace", (void *)1, UINT32_MAX, 1,
-	    NULL, NULL, NULL, 0, VM_SLEEP | VMC_IDENTIFIER);
-	dtrace_minor = vmem_create("dtrace_minor", (void *)DTRACEMNRN_CLONE,
-	    UINT32_MAX - DTRACEMNRN_CLONE, 1, NULL, NULL, NULL, 0,
+	    (vmem_alloc_t *)NULL, (vmem_free_t *)NULL, NULL, 0,
 	    VM_SLEEP | VMC_IDENTIFIER);
+	dtrace_minor = vmem_create("dtrace_minor", (void *)DTRACEMNRN_CLONE,
+	    UINT32_MAX - DTRACEMNRN_CLONE, 1, (vmem_alloc_t *)NULL,
+	    (vmem_free_t *)NULL, NULL, 0, VM_SLEEP | VMC_IDENTIFIER);
 	dtrace_taskq = taskq_create("dtrace_taskq", 1, maxclsyspri,
 	    1, INT_MAX, 0);
 
@@ -17072,15 +17074,15 @@ dtrace_detach(dev_info_t *dip, ddi_detach_cmd_t cmd)
 
 	bzero(&dtrace_anon, sizeof (dtrace_anon_t));
 	unregister_cpu_setup_func((cpu_setup_func_t *)dtrace_cpu_setup, NULL);
-	dtrace_cpu_init = NULL;
-	dtrace_helpers_cleanup = NULL;
-	dtrace_helpers_fork = NULL;
-	dtrace_cpustart_init = NULL;
-	dtrace_cpustart_fini = NULL;
-	dtrace_debugger_init = NULL;
-	dtrace_debugger_fini = NULL;
-	dtrace_modload = NULL;
-	dtrace_modunload = NULL;
+	dtrace_cpu_init = (void (*)(processorid_t))NULL;
+	dtrace_helpers_cleanup = (void (*)(proc_t *))NULL;
+	dtrace_helpers_fork = (void (*)(proc_t *, proc_t *))NULL;
+	dtrace_cpustart_init = (void (*)())NULL;
+	dtrace_cpustart_fini = (void (*)())NULL;
+	dtrace_debugger_init = (void (*)())NULL;
+	dtrace_debugger_fini = (void (*)())NULL;
+	dtrace_modload = (void (*)(struct modctl *))NULL;
+	dtrace_modunload = (void (*)(struct modctl *))NULL;
 
 	ASSERT(dtrace_getf == 0);
 	ASSERT(dtrace_closef == NULL);

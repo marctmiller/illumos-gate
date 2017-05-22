@@ -2050,19 +2050,30 @@ typedef struct dof_helper {
  *   instrument the kernel arbitrarily should be sure to not instrument these
  *   routines.
  */
+typedef	void (*dtps_provide_t)(void *, const dtrace_probedesc_t *);
+typedef	void (*dtps_provide_module_t)(void *, struct modctl *);
+typedef	int (*dtps_enable_t)(void *, dtrace_id_t, void *);
+typedef	void (*dtps_disable_t)(void *, dtrace_id_t, void *);
+typedef	void (*dtps_suspend_t)(void *, dtrace_id_t, void *);
+typedef	void (*dtps_resume_t)(void *, dtrace_id_t, void *);
+typedef	void (*dtps_getargdesc_t)(void *, dtrace_id_t, void *,
+	    dtrace_argdesc_t *);
+typedef	uint64_t (*dtps_getargval_t)(void *, dtrace_id_t, void *,
+	    int, int);
+typedef	int (*dtps_mode_t)(void *, dtrace_id_t, void *);
+typedef	void (*dtps_destroy_t)(void *, dtrace_id_t, void *);
+
 typedef struct dtrace_pops {
-	void (*dtps_provide)(void *arg, const dtrace_probedesc_t *spec);
-	void (*dtps_provide_module)(void *arg, struct modctl *mp);
-	int (*dtps_enable)(void *arg, dtrace_id_t id, void *parg);
-	void (*dtps_disable)(void *arg, dtrace_id_t id, void *parg);
-	void (*dtps_suspend)(void *arg, dtrace_id_t id, void *parg);
-	void (*dtps_resume)(void *arg, dtrace_id_t id, void *parg);
-	void (*dtps_getargdesc)(void *arg, dtrace_id_t id, void *parg,
-	    dtrace_argdesc_t *desc);
-	uint64_t (*dtps_getargval)(void *arg, dtrace_id_t id, void *parg,
-	    int argno, int aframes);
-	int (*dtps_mode)(void *arg, dtrace_id_t id, void *parg);
-	void (*dtps_destroy)(void *arg, dtrace_id_t id, void *parg);
+	dtps_provide_t		dtps_provide;
+	dtps_provide_module_t	dtps_provide_module;
+	dtps_enable_t		dtps_enable;
+	dtps_disable_t		dtps_disable;
+	dtps_suspend_t		dtps_suspend;
+	dtps_resume_t		dtps_resume;
+	dtps_getargdesc_t	dtps_getargdesc;
+	dtps_getargval_t	dtps_getargval;
+	dtps_mode_t		dtps_mode;
+	dtps_destroy_t		dtps_destroy;
 } dtrace_pops_t;
 
 #define	DTRACE_MODE_KERNEL			0x01
