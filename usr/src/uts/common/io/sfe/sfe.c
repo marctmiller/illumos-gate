@@ -2259,7 +2259,7 @@ chip_found:
 		gcp->gc_tx_desc_write = &sfe_tx_desc_write;
 		gcp->gc_tx_start = &sfe_tx_start;
 		gcp->gc_rx_desc_write = &sfe_rx_desc_write;
-		gcp->gc_rx_start = NULL;
+		gcp->gc_rx_start = (gc_rx_start_t)NULL;
 
 		gcp->gc_tx_desc_stat = &sfe_tx_desc_stat;
 		gcp->gc_rx_desc_stat = &sfe_rx_desc_stat;
@@ -2276,11 +2276,11 @@ chip_found:
 			gcp->gc_mii_sync = &sfe_mii_sync_dp83815;
 			gcp->gc_mii_read = &sfe_mii_read_dp83815;
 			gcp->gc_mii_write = &sfe_mii_write_dp83815;
-			gcp->gc_mii_tune_phy = NULL;
+			gcp->gc_mii_tune_phy = (gc_mii_tune_phy_t)NULL;
 			gcp->gc_flow_control = FLOW_CONTROL_NONE;
 		} else {
 			gcp->gc_mii_probe = &gem_mii_probe_default;
-			gcp->gc_mii_init = NULL;
+			gcp->gc_mii_init = (gc_mii_init_t)NULL;
 			gcp->gc_mii_config = &sfe_mii_config_sis900;
 			gcp->gc_mii_sync = &sfe_mii_sync_sis900;
 			gcp->gc_mii_read = &sfe_mii_read_sis900;

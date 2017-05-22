@@ -3764,28 +3764,28 @@ gem_nd_setup(struct gem_dev *dp)
 	dp->nd_arg_p =
 	    kmem_zalloc(sizeof (struct gem_nd_arg) * PARAM_COUNT, KM_SLEEP);
 
-#define	SETFUNC(x)	((x) ? gem_param_set : NULL)
+#define	SETFUNC(x)	((x) ? gem_param_set : (ndsetf_t)NULL)
 
 	gem_nd_load(dp, "autoneg_cap",
-	    gem_param_get, NULL, PARAM_AUTONEG_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_AUTONEG_CAP);
 	gem_nd_load(dp, "pause_cap",
-	    gem_param_get, NULL, PARAM_PAUSE_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_PAUSE_CAP);
 	gem_nd_load(dp, "asym_pause_cap",
-	    gem_param_get, NULL, PARAM_ASYM_PAUSE_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_ASYM_PAUSE_CAP);
 	gem_nd_load(dp, "1000fdx_cap",
-	    gem_param_get, NULL, PARAM_1000FDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_1000FDX_CAP);
 	gem_nd_load(dp, "1000hdx_cap",
-	    gem_param_get, NULL, PARAM_1000HDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_1000HDX_CAP);
 	gem_nd_load(dp, "100T4_cap",
-	    gem_param_get, NULL, PARAM_100T4_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_100T4_CAP);
 	gem_nd_load(dp, "100fdx_cap",
-	    gem_param_get, NULL, PARAM_100FDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_100FDX_CAP);
 	gem_nd_load(dp, "100hdx_cap",
-	    gem_param_get, NULL, PARAM_100HDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_100HDX_CAP);
 	gem_nd_load(dp, "10fdx_cap",
-	    gem_param_get, NULL, PARAM_10FDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_10FDX_CAP);
 	gem_nd_load(dp, "10hdx_cap",
-	    gem_param_get, NULL, PARAM_10HDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_10HDX_CAP);
 
 	/* Our advertised capabilities */
 	gem_nd_load(dp, "adv_autoneg_cap", gem_param_get,
@@ -3828,42 +3828,42 @@ gem_nd_setup(struct gem_dev *dp)
 
 	/* Partner's advertised capabilities */
 	gem_nd_load(dp, "lp_autoneg_cap",
-	    gem_param_get, NULL, PARAM_LP_AUTONEG_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LP_AUTONEG_CAP);
 	gem_nd_load(dp, "lp_pause_cap",
-	    gem_param_get, NULL, PARAM_LP_PAUSE_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LP_PAUSE_CAP);
 	gem_nd_load(dp, "lp_asym_pause_cap",
-	    gem_param_get, NULL, PARAM_LP_ASYM_PAUSE_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LP_ASYM_PAUSE_CAP);
 	gem_nd_load(dp, "lp_1000fdx_cap",
-	    gem_param_get, NULL, PARAM_LP_1000FDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LP_1000FDX_CAP);
 	gem_nd_load(dp, "lp_1000hdx_cap",
-	    gem_param_get, NULL, PARAM_LP_1000HDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LP_1000HDX_CAP);
 	gem_nd_load(dp, "lp_100T4_cap",
-	    gem_param_get, NULL, PARAM_LP_100T4_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LP_100T4_CAP);
 	gem_nd_load(dp, "lp_100fdx_cap",
-	    gem_param_get, NULL, PARAM_LP_100FDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LP_100FDX_CAP);
 	gem_nd_load(dp, "lp_100hdx_cap",
-	    gem_param_get, NULL, PARAM_LP_100HDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LP_100HDX_CAP);
 	gem_nd_load(dp, "lp_10fdx_cap",
-	    gem_param_get, NULL, PARAM_LP_10FDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LP_10FDX_CAP);
 	gem_nd_load(dp, "lp_10hdx_cap",
-	    gem_param_get, NULL, PARAM_LP_10HDX_CAP);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LP_10HDX_CAP);
 
 	/* Current operating modes */
 	gem_nd_load(dp, "link_status",
-	    gem_param_get, NULL, PARAM_LINK_STATUS);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LINK_STATUS);
 	gem_nd_load(dp, "link_speed",
-	    gem_param_get, NULL, PARAM_LINK_SPEED);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LINK_SPEED);
 	gem_nd_load(dp, "link_duplex",
-	    gem_param_get, NULL, PARAM_LINK_DUPLEX);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LINK_DUPLEX);
 	gem_nd_load(dp, "link_autoneg",
-	    gem_param_get, NULL, PARAM_LINK_AUTONEG);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LINK_AUTONEG);
 	gem_nd_load(dp, "link_rx_pause",
-	    gem_param_get, NULL, PARAM_LINK_RX_PAUSE);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LINK_RX_PAUSE);
 	gem_nd_load(dp, "link_tx_pause",
-	    gem_param_get, NULL, PARAM_LINK_TX_PAUSE);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_LINK_TX_PAUSE);
 #ifdef DEBUG_RESUME
 	gem_nd_load(dp, "resume_test",
-	    gem_param_get, NULL, PARAM_RESUME_TEST);
+	    gem_param_get, (ndsetf_t)NULL, PARAM_RESUME_TEST);
 #endif
 #undef	SETFUNC
 }

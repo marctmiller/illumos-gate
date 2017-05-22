@@ -182,6 +182,9 @@ struct mcast_addr {
 #define	SUB(x, y)		((seqnum_t)((x) - (y)))
 #define	SLOT(seqnum, size)	(((unsigned int)(seqnum)) & ((size)-1))
 
+typedef	void (*gc_rx_start_t)(struct gem_dev *, int, int);
+typedef	void (*gc_mii_tune_phy_t)(struct gem_dev *);
+typedef	int (*gc_mii_init_t)(struct gem_dev *);
 /*
  * mac soft state
  */
@@ -475,7 +478,7 @@ struct gem_dev {
 		void (*gc_tx_start) (struct gem_dev *dp, int slot, int frags);
 		void	(*gc_rx_desc_write)(struct gem_dev *dp, int slot,
 			    ddi_dma_cookie_t *dmacookie, int frags);
-		void	(*gc_rx_start)(struct gem_dev *dp, int slot, int frags);
+		gc_rx_start_t gc_rx_start;
 
 		uint_t	(*gc_tx_desc_stat)
 			(struct gem_dev *dp, int slot, int descs);
@@ -515,13 +518,13 @@ struct gem_dev {
 
 		/* mii operations */
 		int	(*gc_mii_probe)(struct gem_dev *dp);
-		int	(*gc_mii_init)(struct gem_dev *dp);
+		gc_mii_init_t gc_mii_init;
 		int	(*gc_mii_config)(struct gem_dev *dp);
 		void	(*gc_mii_sync)(struct gem_dev *dp);
 		uint16_t (*gc_mii_read)(struct gem_dev *dp, uint_t reg);
 		void (*gc_mii_write)(struct gem_dev *dp,
 			uint_t reg, uint16_t val);
-		void (*gc_mii_tune_phy)(struct gem_dev *dp);
+		gc_mii_tune_phy_t gc_mii_tune_phy;
 
 		/* packet in/out operation for copy-style  */
 		void (*gc_put_packet)(struct gem_dev *dp,
