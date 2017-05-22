@@ -2178,12 +2178,12 @@ mptsas_hba_setup(mptsas_t *mpt)
 
 	hba_tran->tran_quiesce		= mptsas_scsi_quiesce;
 	hba_tran->tran_unquiesce	= mptsas_scsi_unquiesce;
-	hba_tran->tran_bus_reset	= NULL;
+	hba_tran->tran_bus_reset	= (scsi_tran_bus_reset)NULL;
 
-	hba_tran->tran_add_eventcall	= NULL;
-	hba_tran->tran_get_eventcookie	= NULL;
-	hba_tran->tran_post_event	= NULL;
-	hba_tran->tran_remove_eventcall	= NULL;
+	hba_tran->tran_add_eventcall	= (scsi_tran_add_eventcall)NULL;
+	hba_tran->tran_get_eventcookie	= (scsi_tran_get_eventcookie)NULL;
+	hba_tran->tran_post_event	= (scsi_tran_post_event)NULL;
+	hba_tran->tran_remove_eventcall	= (scsi_tran_remove_eventcall)NULL;
 
 	hba_tran->tran_bus_config	= mptsas_bus_config;
 
@@ -6344,8 +6344,9 @@ handle_topo_change:
 		 */
 		if (!mpt->m_in_reset)
 			mptsas_handle_topo_change(topo_node, parent);
-		else
+		else {
 			NDBG20(("skipping topo change received during reset"));
+		}
 		save_node = topo_node;
 		topo_node = topo_node->next;
 		ASSERT(save_node);
@@ -10512,15 +10513,17 @@ mpi_pre_fw_download(mptsas_t *mpt, mptsas_pt_request_t *pt)
 
 	pt->sgl_offset = offsetof(MPI2_FW_DOWNLOAD_REQUEST, SGL) +
 	    sizeof (*tcsge);
-	if (pt->request_size != pt->sgl_offset)
+	if (pt->request_size != pt->sgl_offset) {
 		NDBG15(("mpi_pre_fw_download(): Incorrect req size, "
 		    "0x%x, should be 0x%x, dataoutsz 0x%x",
 		    (int)pt->request_size, (int)pt->sgl_offset,
 		    (int)pt->dataout_size));
-	if (pt->data_size < sizeof (MPI2_FW_DOWNLOAD_REPLY))
+	}
+	if (pt->data_size < sizeof (MPI2_FW_DOWNLOAD_REPLY)) {
 		NDBG15(("mpi_pre_fw_download(): Incorrect rep size, "
 		    "0x%x, should be 0x%x", pt->data_size,
 		    (int)sizeof (MPI2_FW_DOWNLOAD_REPLY)));
+	}
 }
 
 /*
@@ -10550,15 +10553,17 @@ mpi_pre_fw_25_download(mptsas_t *mpt, mptsas_pt_request_t *pt)
 	req25->ImageSize = tcsge->ImageSize;
 
 	pt->sgl_offset = offsetof(MPI25_FW_DOWNLOAD_REQUEST, SGL);
-	if (pt->request_size != pt->sgl_offset)
+	if (pt->request_size != pt->sgl_offset) {
 		NDBG15(("mpi_pre_fw_25_download(): Incorrect req size, "
 		    "0x%x, should be 0x%x, dataoutsz 0x%x",
 		    pt->request_size, pt->sgl_offset,
 		    pt->dataout_size));
-	if (pt->data_size < sizeof (MPI2_FW_DOWNLOAD_REPLY))
+	}
+	if (pt->data_size < sizeof (MPI2_FW_DOWNLOAD_REPLY)) {
 		NDBG15(("mpi_pre_fw_25_download(): Incorrect rep size, "
 		    "0x%x, should be 0x%x", pt->data_size,
 		    (int)sizeof (MPI2_FW_UPLOAD_REPLY)));
+	}
 }
 
 /*
@@ -10594,15 +10599,17 @@ mpi_pre_fw_upload(mptsas_t *mpt, mptsas_pt_request_t *pt)
 
 	pt->sgl_offset = offsetof(MPI2_FW_UPLOAD_REQUEST, SGL) +
 	    sizeof (*tcsge);
-	if (pt->request_size != pt->sgl_offset)
+	if (pt->request_size != pt->sgl_offset) {
 		NDBG15(("mpi_pre_fw_upload(): Incorrect req size, "
 		    "0x%x, should be 0x%x, dataoutsz 0x%x",
 		    pt->request_size, pt->sgl_offset,
 		    pt->dataout_size));
-	if (pt->data_size < sizeof (MPI2_FW_UPLOAD_REPLY))
+	}
+	if (pt->data_size < sizeof (MPI2_FW_UPLOAD_REPLY)) {
 		NDBG15(("mpi_pre_fw_upload(): Incorrect rep size, "
 		    "0x%x, should be 0x%x", pt->data_size,
 		    (int)sizeof (MPI2_FW_UPLOAD_REPLY)));
+	}
 }
 
 /*
@@ -10632,15 +10639,17 @@ mpi_pre_fw_25_upload(mptsas_t *mpt, mptsas_pt_request_t *pt)
 	req25->ImageSize = tcsge->ImageSize;
 
 	pt->sgl_offset = offsetof(MPI25_FW_UPLOAD_REQUEST, SGL);
-	if (pt->request_size != pt->sgl_offset)
+	if (pt->request_size != pt->sgl_offset) {
 		NDBG15(("mpi_pre_fw_25_upload(): Incorrect req size, "
 		    "0x%x, should be 0x%x, dataoutsz 0x%x",
 		    pt->request_size, pt->sgl_offset,
 		    pt->dataout_size));
-	if (pt->data_size < sizeof (MPI2_FW_UPLOAD_REPLY))
+	}
+	if (pt->data_size < sizeof (MPI2_FW_UPLOAD_REPLY)) {
 		NDBG15(("mpi_pre_fw_25_upload(): Incorrect rep size, "
 		    "0x%x, should be 0x%x", pt->data_size,
 		    (int)sizeof (MPI2_FW_UPLOAD_REPLY)));
+	}
 }
 
 /*
@@ -10652,16 +10661,18 @@ mpi_pre_ioc_facts(mptsas_t *mpt, mptsas_pt_request_t *pt)
 #ifndef __lock_lint
 	_NOTE(ARGUNUSED(mpt))
 #endif
-	if (pt->request_size != sizeof (MPI2_IOC_FACTS_REQUEST))
+	if (pt->request_size != sizeof (MPI2_IOC_FACTS_REQUEST)) {
 		NDBG15(("mpi_pre_ioc_facts(): Incorrect req size, "
 		    "0x%x, should be 0x%x, dataoutsz 0x%x",
 		    pt->request_size,
 		    (int)sizeof (MPI2_IOC_FACTS_REQUEST),
 		    pt->dataout_size));
-	if (pt->data_size != sizeof (MPI2_IOC_FACTS_REPLY))
+	}
+	if (pt->data_size != sizeof (MPI2_IOC_FACTS_REPLY)) {
 		NDBG15(("mpi_pre_ioc_facts(): Incorrect rep size, "
 		    "0x%x, should be 0x%x", pt->data_size,
 		    (int)sizeof (MPI2_IOC_FACTS_REPLY)));
+	}
 	pt->sgl_offset = (uint16_t)pt->request_size;
 }
 
@@ -10674,16 +10685,18 @@ mpi_pre_port_facts(mptsas_t *mpt, mptsas_pt_request_t *pt)
 #ifndef __lock_lint
 	_NOTE(ARGUNUSED(mpt))
 #endif
-	if (pt->request_size != sizeof (MPI2_PORT_FACTS_REQUEST))
+	if (pt->request_size != sizeof (MPI2_PORT_FACTS_REQUEST)) {
 		NDBG15(("mpi_pre_port_facts(): Incorrect req size, "
 		    "0x%x, should be 0x%x, dataoutsz 0x%x",
 		    pt->request_size,
 		    (int)sizeof (MPI2_PORT_FACTS_REQUEST),
 		    pt->dataout_size));
-	if (pt->data_size != sizeof (MPI2_PORT_FACTS_REPLY))
+	}
+	if (pt->data_size != sizeof (MPI2_PORT_FACTS_REPLY)) {
 		NDBG15(("mpi_pre_port_facts(): Incorrect rep size, "
 		    "0x%x, should be 0x%x", pt->data_size,
 		    (int)sizeof (MPI2_PORT_FACTS_REPLY)));
+	}
 	pt->sgl_offset = (uint16_t)pt->request_size;
 }
 
@@ -10697,15 +10710,17 @@ mpi_pre_sata_passthrough(mptsas_t *mpt, mptsas_pt_request_t *pt)
 	_NOTE(ARGUNUSED(mpt))
 #endif
 	pt->sgl_offset = offsetof(MPI2_SATA_PASSTHROUGH_REQUEST, SGL);
-	if (pt->request_size != pt->sgl_offset)
+	if (pt->request_size != pt->sgl_offset) {
 		NDBG15(("mpi_pre_sata_passthrough(): Incorrect req size, "
 		    "0x%x, should be 0x%x, dataoutsz 0x%x",
 		    pt->request_size, pt->sgl_offset,
 		    pt->dataout_size));
-	if (pt->data_size != sizeof (MPI2_SATA_PASSTHROUGH_REPLY))
+	}
+	if (pt->data_size != sizeof (MPI2_SATA_PASSTHROUGH_REPLY)) {
 		NDBG15(("mpi_pre_sata_passthrough(): Incorrect rep size, "
 		    "0x%x, should be 0x%x", pt->data_size,
 		    (int)sizeof (MPI2_SATA_PASSTHROUGH_REPLY)));
+	}
 }
 
 static void
@@ -10715,15 +10730,17 @@ mpi_pre_smp_passthrough(mptsas_t *mpt, mptsas_pt_request_t *pt)
 	_NOTE(ARGUNUSED(mpt))
 #endif
 	pt->sgl_offset = offsetof(MPI2_SMP_PASSTHROUGH_REQUEST, SGL);
-	if (pt->request_size != pt->sgl_offset)
+	if (pt->request_size != pt->sgl_offset) {
 		NDBG15(("mpi_pre_smp_passthrough(): Incorrect req size, "
 		    "0x%x, should be 0x%x, dataoutsz 0x%x",
 		    pt->request_size, pt->sgl_offset,
 		    pt->dataout_size));
-	if (pt->data_size != sizeof (MPI2_SMP_PASSTHROUGH_REPLY))
+	}
+	if (pt->data_size != sizeof (MPI2_SMP_PASSTHROUGH_REPLY)) {
 		NDBG15(("mpi_pre_smp_passthrough(): Incorrect rep size, "
 		    "0x%x, should be 0x%x", pt->data_size,
 		    (int)sizeof (MPI2_SMP_PASSTHROUGH_REPLY)));
+	}
 }
 
 /*
@@ -10736,14 +10753,16 @@ mpi_pre_config(mptsas_t *mpt, mptsas_pt_request_t *pt)
 	_NOTE(ARGUNUSED(mpt))
 #endif
 	pt->sgl_offset = offsetof(MPI2_CONFIG_REQUEST, PageBufferSGE);
-	if (pt->request_size != pt->sgl_offset)
+	if (pt->request_size != pt->sgl_offset) {
 		NDBG15(("mpi_pre_config(): Incorrect req size, 0x%x, "
 		    "should be 0x%x, dataoutsz 0x%x", pt->request_size,
 		    pt->sgl_offset, pt->dataout_size));
-	if (pt->data_size != sizeof (MPI2_CONFIG_REPLY))
+	}
+	if (pt->data_size != sizeof (MPI2_CONFIG_REPLY)) {
 		NDBG15(("mpi_pre_config(): Incorrect rep size, 0x%x, "
 		    "should be 0x%x", pt->data_size,
 		    (int)sizeof (MPI2_CONFIG_REPLY)));
+	}
 	pt->simple = 1;
 }
 
@@ -10757,15 +10776,17 @@ mpi_pre_scsi_io_req(mptsas_t *mpt, mptsas_pt_request_t *pt)
 	_NOTE(ARGUNUSED(mpt))
 #endif
 	pt->sgl_offset = offsetof(MPI2_SCSI_IO_REQUEST, SGL);
-	if (pt->request_size != pt->sgl_offset)
+	if (pt->request_size != pt->sgl_offset) {
 		NDBG15(("mpi_pre_config(): Incorrect req size, 0x%x, "
 		    "should be 0x%x, dataoutsz 0x%x", pt->request_size,
 		    pt->sgl_offset,
 		    pt->dataout_size));
-	if (pt->data_size != sizeof (MPI2_SCSI_IO_REPLY))
+	}
+	if (pt->data_size != sizeof (MPI2_SCSI_IO_REPLY)) {
 		NDBG15(("mpi_pre_config(): Incorrect rep size, 0x%x, "
 		    "should be 0x%x", pt->data_size,
 		    (int)sizeof (MPI2_SCSI_IO_REPLY)));
+	}
 }
 
 /*
@@ -10802,7 +10823,7 @@ static struct mptsas_func {
 	{ MPI2_FUNCTION_CONFIG, "CONFIG",		mpi_pre_config},
 	{ MPI2_FUNCTION_SAS_IO_UNIT_CONTROL, "SAS_IO_UNIT_CONTROL",
 	    mpi_pre_sas_io_unit_control },
-	{ 0xFF, NULL,				NULL } /* list end */
+	{ 0xFF, NULL, (mptsas_pre_f *)NULL } /* list end */
 };
 
 static void
@@ -13813,7 +13834,7 @@ mptsas_send_scsi_cmd(mptsas_t *mpt, struct scsi_address *ap,
 
 	pktp = scsi_init_pkt(ap, (struct scsi_pkt *)NULL,
 	    data_bp, cdblen, sizeof (struct scsi_arq_status),
-	    0, PKT_CONSISTENT, NULL, NULL);
+	    0, PKT_CONSISTENT, (int (*)(caddr_t))NULL, NULL);
 	if (pktp == NULL) {
 		goto out;
 	}

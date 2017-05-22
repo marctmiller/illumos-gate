@@ -58,6 +58,20 @@ typedef struct __scsi_tgtmap	scsi_hba_tgtmap_t;
 
 typedef struct scsi_hba_tran	scsi_hba_tran_t;
 
+typedef	int (*scsi_tran_get_eventcookie)(dev_info_t *, dev_info_t *,
+	char *, ddi_eventcookie_t *);
+typedef	void (*scsi_tran_event_callback)(dev_info_t *, ddi_eventcookie_t,
+	void *, void *);
+typedef	int (*scsi_tran_add_eventcall)(dev_info_t *, dev_info_t *,
+	ddi_eventcookie_t, scsi_tran_event_callback,
+	void *, ddi_callback_id_t *);
+
+typedef	int (*scsi_tran_remove_eventcall)(dev_info_t *, ddi_callback_id_t);
+
+typedef	int (*scsi_tran_post_event)(dev_info_t *, dev_info_t *,
+	ddi_eventcookie_t, void *);
+typedef	int (*scsi_tran_bus_reset)(dev_info_t *, int);
+
 struct scsi_hba_tran {
 	/*
 	 * Ptr to the device info structure for this particular HBA. If a SCSA
@@ -170,32 +184,13 @@ struct scsi_hba_tran {
 				struct scsi_address	*ap,
 				struct scsi_pkt		*pkt);
 
-	int		(*tran_get_eventcookie)(
-				dev_info_t		*hba_dip,
-				dev_info_t		*tgt_dip,
-				char			*name,
-				ddi_eventcookie_t	*eventp);
+	scsi_tran_get_eventcookie	tran_get_eventcookie;
 
-	int		(*tran_add_eventcall)(
-				dev_info_t		*hba_dip,
-				dev_info_t		*tgt_dip,
-				ddi_eventcookie_t	event,
-				void			(*callback)(
-						dev_info_t *tgt_dip,
-						ddi_eventcookie_t event,
-						void *arg,
-						void *bus_impldata),
-				void			*arg,
-				ddi_callback_id_t *cb_id);
+	scsi_tran_add_eventcall		tran_add_eventcall;
 
-	int		(*tran_remove_eventcall)(dev_info_t *devi,
-			ddi_callback_id_t cb_id);
+	scsi_tran_remove_eventcall	tran_remove_eventcall;
 
-	int		(*tran_post_event)(
-				dev_info_t		*hba_dip,
-				dev_info_t		*tgt_dip,
-				ddi_eventcookie_t	event,
-				void			*bus_impldata);
+	scsi_tran_post_event		tran_post_event;
 
 	int		(*tran_quiesce)(
 				dev_info_t		*hba_dip);
@@ -203,9 +198,7 @@ struct scsi_hba_tran {
 	int		(*tran_unquiesce)(
 				dev_info_t		*hba_dip);
 
-	int		(*tran_bus_reset)(
-				dev_info_t		*hba_dip,
-				int			level);
+	scsi_tran_bus_reset	tran_bus_reset;
 
 	/*
 	 * Implementation-private specifics.
