@@ -347,6 +347,8 @@ extern struct buf	bfreelist;	/* head of available list */
 extern void (*bio_lufs_strategy)(void *, buf_t *);	/* UFS Logging */
 extern void (*bio_snapshot_strategy)(void *, buf_t *);	/* UFS snapshots */
 
+typedef int (*biodone_t)(struct buf *);
+
 int	bcheck(dev_t, struct buf *);
 int	iowait(struct buf *);
 int	hash2ints(int x, int y);
@@ -395,7 +397,7 @@ struct buf *pageio_setup(struct page *, size_t, struct vnode *, int);
 void bioerror(struct buf *bp, int error);
 void bioreset(struct buf *bp);
 struct buf *bioclone(struct buf *, off_t, size_t, dev_t, daddr_t,
-	int (*)(struct buf *), struct buf *, int);
+	biodone_t, struct buf *, int);
 size_t	biosize(void);
 #endif	/* defined(_KERNEL) */
 

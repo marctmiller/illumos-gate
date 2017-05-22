@@ -171,7 +171,7 @@ int32_t ud_iodone(struct buf *);
 int32_t ud_rdip(struct ud_inode *, struct uio *, int32_t, cred_t *);
 int32_t ud_wrip(struct ud_inode *, struct uio *, int32_t, cred_t *);
 int32_t ud_multi_strat(struct ud_inode *, page_t *, struct buf *, u_offset_t);
-int32_t ud_slave_done(struct buf *);
+int	ud_slave_done(struct buf *);
 
 /*
  * Structures to control multiple IO operations to get or put pages
@@ -3566,7 +3566,7 @@ end:
 	return (error);
 }
 
-int32_t
+int
 ud_slave_done(struct buf *bp)
 {
 	mio_master_t *mm;
