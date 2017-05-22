@@ -85,6 +85,9 @@ extern "C" {
  *	  c		XXawrite	DDI(Sun)
  */
 
+typedef	int (*cb_prop_op_t)(dev_t, dev_info_t *, ddi_prop_op_t, int,
+	char *, caddr_t, int *);
+
 struct cb_ops  {
 	int	(*cb_open)(dev_t *devp, int flag, int otyp, cred_t *credp);
 	int	(*cb_close)(dev_t dev, int flag, int otyp, cred_t *credp);
@@ -103,9 +106,7 @@ struct cb_ops  {
 		    unsigned int maxprot, unsigned int flags, cred_t *credp);
 	int	(*cb_chpoll)(dev_t dev, short events, int anyyet,
 		    short *reventsp, struct pollhead **phpp);
-	int	(*cb_prop_op)(dev_t dev, dev_info_t *dip,
-		    ddi_prop_op_t prop_op, int mod_flags,
-		    char *name, caddr_t valuep, int *length);
+	cb_prop_op_t cb_prop_op;
 
 	struct streamtab *cb_str;	/* streams information */
 
