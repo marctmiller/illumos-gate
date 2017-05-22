@@ -3013,15 +3013,14 @@ di_getpath_data(dev_info_t *dip, di_off_t *off_p, di_off_t noff,
  *   If "cb_prop_op == ddi_prop_op", framework does not need to call driver.
  *   XXX or parent's bus_prop_op != ddi_bus_prop_op
  */
-static int
-(*di_getprop_prop_op(struct dev_info *dip))
-	(dev_t, dev_info_t *, ddi_prop_op_t, int, char *, caddr_t, int *)
+static cb_prop_op_t
+di_getprop_prop_op(struct dev_info *dip)
 {
 	struct dev_ops	*ops;
 
 	/* If driver is not attached we ignore the driver property list. */
 	if ((dip == NULL) || !i_ddi_devi_attached((dev_info_t *)dip))
-		return (NULL);
+		return ((cb_prop_op_t)NULL);
 
 	/*
 	 * Some nexus drivers incorrectly set cb_prop_op to nodev, nulldev,
@@ -3034,7 +3033,7 @@ static int
 	    (ops->devo_cb_ops->cb_prop_op != nulldev) &&
 	    (ops->devo_cb_ops->cb_prop_op != NULL))
 		return (ops->devo_cb_ops->cb_prop_op);
-	return (NULL);
+	return ((cb_prop_op_t)NULL);
 }
 
 static di_off_t
@@ -3190,7 +3189,8 @@ di_getprop(int list, struct ddi_prop **pprop, di_off_t *off_p,
 	    list, (void *)*pprop));
 
 	/* get pointer to driver's prop_op(9E) implementation if DRV_LIST */
-	prop_op = (list == DI_PROP_DRV_LIST) ? di_getprop_prop_op(dip) : NULL;
+	prop_op = (list == DI_PROP_DRV_LIST) ?
+	    di_getprop_prop_op(dip) : (cb_prop_op_t)NULL;
 
 	/*
 	 * Form private list of properties, holding devi_lock for properties
