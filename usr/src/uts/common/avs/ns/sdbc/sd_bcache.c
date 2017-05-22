@@ -5379,7 +5379,8 @@ _sd_doread(_sd_buf_handle_t *handle, _sd_cctl_t *cc_ent, nsc_off_t fba_pos,
 
 	DISK_FBA_READ(cd, FBA_NUM(file_len));
 
-	fn = (handle->bh_flag & NSC_NOBLOCK) ? _sd_async_read_ea : NULL;
+	fn = (handle->bh_flag & NSC_NOBLOCK) ? _sd_async_read_ea :
+	    (void (*)(blind_t, nsc_off_t, nsc_size_t, int))NULL;
 	err = sd_start_io(bp, _sd_cache_files[cd].cd_strategy, fn, handle);
 
 	if (err != NSC_PENDING) {
@@ -6165,7 +6166,8 @@ _sd_sync_write2(_sd_buf_handle_t *wr_handle, nsc_off_t wr_st_pos,
 
 	FBA_WRITE_IO_KSTATS(cd, log_bytes);
 
-	fn = (wr_handle->bh_flag & NSC_NOBLOCK) ? _sd_async_write_ea : NULL;
+	fn = (wr_handle->bh_flag & NSC_NOBLOCK) ? _sd_async_write_ea :
+	    (void (*)(blind_t, nsc_off_t, nsc_size_t, int))NULL;
 
 	err = sd_start_io(bp, _sd_cache_files[cd].cd_strategy, fn, wr_handle);
 
