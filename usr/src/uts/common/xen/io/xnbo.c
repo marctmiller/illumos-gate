@@ -327,8 +327,8 @@ xnbo_open_mac(xnb_t *xnbp, char *mac)
 		rx_fn = xnbo_from_mac;
 
 	err = mac_unicast_add_set_rx(xnbop->o_mch, NULL, MAC_UNICAST_PRIMARY,
-	    &xnbop->o_mah, 0, &diag, xnbop->o_multicast_control ? rx_fn : NULL,
-	    xnbp);
+	    &xnbop->o_mah, 0, &diag,
+	    xnbop->o_multicast_control ? rx_fn : (mac_rx_t)NULL, xnbp);
 	if (err != 0) {
 		cmn_err(CE_WARN, "xnbo_open_mac: failed to get the primary "
 		    "MAC address of %s: %d", mac, err);
@@ -711,7 +711,7 @@ static struct dev_ops ops = {
 	nodev,			/* devo_reset */
 	&cb_ops,		/* devo_cb_ops */
 	(struct bus_ops *)0,	/* devo_bus_ops */
-	NULL,			/* devo_power */
+	(devo_power_t)NULL,	/* devo_power */
 	ddi_quiesce_not_needed,		/* devo_quiesce */
 };
 
