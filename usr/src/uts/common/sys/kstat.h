@@ -790,6 +790,8 @@ extern void	kstat_init(void);	/* initialize kstat framework */
  * thus making it seem like you were never gone.
  */
 
+typedef void (*kstat_io_cb_t)(kstat_io_t *);
+
 extern kstat_t *kstat_create(const char *, int, const char *, const char *,
     uchar_t, uint_t, uchar_t);
 extern kstat_t *kstat_create_zone(const char *, int, const char *,

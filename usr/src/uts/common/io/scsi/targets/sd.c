@@ -1399,15 +1399,13 @@ static void sd_print_sense_failed_msg(struct sd_lun *un, struct buf *bp,
 static void sd_print_cmd_incomplete_msg(struct sd_lun *un, struct buf *bp,
     void *arg, int code);
 
+typedef void (*user_func_t)(struct sd_lun *, struct buf *, void *, int);
 static void sd_retry_command(struct sd_lun *un, struct buf *bp,
-	int retry_check_flag,
-	void (*user_funcp)(struct sd_lun *un, struct buf *bp, void *argp,
-		int c),
-	void *user_arg, int failure_code,  clock_t retry_delay,
-	void (*statp)(kstat_io_t *));
+	int retry_check_flag, user_func_t user_funcp, void *user_arg,
+	int failure_code, clock_t retry_delay, kstat_io_cb_t);
 
 static void sd_set_retry_bp(struct sd_lun *un, struct buf *bp,
-	clock_t retry_delay, void (*statp)(kstat_io_t *));
+	clock_t retry_delay, kstat_io_cb_t);
 
 static void sd_send_request_sense_command(struct sd_lun *un, struct buf *bp,
 	struct scsi_pkt *pktp);
@@ -6311,7 +6309,7 @@ sd_ddi_suspend(dev_info_t *devi)
 				un->un_waitq_tailp = un->un_retry_bp;
 			}
 			un->un_retry_bp = NULL;
-			un->un_retry_statp = NULL;
+			un->un_retry_statp = (kstat_io_cb_t)NULL;
 		}
 	}
 
@@ -12170,7 +12168,7 @@ sd_ssc_print(sd_ssc_t *ssc, int sd_severity)
 		sensep = NULL;
 	com = cdbp->scc_cmd;
 	scsi_generic_errmsg(devp, sd_label, sd_severity, 0, 0, com,
-	    scsi_cmds, sensep, ssc->ssc_un->un_additional_codes, NULL);
+	    scsi_cmds, sensep, ssc->ssc_un->un_additional_codes, '\0');
 }
 
 /*
@@ -14507,7 +14505,7 @@ sd_bioclone_free(struct buf *bp)
 	 * never gets confused by a stale value in this field. (Just a little
 	 * extra defensiveness here.)
 	 */
-	bp->b_iodone = NULL;
+	bp->b_iodone = (biodone_t)NULL;
 
 	freerbuf(bp);
 
@@ -14545,7 +14543,7 @@ sd_shadow_buf_free(struct buf *bp)
 	 * never gets confused by a stale value in this field. (Just a little
 	 * extra defensiveness here.)
 	 */
-	bp->b_iodone = NULL;
+	bp->b_iodone = (biodone_t)NULL;
 
 #if defined(__i386) || defined(__amd64)
 	kmem_free(bp->b_un.b_addr, bp->b_bcount);
@@ -14777,9 +14775,9 @@ sd_start_cmds(struct sd_lun *un, struct buf *immed_bp)
 {
 	struct	sd_xbuf	*xp;
 	struct	buf	*bp;
-	void	(*statp)(kstat_io_t *);
+	kstat_io_cb_t statp;
 #if defined(__i386) || defined(__amd64)	/* DMAFREE for x86 only */
-	void	(*saved_statp)(kstat_io_t *);
+	kstat_io_cb_t saved_statp;
 #endif
 	int	rval;
 	struct sd_fm_internal *sfip = NULL;
@@ -14793,7 +14791,7 @@ sd_start_cmds(struct sd_lun *un, struct buf *immed_bp)
 
 	do {
 #if defined(__i386) || defined(__amd64)	/* DMAFREE for x86 only */
-		saved_statp = NULL;
+		saved_statp = (kstat_io_cb_t)NULL;
 #endif
 
 		/*
@@ -14854,7 +14852,7 @@ sd_start_cmds(struct sd_lun *un, struct buf *immed_bp)
 #if defined(__i386) || defined(__amd64)	/* DMAFREE for x86 only */
 				saved_statp = un->un_retry_statp;
 #endif
-				un->un_retry_statp = NULL;
+				un->un_retry_statp = (kstat_io_cb_t)NULL;
 
 				SD_TRACE(SD_LOG_IO | SD_LOG_ERROR, un,
 				    "sd_start_cmds: un:0x%p: GOT retry_bp:0x%p "
@@ -15208,7 +15206,8 @@ got_pkt:
 				SD_UPDATE_KSTATS(un, kstat_runq_exit, bp);
 				bp = sd_mark_rqs_idle(un, xp);
 				sd_retry_command(un, bp, SD_RETRIES_STANDARD,
-				    NULL, NULL, EIO, un->un_busy_timeout / 500,
+				    (user_func_t)NULL, NULL, EIO,
+				    un->un_busy_timeout / 500,
 				    kstat_waitq_enter);
 				goto exit;
 			}
@@ -15400,7 +15399,8 @@ sd_return_command(struct sd_lun *un, struct buf *bp)
 			 * transfer, try sending it
 			 */
 			sd_retry_command(un, bp, SD_RETRIES_NOCHECK,
-			    NULL, NULL, 0, (clock_t)0, NULL);
+			    (user_func_t)NULL, NULL, 0, (clock_t)0,
+			    (kstat_io_cb_t)NULL);
 			sd_start_cmds(un, NULL);
 			return;	/* Note:x86: need a return here? */
 		}
@@ -15455,7 +15455,7 @@ sd_return_command(struct sd_lun *un, struct buf *bp)
 		    "sd_return_command: un:0x%p: "
 		    "RETURNING retry_bp:0x%p\n", un, un->un_retry_bp);
 		un->un_retry_bp = NULL;
-		un->un_retry_statp = NULL;
+		un->un_retry_statp = (kstat_io_cb_t)NULL;
 	}
 
 	SD_UPDATE_RDWR_STATS(un, bp);
@@ -15571,7 +15571,7 @@ sd_return_failed_command_no_restart(struct sd_lun *un, struct buf *bp,
 		    "sd_return_failed_command_no_restart: "
 		    " un:0x%p: RETURNING retry_bp:0x%p\n", un, un->un_retry_bp);
 		un->un_retry_bp = NULL;
-		un->un_retry_statp = NULL;
+		un->un_retry_statp = (kstat_io_cb_t)NULL;
 	}
 
 	SD_UPDATE_RDWR_STATS(un, bp);
@@ -15641,9 +15641,8 @@ sd_return_failed_command_no_restart(struct sd_lun *un, struct buf *bp,
 
 static void
 sd_retry_command(struct sd_lun *un, struct buf *bp, int retry_check_flag,
-    void (*user_funcp)(struct sd_lun *un, struct buf *bp, void *argp, int code),
-    void *user_arg, int failure_code, clock_t retry_delay,
-    void (*statp)(kstat_io_t *))
+    user_func_t user_funcp, void *user_arg, int failure_code,
+    clock_t retry_delay, kstat_io_cb_t statp)
 {
 	struct sd_xbuf	*xp;
 	struct scsi_pkt	*pktp;
@@ -15701,7 +15700,7 @@ sd_retry_command(struct sd_lun *un, struct buf *bp, int retry_check_flag,
 		}
 		if (bp == un->un_retry_bp) {
 			un->un_retry_bp = NULL;
-			un->un_retry_statp = NULL;
+			un->un_retry_statp = (kstat_io_cb_t)NULL;
 		}
 		SD_UPDATE_KSTATS(un, kstat_waitq_enter, bp);
 		SD_TRACE(SD_LOG_IO_CORE | SD_LOG_ERROR, un, "sd_retry_command: "
@@ -16007,7 +16006,7 @@ fail_command_no_log:
 
 static void
 sd_set_retry_bp(struct sd_lun *un, struct buf *bp, clock_t retry_delay,
-    void (*statp)(kstat_io_t *))
+    kstat_io_cb_t statp)
 {
 	ASSERT(un != NULL);
 	ASSERT(mutex_owned(SD_MUTEX(un)));
@@ -16029,7 +16028,7 @@ sd_set_retry_bp(struct sd_lun *un, struct buf *bp, clock_t retry_delay,
 	 * is the case where a START_STOP_UNIT is sent to spin-up a device.
 	 */
 	if (un->un_retry_bp == NULL) {
-		ASSERT(un->un_retry_statp == NULL);
+		ASSERT(un->un_retry_statp == (kstat_io_cb_t)NULL);
 		un->un_retry_bp = bp;
 
 		/*
@@ -16293,7 +16292,7 @@ sd_send_request_sense_command(struct sd_lun *un, struct buf *bp,
 		/* Don't retry if the command is flagged as non-retryable */
 		if ((pktp->pkt_flags & FLAG_DIAGNOSE) == 0) {
 			sd_retry_command(un, bp, SD_RETRIES_NOCHECK,
-			    NULL, NULL, 0, un->un_busy_timeout,
+			    (user_func_t)NULL, NULL, 0, un->un_busy_timeout,
 			    kstat_waitq_enter);
 			SD_TRACE(SD_LOG_IO_CORE | SD_LOG_ERROR, un,
 			    "sd_send_request_sense_command: "
@@ -17341,7 +17340,7 @@ sd_pkt_status_good(struct sd_lun *un, struct buf *bp,
 	 * the b_resid count.
 	 */
 	sd_retry_command(un, bp, SD_RETRIES_STANDARD, sd_print_incomplete_msg,
-	    cmdp, EIO, (clock_t)0, NULL);
+	    cmdp, EIO, (clock_t)0, (kstat_io_cb_t)NULL);
 
 	SD_TRACE(SD_LOG_IO_CORE, un, "sd_pkt_status_good: exit\n");
 }
@@ -17405,7 +17404,8 @@ sd_handle_request_sense(struct sd_lun *un, struct buf *sense_bp,
 		if ((cmd_pktp->pkt_flags & FLAG_DIAGNOSE) == 0) {
 			cmd_bp = sd_mark_rqs_idle(un, sense_xp);
 			sd_retry_command(un, cmd_bp, SD_RETRIES_STANDARD,
-			    NULL, NULL, EIO, (clock_t)0, NULL);
+			    (user_func_t)NULL, NULL, EIO, (clock_t)0,
+			    (kstat_io_cb_t)NULL);
 			return;
 		}
 	}
@@ -17517,7 +17517,8 @@ sd_handle_auto_request_sense(struct sd_lun *un, struct buf *bp,
 		sd_reset_target(un, pktp);
 
 		sd_retry_command(un, bp, SD_RETRIES_STANDARD,
-		    NULL, NULL, EIO, (clock_t)0, NULL);
+		    (user_func_t)NULL, NULL, EIO, (clock_t)0,
+		    (kstat_io_cb_t)NULL);
 		return;
 	}
 
@@ -17638,14 +17639,14 @@ sd_validate_sense_data(struct sd_lun *un, struct buf *bp, struct sd_xbuf *xp,
 	case STATUS_BUSY:
 		scsi_log(SD_DEVINFO(un), sd_label, CE_WARN,
 		    "Busy Status on REQUEST SENSE\n");
-		sd_retry_command(un, bp, SD_RETRIES_BUSY, NULL,
+		sd_retry_command(un, bp, SD_RETRIES_BUSY, (user_func_t)NULL,
 		    NULL, EIO, un->un_busy_timeout / 500, kstat_waitq_enter);
 		return (SD_SENSE_DATA_IS_INVALID);
 
 	case STATUS_QFULL:
 		scsi_log(SD_DEVINFO(un), sd_label, CE_WARN,
 		    "QFULL Status on REQUEST SENSE\n");
-		sd_retry_command(un, bp, SD_RETRIES_STANDARD, NULL,
+		sd_retry_command(un, bp, SD_RETRIES_STANDARD, (user_func_t)NULL,
 		    NULL, EIO, un->un_busy_timeout / 500, kstat_waitq_enter);
 		return (SD_SENSE_DATA_IS_INVALID);
 
@@ -17754,10 +17755,12 @@ sense_failed:
 	 */
 	sd_retry_command(un, bp, SD_RETRIES_STANDARD,
 	    sd_print_sense_failed_msg, msgp, EIO,
-	    un->un_f_is_fibre?drv_usectohz(100000):(clock_t)0, NULL);
+	    un->un_f_is_fibre?drv_usectohz(100000):(clock_t)0,
+	    (kstat_io_cb_t)NULL);
 #else
 	sd_retry_command(un, bp, SD_RETRIES_STANDARD,
-	    sd_print_sense_failed_msg, msgp, EIO, SD_RETRY_DELAY, NULL);
+	    sd_print_sense_failed_msg, msgp, EIO, SD_RETRY_DELAY,
+	    (kstat_io_cb_t)NULL);
 #endif
 
 	return (SD_SENSE_DATA_IS_INVALID);
@@ -18062,7 +18065,7 @@ sd_print_sense_msg(struct sd_lun *un, struct buf *bp, void *arg, int code)
 		scsi_vu_errmsg(SD_SCSI_DEVP(un), pktp, sd_label, severity,
 		    request_blkno, err_blkno, scsi_cmds,
 		    (struct scsi_extended_sense *)sensep,
-		    un->un_additional_codes, NULL);
+		    un->un_additional_codes, '\0');
 	}
 }
 
@@ -18092,7 +18095,7 @@ sd_sense_key_no_sense(struct sd_lun *un, struct buf *bp, struct sd_xbuf *xp,
 	SD_UPDATE_ERRSTATS(un, sd_softerrs);
 
 	sd_retry_command(un, bp, SD_RETRIES_STANDARD, sd_print_sense_msg,
-	    &si, EIO, (clock_t)0, NULL);
+	    &si, EIO, (clock_t)0, (kstat_io_cb_t)NULL);
 }
 
 
@@ -18147,7 +18150,7 @@ sd_sense_key_recoverable_error(struct sd_lun *un, uint8_t *sense_datap,
 	}
 
 	sd_retry_command(un, bp, SD_RETRIES_STANDARD, sd_print_sense_msg,
-	    &si, EIO, (clock_t)0, NULL);
+	    &si, EIO, (clock_t)0, (kstat_io_cb_t)NULL);
 }
 
 
@@ -18411,7 +18414,7 @@ do_retry:
 	xp->xb_nr_retry_count++;
 	si.ssi_severity = SCSI_ERR_RETRYABLE;
 	sd_retry_command(un, bp, SD_RETRIES_NOCHECK, sd_print_sense_msg,
-	    &si, EIO, un->un_busy_timeout, NULL);
+	    &si, EIO, un->un_busy_timeout, (kstat_io_cb_t)NULL);
 
 	return;
 
@@ -18514,7 +18517,7 @@ sd_sense_key_medium_or_hardware_error(struct sd_lun *un, uint8_t *sense_datap,
 	 * as some drives report this as a spurious error.
 	 */
 	sd_retry_command(un, bp, SD_RETRIES_STANDARD, sd_print_sense_msg,
-	    &si, EIO, (clock_t)0, NULL);
+	    &si, EIO, (clock_t)0, (kstat_io_cb_t)NULL);
 }
 
 
@@ -18698,7 +18701,7 @@ sd_sense_key_unit_attention(struct sd_lun *un, 	uint8_t *sense_datap,
 
 do_retry:
 	sd_retry_command(un, bp, retry_check_flag, sd_print_sense_msg, &si,
-	    EIO, SD_UA_RETRY_DELAY, NULL);
+	    EIO, SD_UA_RETRY_DELAY, (kstat_io_cb_t)NULL);
 }
 
 
@@ -18799,7 +18802,7 @@ sd_sense_key_aborted_command(struct sd_lun *un, struct buf *bp,
 	 * as some drives report this as a spurious error.
 	 */
 	sd_retry_command(un, bp, SD_RETRIES_STANDARD, sd_print_sense_msg,
-	    &si, EIO, drv_usectohz(100000), NULL);
+	    &si, EIO, drv_usectohz(100000), (kstat_io_cb_t)NULL);
 }
 
 
@@ -18841,7 +18844,7 @@ sd_sense_key_default(struct sd_lun *un, uint8_t *sense_datap, struct buf *bp,
 	si.ssi_pfa_flag = FALSE;
 
 	sd_retry_command(un, bp, SD_RETRIES_STANDARD, sd_print_sense_msg,
-	    &si, EIO, (clock_t)0, NULL);
+	    &si, EIO, (clock_t)0, (kstat_io_cb_t)NULL);
 }
 
 
@@ -19024,7 +19027,8 @@ sd_pkt_reason_cmd_incomplete(struct sd_lun *un, struct buf *bp,
 	SD_UPDATE_RESERVATION_STATUS(un, pktp);
 
 	sd_retry_command(un, bp, flag,
-	    sd_print_cmd_incomplete_msg, NULL, EIO, SD_RESTART_TIMEOUT, NULL);
+	    sd_print_cmd_incomplete_msg, NULL, EIO, SD_RESTART_TIMEOUT,
+	    (kstat_io_cb_t)NULL);
 }
 
 
@@ -19062,7 +19066,8 @@ sd_pkt_reason_cmd_tran_err(struct sd_lun *un, struct buf *bp,
 	SD_UPDATE_RESERVATION_STATUS(un, pktp);
 
 	sd_retry_command(un, bp, (SD_RETRIES_STANDARD | SD_RETRIES_ISOLATE),
-	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT, NULL);
+	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT,
+	    (kstat_io_cb_t)NULL);
 }
 
 
@@ -19099,7 +19104,8 @@ sd_pkt_reason_cmd_reset(struct sd_lun *un, struct buf *bp, struct sd_xbuf *xp,
 	 */
 
 	sd_retry_command(un, bp, (SD_RETRIES_VICTIM | SD_RETRIES_ISOLATE),
-	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT, NULL);
+	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT,
+	    (kstat_io_cb_t)NULL);
 }
 
 
@@ -19137,7 +19143,8 @@ sd_pkt_reason_cmd_aborted(struct sd_lun *un, struct buf *bp, struct sd_xbuf *xp,
 	 */
 
 	sd_retry_command(un, bp, (SD_RETRIES_VICTIM | SD_RETRIES_ISOLATE),
-	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT, NULL);
+	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT,
+	    (kstat_io_cb_t)NULL);
 }
 
 
@@ -19173,7 +19180,8 @@ sd_pkt_reason_cmd_timeout(struct sd_lun *un, struct buf *bp, struct sd_xbuf *xp,
 	 */
 	sd_retry_command(un, bp,
 	    (SD_RETRIES_STANDARD | SD_RETRIES_ISOLATE | SD_RETRIES_FAILFAST),
-	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT, NULL);
+	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT,
+	    (kstat_io_cb_t)NULL);
 }
 
 
@@ -19190,7 +19198,7 @@ static void
 sd_pkt_reason_cmd_unx_bus_free(struct sd_lun *un, struct buf *bp,
     struct sd_xbuf *xp, struct scsi_pkt *pktp)
 {
-	void (*funcp)(struct sd_lun *un, struct buf *bp, void *arg, int code);
+	user_func_t funcp;
 
 	ASSERT(un != NULL);
 	ASSERT(mutex_owned(SD_MUTEX(un)));
@@ -19202,10 +19210,10 @@ sd_pkt_reason_cmd_unx_bus_free(struct sd_lun *un, struct buf *bp,
 	SD_UPDATE_RESERVATION_STATUS(un, pktp);
 
 	funcp = ((pktp->pkt_statistics & STAT_PERR) == 0) ?
-	    sd_print_retry_msg : NULL;
+	    sd_print_retry_msg : (user_func_t)NULL;
 
 	sd_retry_command(un, bp, (SD_RETRIES_STANDARD | SD_RETRIES_ISOLATE),
-	    funcp, NULL, EIO, SD_RESTART_TIMEOUT, NULL);
+	    funcp, NULL, EIO, SD_RESTART_TIMEOUT, (kstat_io_cb_t)NULL);
 }
 
 
@@ -19243,7 +19251,8 @@ sd_pkt_reason_cmd_tag_reject(struct sd_lun *un, struct buf *bp,
 
 	/* Legacy behavior not to check retry counts here. */
 	sd_retry_command(un, bp, (SD_RETRIES_NOCHECK | SD_RETRIES_ISOLATE),
-	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT, NULL);
+	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT,
+	    (kstat_io_cb_t)NULL);
 }
 
 
@@ -19272,7 +19281,8 @@ sd_pkt_reason_default(struct sd_lun *un, struct buf *bp, struct sd_xbuf *xp,
 	SD_UPDATE_RESERVATION_STATUS(un, pktp);
 
 	sd_retry_command(un, bp, (SD_RETRIES_STANDARD | SD_RETRIES_ISOLATE),
-	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT, NULL);
+	    sd_print_retry_msg, NULL, EIO, SD_RESTART_TIMEOUT,
+	    (kstat_io_cb_t)NULL);
 }
 
 
@@ -19316,12 +19326,13 @@ sd_pkt_status_check_condition(struct sd_lun *un, struct buf *bp,
 		 * The SD_RETRY_DELAY value need to be adjusted here
 		 * when SD_RETRY_DELAY change in sddef.h
 		 */
-		sd_retry_command(un, bp, SD_RETRIES_STANDARD, NULL, NULL, EIO,
+		sd_retry_command(un, bp, SD_RETRIES_STANDARD, (user_func_t)NULL,
+		    NULL, EIO,
 		    un->un_f_is_fibre?drv_usectohz(100000):(clock_t)0,
-		    NULL);
+		    (kstat_io_cb_t)NULL);
 #else
-		sd_retry_command(un, bp, SD_RETRIES_STANDARD, NULL, NULL,
-		    EIO, SD_RETRY_DELAY, NULL);
+		sd_retry_command(un, bp, SD_RETRIES_STANDARD, (user_func_t)NULL,
+		    NULL, EIO, SD_RETRY_DELAY, (kstat_io_cb_t)NULL);
 #endif
 	}
 
@@ -19414,8 +19425,8 @@ sd_pkt_status_busy(struct sd_lun *un, struct buf *bp, struct sd_xbuf *xp,
 	 * Retry the command. Be sure to specify SD_RETRIES_NOCHECK as
 	 * we have already checked the retry counts above.
 	 */
-	sd_retry_command(un, bp, SD_RETRIES_NOCHECK, NULL, NULL,
-	    EIO, un->un_busy_timeout, NULL);
+	sd_retry_command(un, bp, SD_RETRIES_NOCHECK, (user_func_t)NULL, NULL,
+	    EIO, un->un_busy_timeout, (kstat_io_cb_t)NULL);
 
 	SD_TRACE(SD_LOG_IO_CORE | SD_LOG_ERROR, un,
 	    "sd_pkt_status_busy: exit\n");
@@ -19491,8 +19502,8 @@ sd_pkt_status_reservation_conflict(struct sd_lun *un, struct buf *bp,
 	 * Note: The legacy return code for this failure is EIO, however EACCES
 	 * seems more appropriate for a reservation conflict.
 	 */
-	sd_retry_command(un, bp, SD_RETRIES_STANDARD, NULL, NULL, EIO,
-	    (clock_t)2, NULL);
+	sd_retry_command(un, bp, SD_RETRIES_STANDARD, (user_func_t)NULL, NULL,
+	    EIO, (clock_t)2, (kstat_io_cb_t)NULL);
 }
 
 
@@ -19531,8 +19542,8 @@ sd_pkt_status_qfull(struct sd_lun *un, struct buf *bp, struct sd_xbuf *xp,
 	 * we do not limit the number of retries here.
 	 */
 	sd_reduce_throttle(un, SD_THROTTLE_QFULL);
-	sd_retry_command(un, bp, SD_RETRIES_NOCHECK, NULL, NULL, 0,
-	    SD_RESTART_TIMEOUT, NULL);
+	sd_retry_command(un, bp, SD_RETRIES_NOCHECK, (user_func_t)NULL, NULL, 0,
+	    SD_RESTART_TIMEOUT, (kstat_io_cb_t)NULL);
 
 	SD_TRACE(SD_LOG_IO_CORE | SD_LOG_ERROR, un,
 	    "sd_pkt_status_qfull: exit\n");
@@ -19815,7 +19826,7 @@ sd_media_change_task(void *arg)
 		sd_return_failed_command(un, bp, EIO);
 	} else {
 		sd_retry_command(un, bp, SD_RETRIES_UA, sd_print_sense_msg,
-		    &si, EIO, (clock_t)0, NULL);
+		    &si, EIO, (clock_t)0, (kstat_io_cb_t)NULL);
 	}
 	mutex_exit(SD_MUTEX(un));
 }
@@ -26381,7 +26392,7 @@ sd_ddi_scsi_poll(struct scsi_pkt *pkt)
 	 * do a callback for polled cmds; however, removing this will break sd
 	 * and probably other target drivers
 	 */
-	pkt->pkt_comp = NULL;
+	pkt->pkt_comp = (void (*)(struct scsi_pkt *))NULL;
 
 	/*
 	 * we don't like a polled command without timeout.
