@@ -400,6 +400,8 @@ typedef enum {
 	DDI_RESET_FORCE = 0
 } ddi_reset_cmd_t;
 
+typedef	int	(*devo_power_t)(dev_info_t *, int, int);
+
 struct dev_ops  {
 	int		devo_rev;	/* Driver build version		*/
 	int		devo_refcnt;	/* device reference count	*/
@@ -414,8 +416,7 @@ struct dev_ops  {
 
 	struct cb_ops	*devo_cb_ops;	/* cb_ops pointer for leaf drivers   */
 	struct bus_ops	*devo_bus_ops;	/* bus_ops pointer for nexus drivers */
-	int		(*devo_power)(dev_info_t *dip, int component,
-			    int level);
+	devo_power_t	devo_power;
 	int		(*devo_quiesce)(dev_info_t *dip);
 };
 
