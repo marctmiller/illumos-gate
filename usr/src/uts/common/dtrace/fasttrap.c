@@ -874,8 +874,8 @@ fasttrap_disable_callbacks(void)
 			rw_enter(&cur->cpu_ft_lock, RW_WRITER);
 		}
 
-		dtrace_pid_probe_ptr = NULL;
-		dtrace_return_probe_ptr = NULL;
+		dtrace_pid_probe_ptr = (int (*)(struct regs *))NULL;
+		dtrace_return_probe_ptr = (int (*)(struct regs *))NULL;
 
 		for (cur = cpu->cpu_next_onln; cur != cpu;
 		    cur = cur->cpu_next_onln) {
@@ -1154,27 +1154,27 @@ static const dtrace_pattr_t pid_attr = {
 
 static dtrace_pops_t pid_pops = {
 	fasttrap_pid_provide,
-	NULL,
+	(dtps_provide_module_t)NULL,
 	fasttrap_pid_enable,
 	fasttrap_pid_disable,
-	NULL,
-	NULL,
+	(dtps_suspend_t)NULL,
+	(dtps_resume_t)NULL,
 	fasttrap_pid_getargdesc,
 	fasttrap_pid_getarg,
-	NULL,
+	(dtps_mode_t)NULL,
 	fasttrap_pid_destroy
 };
 
 static dtrace_pops_t usdt_pops = {
 	fasttrap_pid_provide,
-	NULL,
+	(dtps_provide_module_t)NULL,
 	fasttrap_pid_enable,
 	fasttrap_pid_disable,
-	NULL,
-	NULL,
+	(dtps_suspend_t)NULL,
+	(dtps_resume_t)NULL,
 	fasttrap_pid_getargdesc,
 	fasttrap_usdt_getarg,
-	NULL,
+	(dtps_mode_t)NULL,
 	fasttrap_pid_destroy
 };
 
@@ -2330,13 +2330,13 @@ fasttrap_detach(dev_info_t *devi, ddi_detach_cmd_t cmd)
 	 * and fasttrap_exec() and fasttrap_exit().
 	 */
 	ASSERT(dtrace_fasttrap_fork_ptr == &fasttrap_fork);
-	dtrace_fasttrap_fork_ptr = NULL;
+	dtrace_fasttrap_fork_ptr = (void (*)(proc_t *, proc_t *))NULL;
 
 	ASSERT(dtrace_fasttrap_exec_ptr == &fasttrap_exec_exit);
-	dtrace_fasttrap_exec_ptr = NULL;
+	dtrace_fasttrap_exec_ptr = (void (*)(proc_t *))NULL;
 
 	ASSERT(dtrace_fasttrap_exit_ptr == &fasttrap_exec_exit);
-	dtrace_fasttrap_exit_ptr = NULL;
+	dtrace_fasttrap_exit_ptr = (void (*)(proc_t *))NULL;
 
 	ddi_remove_minor_node(devi, NULL);
 
