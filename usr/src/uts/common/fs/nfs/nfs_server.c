@@ -491,7 +491,7 @@ nfs_svc(struct nfs_svc_args *arg, model_t model)
 
 	/* Create a transport handle. */
 	error = svc_tli_kcreate(fp, readsize, buf, &addrmask, &xprt,
-	    sctp, NULL, NFS_SVCPOOL_ID, TRUE);
+	    sctp, (void (*)(const SVCMASTERXPRT *))NULL, NFS_SVCPOOL_ID, TRUE);
 
 	if (error)
 		kmem_free(addrmask.buf, addrmask.maxlen);
@@ -1714,7 +1714,7 @@ common_dispatch(struct svc_req *req, SVCXPRT *xprt, rpcvers_t min_vers,
 			curthread->t_flag &= ~T_DONTPEND;
 			if (curthread->t_flag & T_WOULDBLOCK) {
 				curthread->t_flag &= ~T_WOULDBLOCK;
-				SVC_DUPDONE_EXT(xprt, dr, res, NULL,
+				SVC_DUPDONE_EXT(xprt, dr, res, (void (*)())NULL,
 				    disp->dis_ressz, DUP_DROP);
 				if (res != (char *)&res_buf)
 					SVC_FREERES(xprt);
@@ -1722,12 +1722,12 @@ common_dispatch(struct svc_req *req, SVCXPRT *xprt, rpcvers_t min_vers,
 				goto done;
 			}
 			if (dis_flags & RPC_AVOIDWORK) {
-				SVC_DUPDONE_EXT(xprt, dr, res, NULL,
+				SVC_DUPDONE_EXT(xprt, dr, res, (void (*)())NULL,
 				    disp->dis_ressz, DUP_DROP);
 			} else {
 				SVC_DUPDONE_EXT(xprt, dr, res,
-				    disp->dis_resfree == nullfree ? NULL :
-				    disp->dis_resfree,
+				    disp->dis_resfree == nullfree ?
+				    (void (*)())NULL : disp->dis_resfree,
 				    disp->dis_ressz, DUP_DONE);
 				dupcached = TRUE;
 			}

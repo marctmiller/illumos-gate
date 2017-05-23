@@ -1366,7 +1366,7 @@ rfs4_state_init()
 	    1,
 	    rfs4_file_create,
 	    rfs4_file_destroy,
-	    NULL,
+	    (bool_t (*)(rfs4_entry_t))NULL,
 	    sizeof (rfs4_file_t),
 	    TABSIZE,
 	    MAXTABSZ, -1);
@@ -1425,7 +1425,7 @@ rfs4_state_fini()
 		return;
 	}
 
-	rfs4_client_clrst = NULL;
+	rfs4_client_clrst = (void (*)(struct nfs4clrst_args *))NULL;
 
 	rfs4_set_deleg_policy(SRV_NEVER_DELEGATE);
 	dbp = rfs4_server_state;
