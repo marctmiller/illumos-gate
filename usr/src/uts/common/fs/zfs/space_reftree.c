@@ -136,7 +136,7 @@ space_reftree_generate_map(avl_tree_t *t, range_tree_t *rt, int64_t minref)
 
 	ASSERT(MUTEX_HELD(rt->rt_lock));
 
-	range_tree_vacate(rt, NULL, NULL);
+	range_tree_vacate(rt, (range_tree_func_t *)NULL, NULL);
 
 	for (sr = avl_first(t); sr != NULL; sr = AVL_NEXT(t, sr)) {
 		refcnt += sr->sr_refcnt;

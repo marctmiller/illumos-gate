@@ -237,7 +237,7 @@ dmu_tx_count_write(dmu_tx_hold_t *txh, uint64_t off, uint64_t len)
 		}
 	} else {
 		zio_t *zio = zio_root(dn->dn_objset->os_spa,
-		    NULL, NULL, ZIO_FLAG_CANFAIL);
+		    (zio_done_func_t *)NULL, NULL, ZIO_FLAG_CANFAIL);
 
 		/* first level-0 block */
 		uint64_t start = off >> dn->dn_datablkshift;
@@ -389,7 +389,7 @@ dmu_tx_hold_free_impl(dmu_tx_hold_t *txh, uint64_t off, uint64_t len)
 			start = end = 0;
 
 		zio_t *zio = zio_root(tx->tx_pool->dp_spa,
-		    NULL, NULL, ZIO_FLAG_CANFAIL);
+		    (zio_done_func_t *)NULL, NULL, ZIO_FLAG_CANFAIL);
 		for (uint64_t i = start; i <= end; i++) {
 			uint64_t ibyte = i << shift;
 			err = dnode_next_offset(dn, 0, &ibyte, 2, 1, 0);

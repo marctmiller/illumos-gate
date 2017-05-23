@@ -684,7 +684,8 @@ spa_prop_set(spa_t *spa, nvlist_t *nvp)
 			 * read object, the features for write object, or the
 			 * feature descriptions object.
 			 */
-			error = dsl_sync_task(spa->spa_name, NULL,
+			error = dsl_sync_task(spa->spa_name,
+			    (dsl_checkfunc_t *)NULL,
 			    spa_sync_version, &ver,
 			    6, ZFS_SPACE_CHECK_RESERVED);
 			if (error)
@@ -697,8 +698,8 @@ spa_prop_set(spa_t *spa, nvlist_t *nvp)
 	}
 
 	if (need_sync) {
-		return (dsl_sync_task(spa->spa_name, NULL, spa_sync_props,
-		    nvp, 6, ZFS_SPACE_CHECK_RESERVED));
+		return (dsl_sync_task(spa->spa_name, (dsl_checkfunc_t *)NULL,
+		    spa_sync_props, nvp, 6, ZFS_SPACE_CHECK_RESERVED));
 	}
 
 	return (0);
@@ -1965,7 +1966,7 @@ spa_load_verify(spa_t *spa)
 	if (error != 0)
 		return (error);
 
-	rio = zio_root(spa, NULL, &sle,
+	rio = zio_root(spa, (zio_done_func_t *)NULL, &sle,
 	    ZIO_FLAG_CANFAIL | ZIO_FLAG_SPECULATIVE);
 
 	if (spa_load_verify_metadata) {
@@ -2257,7 +2258,8 @@ spa_load_impl(spa_t *spa, uint64_t pool_guid, nvlist_t *config,
 	spa->spa_async_zio_root = kmem_alloc(max_ncpus * sizeof (void *),
 	    KM_SLEEP);
 	for (int i = 0; i < max_ncpus; i++) {
-		spa->spa_async_zio_root[i] = zio_root(spa, NULL, NULL,
+		spa->spa_async_zio_root[i] = zio_root(spa,
+		    (zio_done_func_t *)NULL, NULL,
 		    ZIO_FLAG_CANFAIL | ZIO_FLAG_SPECULATIVE |
 		    ZIO_FLAG_GODFATHER);
 	}
@@ -3656,7 +3658,8 @@ spa_create(const char *pool, nvlist_t *nvroot, nvlist_t *props,
 	spa->spa_async_zio_root = kmem_alloc(max_ncpus * sizeof (void *),
 	    KM_SLEEP);
 	for (int i = 0; i < max_ncpus; i++) {
-		spa->spa_async_zio_root[i] = zio_root(spa, NULL, NULL,
+		spa->spa_async_zio_root[i] = zio_root(spa,
+		    (zio_done_func_t *)NULL, NULL,
 		    ZIO_FLAG_CANFAIL | ZIO_FLAG_SPECULATIVE |
 		    ZIO_FLAG_GODFATHER);
 	}
@@ -6025,7 +6028,7 @@ spa_free_sync_cb(void *arg, const blkptr_t *bp, dmu_tx_t *tx)
 static void
 spa_sync_frees(spa_t *spa, bplist_t *bpl, dmu_tx_t *tx)
 {
-	zio_t *zio = zio_root(spa, NULL, NULL, 0);
+	zio_t *zio = zio_root(spa, (zio_done_func_t *)NULL, NULL, 0);
 	bplist_iterate(bpl, spa_free_sync_cb, zio, tx);
 	VERIFY(zio_wait(zio) == 0);
 }
@@ -6037,7 +6040,7 @@ spa_sync_frees(spa_t *spa, bplist_t *bpl, dmu_tx_t *tx)
 static void
 spa_sync_deferred_frees(spa_t *spa, dmu_tx_t *tx)
 {
-	zio_t *zio = zio_root(spa, NULL, NULL, 0);
+	zio_t *zio = zio_root(spa, (zio_done_func_t *)NULL, NULL, 0);
 	VERIFY3U(bpobj_iterate(&spa->spa_deferred_bpobj,
 	    spa_free_sync_cb, zio, tx), ==, 0);
 	VERIFY0(zio_wait(zio));

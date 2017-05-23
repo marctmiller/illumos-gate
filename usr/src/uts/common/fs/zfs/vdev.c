@@ -675,7 +675,8 @@ vdev_free(vdev_t *vd)
 	mutex_enter(&vd->vdev_dtl_lock);
 	space_map_close(vd->vdev_dtl_sm);
 	for (int t = 0; t < DTL_TYPES; t++) {
-		range_tree_vacate(vd->vdev_dtl[t], NULL, NULL);
+		range_tree_vacate(vd->vdev_dtl[t],
+		    (range_tree_func_t *)NULL, NULL);
 		range_tree_destroy(vd->vdev_dtl[t]);
 	}
 	mutex_exit(&vd->vdev_dtl_lock);
@@ -1873,12 +1874,16 @@ vdev_dtl_reassess(vdev_t *vd, uint64_t txg, uint64_t scrub_txg, int scrub_done)
 			    vd->vdev_dtl[DTL_MISSING], 1);
 			space_reftree_destroy(&reftree);
 		}
-		range_tree_vacate(vd->vdev_dtl[DTL_PARTIAL], NULL, NULL);
+		range_tree_vacate(vd->vdev_dtl[DTL_PARTIAL],
+		    (range_tree_func_t *)NULL, NULL);
 		range_tree_walk(vd->vdev_dtl[DTL_MISSING],
 		    range_tree_add, vd->vdev_dtl[DTL_PARTIAL]);
-		if (scrub_done)
-			range_tree_vacate(vd->vdev_dtl[DTL_SCRUB], NULL, NULL);
-		range_tree_vacate(vd->vdev_dtl[DTL_OUTAGE], NULL, NULL);
+		if (scrub_done) {
+			range_tree_vacate(vd->vdev_dtl[DTL_SCRUB],
+			    (range_tree_func_t *)NULL, NULL);
+		}
+		range_tree_vacate(vd->vdev_dtl[DTL_OUTAGE],
+		    (range_tree_func_t *)NULL, NULL);
 		if (!vdev_readable(vd))
 			range_tree_add(vd->vdev_dtl[DTL_OUTAGE], 0, -1ULL);
 		else
@@ -2070,7 +2075,7 @@ vdev_dtl_sync(vdev_t *vd, uint64_t txg)
 
 	space_map_truncate(vd->vdev_dtl_sm, tx);
 	space_map_write(vd->vdev_dtl_sm, rtsync, SM_ALLOC, tx);
-	range_tree_vacate(rtsync, NULL, NULL);
+	range_tree_vacate(rtsync, (range_tree_func_t *)NULL, NULL);
 
 	range_tree_destroy(rtsync);
 

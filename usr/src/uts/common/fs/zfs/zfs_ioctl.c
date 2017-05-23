@@ -3170,13 +3170,15 @@ zfs_fill_zplprops_root(uint64_t spa_vers, nvlist_t *createprops,
  *
  * outnvl: propname -> error code (int32)
  */
+typedef void (*cbfunc_t)(objset_t *, void *, cred_t *, dmu_tx_t *);
+
 static int
 zfs_ioc_create(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 {
 	int error = 0;
 	zfs_creat_t zct = { 0 };
 	nvlist_t *nvprops = NULL;
-	void (*cbfunc)(objset_t *os, void *arg, cred_t *cr, dmu_tx_t *tx);
+	cbfunc_t cbfunc;
 	int32_t type32;
 	dmu_objset_type_t type;
 	boolean_t is_insensitive = B_FALSE;
@@ -3196,7 +3198,7 @@ zfs_ioc_create(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 		break;
 
 	default:
-		cbfunc = NULL;
+		cbfunc = (cbfunc_t)NULL;
 		break;
 	}
 	if (strchr(fsname, '@') ||
@@ -6230,7 +6232,7 @@ static struct dev_ops zfs_dev_ops = {
 	nodev,		/* reset */
 	&zfs_cb_ops,	/* driver operations */
 	NULL,		/* no bus operations */
-	NULL,		/* power */
+	(devo_power_t)NULL,	/* power */
 	ddi_quiesce_not_needed,	/* quiesce */
 };
 
@@ -6271,7 +6273,7 @@ _init(void)
 		return (error);
 	}
 
-	tsd_create(&zfs_fsyncer_key, NULL);
+	tsd_create(&zfs_fsyncer_key, (void (*)(void *))NULL);
 	tsd_create(&rrw_tsd_key, rrw_tsd_destroy);
 	tsd_create(&zfs_allow_log_key, zfs_allow_log_destroy);
 

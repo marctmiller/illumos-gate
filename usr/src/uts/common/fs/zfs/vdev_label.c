@@ -464,11 +464,11 @@ retry:
 	for (int l = 0; l < VDEV_LABELS; l++) {
 		nvlist_t *label = NULL;
 
-		zio = zio_root(spa, NULL, NULL, flags);
+		zio = zio_root(spa, (zio_done_func_t *)NULL, NULL, flags);
 
 		vdev_label_read(zio, vd, l, vp_abd,
 		    offsetof(vdev_label_t, vl_vdev_phys),
-		    sizeof (vdev_phys_t), NULL, NULL, flags);
+		    sizeof (vdev_phys_t), (zio_done_func_t *)NULL, NULL, flags);
 
 		if (zio_wait(zio) == 0 &&
 		    nvlist_unpack(vp->vp_nvlist, sizeof (vp->vp_nvlist),
@@ -808,13 +808,13 @@ vdev_label_init(vdev_t *vd, uint64_t crtxg, vdev_labeltype_t reason)
 	 * Write everything in parallel.
 	 */
 retry:
-	zio = zio_root(spa, NULL, NULL, flags);
+	zio = zio_root(spa, (zio_done_func_t *)NULL, NULL, flags);
 
 	for (int l = 0; l < VDEV_LABELS; l++) {
 
 		vdev_label_write(zio, vd, l, vp_abd,
 		    offsetof(vdev_label_t, vl_vdev_phys),
-		    sizeof (vdev_phys_t), NULL, NULL, flags);
+		    sizeof (vdev_phys_t), (zio_done_func_t *)NULL, NULL, flags);
 
 		/*
 		 * Skip the 1st padding area.
@@ -823,11 +823,11 @@ retry:
 		 */
 		vdev_label_write(zio, vd, l, pad2,
 		    offsetof(vdev_label_t, vl_pad2),
-		    VDEV_PAD_SIZE, NULL, NULL, flags);
+		    VDEV_PAD_SIZE, (zio_done_func_t *)NULL, NULL, flags);
 
 		vdev_label_write(zio, vd, l, ub_abd,
 		    offsetof(vdev_label_t, vl_uberblock),
-		    VDEV_UBERBLOCK_RING, NULL, NULL, flags);
+		    VDEV_UBERBLOCK_RING, (zio_done_func_t *)NULL, NULL, flags);
 	}
 
 	error = zio_wait(zio);
@@ -973,7 +973,7 @@ vdev_uberblock_load(vdev_t *rvd, uberblock_t *ub, nvlist_t **config)
 	cb.ubl_vd = NULL;
 
 	spa_config_enter(spa, SCL_ALL, FTAG, RW_WRITER);
-	zio = zio_root(spa, NULL, &cb, flags);
+	zio = zio_root(spa, (zio_done_func_t *)NULL, &cb, flags);
 	vdev_uberblock_load_impl(zio, rvd, flags, &cb);
 	(void) zio_wait(zio);
 
@@ -1040,7 +1040,7 @@ vdev_uberblock_sync_list(vdev_t **svd, int svdcount, uberblock_t *ub, int flags)
 	zio_t *zio;
 	uint64_t good_writes = 0;
 
-	zio = zio_root(spa, NULL, &good_writes, flags);
+	zio = zio_root(spa, (zio_done_func_t *)NULL, &good_writes, flags);
 
 	for (int v = 0; v < svdcount; v++)
 		vdev_uberblock_sync(zio, ub, svd[v], flags);
@@ -1052,7 +1052,7 @@ vdev_uberblock_sync_list(vdev_t **svd, int svdcount, uberblock_t *ub, int flags)
 	 * are no longer needed (because the new uberblocks and the even
 	 * labels are safely on disk), so it is safe to overwrite them.
 	 */
-	zio = zio_root(spa, NULL, NULL, flags);
+	zio = zio_root(spa, (zio_done_func_t *)NULL, NULL, flags);
 
 	for (int v = 0; v < svdcount; v++)
 		zio_flush(zio, svd[v]);
@@ -1155,7 +1155,7 @@ vdev_label_sync_list(spa_t *spa, int l, uint64_t txg, int flags)
 	/*
 	 * Write the new labels to disk.
 	 */
-	zio = zio_root(spa, NULL, NULL, flags);
+	zio = zio_root(spa, (zio_done_func_t *)NULL, NULL, flags);
 
 	for (vd = list_head(dl); vd != NULL; vd = list_next(dl, vd)) {
 		uint64_t *good_writes = kmem_zalloc(sizeof (uint64_t),
@@ -1176,7 +1176,7 @@ vdev_label_sync_list(spa_t *spa, int l, uint64_t txg, int flags)
 	/*
 	 * Flush the new labels to disk.
 	 */
-	zio = zio_root(spa, NULL, NULL, flags);
+	zio = zio_root(spa, (zio_done_func_t *)NULL, NULL, flags);
 
 	for (vd = list_head(dl); vd != NULL; vd = list_next(dl, vd))
 		zio_flush(zio, vd);
@@ -1245,7 +1245,7 @@ retry:
 	 * written in this txg will be committed to stable storage
 	 * before any uberblock that references them.
 	 */
-	zio = zio_root(spa, NULL, NULL, flags);
+	zio = zio_root(spa, (zio_done_func_t *)NULL, NULL, flags);
 
 	for (vd = txg_list_head(&spa->spa_vdev_txg_list, TXG_CLEAN(txg)); vd;
 	    vd = txg_list_next(&spa->spa_vdev_txg_list, vd, TXG_CLEAN(txg)))

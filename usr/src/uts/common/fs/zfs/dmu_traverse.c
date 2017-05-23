@@ -196,7 +196,7 @@ traverse_prefetch_metadata(traverse_data_t *td,
 	if (BP_GET_LEVEL(bp) == 0 && BP_GET_TYPE(bp) != DMU_OT_DNODE)
 		return;
 
-	(void) arc_read(NULL, td->td_spa, bp, NULL, NULL,
+	(void) arc_read(NULL, td->td_spa, bp, (arc_done_func_t *)NULL, NULL,
 	    ZIO_PRIORITY_ASYNC_READ, ZIO_FLAG_CANFAIL, &flags, zb);
 }
 
@@ -512,8 +512,9 @@ traverse_prefetcher(spa_t *spa, zilog_t *zilog, const blkptr_t *bp,
 	cv_broadcast(&pfd->pd_cv);
 	mutex_exit(&pfd->pd_mtx);
 
-	(void) arc_read(NULL, spa, bp, NULL, NULL, ZIO_PRIORITY_ASYNC_READ,
-	    ZIO_FLAG_CANFAIL | ZIO_FLAG_SPECULATIVE, &aflags, zb);
+	(void) arc_read(NULL, spa, bp, (arc_done_func_t *)NULL, NULL,
+	    ZIO_PRIORITY_ASYNC_READ, ZIO_FLAG_CANFAIL | ZIO_FLAG_SPECULATIVE,
+	    &aflags, zb);
 
 	return (0);
 }

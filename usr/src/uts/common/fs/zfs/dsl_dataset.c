@@ -885,7 +885,8 @@ dsl_dataset_zero_zil(dsl_dataset_t *ds, dmu_tx_t *tx)
 
 		bzero(&os->os_zil_header, sizeof (os->os_zil_header));
 
-		zio = zio_root(dp->dp_spa, NULL, NULL, ZIO_FLAG_MUSTSUCCEED);
+		zio = zio_root(dp->dp_spa, (zio_done_func_t *)NULL, NULL,
+		    ZIO_FLAG_MUSTSUCCEED);
 		dsl_dataset_sync(ds, zio, tx);
 		VERIFY0(zio_wait(zio));
 

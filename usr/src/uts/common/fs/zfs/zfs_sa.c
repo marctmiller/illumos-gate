@@ -233,17 +233,26 @@ zfs_sa_upgrade(sa_handle_t *hdl, dmu_tx_t *tx)
 	}
 
 	/* First do a bulk query of the attributes that aren't cached */
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MTIME(zfsvfs), NULL, &mtime, 16);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_CTIME(zfsvfs), NULL, &ctime, 16);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_CRTIME(zfsvfs), NULL, &crtime, 16);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MODE(zfsvfs), NULL, &mode, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_PARENT(zfsvfs), NULL, &parent, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_XATTR(zfsvfs), NULL, &xattr, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_RDEV(zfsvfs), NULL, &rdev, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_UID(zfsvfs), NULL, &uid, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_GID(zfsvfs), NULL, &gid, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_ZNODE_ACL(zfsvfs), NULL,
-	    &znode_acl, 88);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MTIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, &mtime, 16);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_CTIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, &ctime, 16);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_CRTIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, &crtime, 16);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MODE(zfsvfs),
+	    (sa_data_locator_t *)NULL, &mode, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_PARENT(zfsvfs),
+	    (sa_data_locator_t *)NULL, &parent, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_XATTR(zfsvfs),
+	    (sa_data_locator_t *)NULL, &xattr, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_RDEV(zfsvfs),
+	    (sa_data_locator_t *)NULL, &rdev, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_UID(zfsvfs),
+	    (sa_data_locator_t *)NULL, &uid, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_GID(zfsvfs),
+	    (sa_data_locator_t *)NULL, &gid, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_ZNODE_ACL(zfsvfs),
+	    (sa_data_locator_t *)NULL, &znode_acl, 88);
 
 	if (sa_bulk_lookup_locked(hdl, bulk, count) != 0)
 		goto done;
@@ -254,32 +263,35 @@ zfs_sa_upgrade(sa_handle_t *hdl, dmu_tx_t *tx)
 	 * it is such a way to pick up an already existing layout number
 	 */
 	count = 0;
-	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_MODE(zfsvfs), NULL, &mode, 8);
-	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_SIZE(zfsvfs), NULL,
-	    &zp->z_size, 8);
+	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_MODE(zfsvfs),
+	    (sa_data_locator_t *)NULL, &mode, 8);
+	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_SIZE(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_size, 8);
 	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_GEN(zfsvfs),
-	    NULL, &zp->z_gen, 8);
-	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_UID(zfsvfs), NULL, &uid, 8);
-	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_GID(zfsvfs), NULL, &gid, 8);
+	    (sa_data_locator_t *)NULL, &zp->z_gen, 8);
+	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_UID(zfsvfs),
+	    (sa_data_locator_t *)NULL, &uid, 8);
+	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_GID(zfsvfs),
+	    (sa_data_locator_t *)NULL, &gid, 8);
 	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_PARENT(zfsvfs),
-	    NULL, &parent, 8);
-	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_FLAGS(zfsvfs), NULL,
-	    &zp->z_pflags, 8);
-	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_ATIME(zfsvfs), NULL,
-	    zp->z_atime, 16);
-	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_MTIME(zfsvfs), NULL,
-	    &mtime, 16);
-	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_CTIME(zfsvfs), NULL,
-	    &ctime, 16);
-	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_CRTIME(zfsvfs), NULL,
-	    &crtime, 16);
-	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_LINKS(zfsvfs), NULL,
-	    &zp->z_links, 8);
+	    (sa_data_locator_t *)NULL, &parent, 8);
+	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_FLAGS(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_pflags, 8);
+	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_ATIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, zp->z_atime, 16);
+	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_MTIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, &mtime, 16);
+	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_CTIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, &ctime, 16);
+	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_CRTIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, &crtime, 16);
+	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_LINKS(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_links, 8);
 	if (zp->z_vnode->v_type == VBLK || zp->z_vnode->v_type == VCHR)
-		SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_RDEV(zfsvfs), NULL,
-		    &rdev, 8);
-	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_DACL_COUNT(zfsvfs), NULL,
-	    &zp->z_acl_cached->z_acl_count, 8);
+		SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_RDEV(zfsvfs),
+		    (sa_data_locator_t *)NULL, &rdev, 8);
+	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_DACL_COUNT(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_acl_cached->z_acl_count, 8);
 
 	if (zp->z_acl_cached->z_version < ZFS_ACL_VERSION_FUID)
 		zfs_acl_xform(zp, zp->z_acl_cached, CRED());
@@ -290,7 +302,7 @@ zfs_sa_upgrade(sa_handle_t *hdl, dmu_tx_t *tx)
 
 	if (xattr)
 		SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_XATTR(zfsvfs),
-		    NULL, &xattr, 8);
+		    (sa_data_locator_t *)NULL, &xattr, 8);
 
 	/* if scanstamp then add scanstamp */
 
@@ -298,7 +310,7 @@ zfs_sa_upgrade(sa_handle_t *hdl, dmu_tx_t *tx)
 		bcopy((caddr_t)db->db_data + ZFS_OLD_ZNODE_PHYS_SIZE,
 		    scanstamp, AV_SCANSTAMP_SZ);
 		SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_SCANSTAMP(zfsvfs),
-		    NULL, scanstamp, AV_SCANSTAMP_SZ);
+		    (sa_data_locator_t *)NULL, scanstamp, AV_SCANSTAMP_SZ);
 		zp->z_pflags &= ~ZFS_BONUS_SCANSTAMP;
 	}
 

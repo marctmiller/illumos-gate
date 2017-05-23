@@ -180,7 +180,8 @@ process_old_deadlist(dsl_dataset_t *ds, dsl_dataset_t *ds_prev,
 	poa.ds = ds;
 	poa.ds_prev = ds_prev;
 	poa.after_branch_point = after_branch_point;
-	poa.pio = zio_root(dp->dp_spa, NULL, NULL, ZIO_FLAG_MUSTSUCCEED);
+	poa.pio = zio_root(dp->dp_spa, (zio_done_func_t *)NULL, NULL,
+	    ZIO_FLAG_MUSTSUCCEED);
 	VERIFY0(bpobj_iterate(&ds_next->ds_deadlist.dl_bpobj,
 	    process_old_cb, &poa, tx));
 	VERIFY0(zio_wait(poa.pio));

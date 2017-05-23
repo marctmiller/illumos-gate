@@ -1566,7 +1566,8 @@ arc_cksum_is_equal(arc_buf_hdr_t *hdr, zio_t *zio)
 			bzero((char *)cbuf + csize, HDR_GET_PSIZE(hdr) - csize);
 			csize = HDR_GET_PSIZE(hdr);
 		}
-		zio_push_transform(zio, cbuf, csize, HDR_GET_PSIZE(hdr), NULL);
+		zio_push_transform(zio, cbuf, csize, HDR_GET_PSIZE(hdr),
+		    (zio_transform_func_t *)NULL);
 	}
 
 	/*
@@ -4860,7 +4861,8 @@ top:
 				acb->acb_compressed = compressed_read;
 				if (pio != NULL)
 					acb->acb_zio_dummy = zio_null(pio,
-					    spa, NULL, NULL, NULL, zio_flags);
+					    spa, NULL, (zio_done_func_t *)NULL,
+					    NULL, zio_flags);
 
 				ASSERT3P(acb->acb_done, !=, NULL);
 				acb->acb_next = hdr->b_l1hdr.b_acb;
@@ -5654,7 +5656,8 @@ arc_write(zio_t *pio, spa_t *spa, uint64_t txg, blkptr_t *bp, arc_buf_t *buf,
 	zio = zio_write(pio, spa, txg, bp,
 	    abd_get_from_buf(buf->b_data, HDR_GET_LSIZE(hdr)),
 	    HDR_GET_LSIZE(hdr), arc_buf_size(buf), zp, arc_write_ready,
-	    (children_ready != NULL) ? arc_write_children_ready : NULL,
+	    (children_ready != NULL) ? arc_write_children_ready :
+	    (zio_done_func_t *)NULL,
 	    arc_write_physdone, arc_write_done, callback,
 	    priority, zio_flags, zb);
 
@@ -6913,7 +6916,7 @@ l2arc_write_buffers(spa_t *spa, l2arc_dev_t *dev, uint64_t target_sz)
 			}
 			wzio = zio_write_phys(pio, dev->l2ad_vdev,
 			    hdr->b_l2hdr.b_daddr, size, to_write,
-			    ZIO_CHECKSUM_OFF, NULL, hdr,
+			    ZIO_CHECKSUM_OFF, (zio_done_func_t *)NULL, hdr,
 			    ZIO_PRIORITY_ASYNC_WRITE,
 			    ZIO_FLAG_CANFAIL, B_FALSE);
 

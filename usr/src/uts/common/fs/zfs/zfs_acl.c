@@ -1195,12 +1195,12 @@ zfs_aclset_common(znode_t *zp, zfs_acl_t *aclp, cred_t *cr, dmu_tx_t *tx)
 	    zp->z_uid, zp->z_gid);
 
 	zp->z_mode = mode;
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MODE(zfsvfs), NULL,
-	    &mode, sizeof (mode));
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_FLAGS(zfsvfs), NULL,
-	    &zp->z_pflags, sizeof (zp->z_pflags));
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_CTIME(zfsvfs), NULL,
-	    &ctime, sizeof (ctime));
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MODE(zfsvfs),
+	    (sa_data_locator_t *)NULL, &mode, sizeof (mode));
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_FLAGS(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_pflags, sizeof (zp->z_pflags));
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_CTIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, &ctime, sizeof (ctime));
 
 	if (zp->z_acl_cached) {
 		zfs_acl_free(zp->z_acl_cached);
@@ -1230,7 +1230,8 @@ zfs_aclset_common(znode_t *zp, zfs_acl_t *aclp, cred_t *cr, dmu_tx_t *tx)
 		SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_DACL_ACES(zfsvfs),
 		    zfs_acl_data_locator, &locate, aclp->z_acl_bytes);
 		SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_DACL_COUNT(zfsvfs),
-		    NULL, &aclp->z_acl_count, sizeof (uint64_t));
+		    (sa_data_locator_t *)NULL, &aclp->z_acl_count,
+		    sizeof (uint64_t));
 	} else { /* Painful legacy way */
 		zfs_acl_node_t *aclnode;
 		uint64_t off = 0;
@@ -1311,8 +1312,8 @@ zfs_aclset_common(znode_t *zp, zfs_acl_t *aclp, cred_t *cr, dmu_tx_t *tx)
 		}
 		acl_phys.z_acl_version = aclp->z_version;
 
-		SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_ZNODE_ACL(zfsvfs), NULL,
-		    &acl_phys, sizeof (acl_phys));
+		SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_ZNODE_ACL(zfsvfs),
+		    (sa_data_locator_t *)NULL, &acl_phys, sizeof (acl_phys));
 	}
 
 	/*

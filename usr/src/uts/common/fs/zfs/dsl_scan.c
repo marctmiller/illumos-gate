@@ -88,7 +88,7 @@ boolean_t zfs_free_bpobj_enabled = B_TRUE;
 
 /* the order has to match pool_scan_type */
 static scan_cb_t *scan_funcs[POOL_SCAN_FUNCS] = {
-	NULL,
+	(scan_cb_t *)NULL,
 	dsl_scan_scrub_cb,	/* POOL_SCAN_SCRUB */
 	dsl_scan_scrub_cb,	/* POOL_SCAN_RESILVER */
 };
@@ -573,7 +573,7 @@ dsl_scan_prefetch(dsl_scan_t *scn, arc_buf_t *buf, blkptr_t *bp,
 	SET_BOOKMARK(&czb, objset, object, BP_GET_LEVEL(bp), blkid);
 
 	(void) arc_read(scn->scn_zio_root, scn->scn_dp->dp_spa, bp,
-	    NULL, NULL, ZIO_PRIORITY_ASYNC_READ,
+	    (arc_done_func_t *)NULL, NULL, ZIO_PRIORITY_ASYNC_READ,
 	    ZIO_FLAG_CANFAIL | ZIO_FLAG_SCAN_THREAD, &flags, &czb);
 }
 
@@ -1505,8 +1505,8 @@ dsl_scan_sync(dsl_pool_t *dp, dmu_tx_t *tx)
 	if (zfs_free_bpobj_enabled &&
 	    spa_version(dp->dp_spa) >= SPA_VERSION_DEADLISTS) {
 		scn->scn_is_bptree = B_FALSE;
-		scn->scn_zio_root = zio_root(dp->dp_spa, NULL,
-		    NULL, ZIO_FLAG_MUSTSUCCEED);
+		scn->scn_zio_root = zio_root(dp->dp_spa,
+		    (zio_done_func_t *)NULL, NULL, ZIO_FLAG_MUSTSUCCEED);
 		err = bpobj_iterate(&dp->dp_free_bpobj,
 		    dsl_scan_free_block_cb, scn, tx);
 		VERIFY3U(0, ==, zio_wait(scn->scn_zio_root));
@@ -1518,8 +1518,8 @@ dsl_scan_sync(dsl_pool_t *dp, dmu_tx_t *tx)
 	if (err == 0 && spa_feature_is_active(spa, SPA_FEATURE_ASYNC_DESTROY)) {
 		ASSERT(scn->scn_async_destroying);
 		scn->scn_is_bptree = B_TRUE;
-		scn->scn_zio_root = zio_root(dp->dp_spa, NULL,
-		    NULL, ZIO_FLAG_MUSTSUCCEED);
+		scn->scn_zio_root = zio_root(dp->dp_spa,
+		    (zio_done_func_t *)NULL, NULL, ZIO_FLAG_MUSTSUCCEED);
 		err = bptree_iterate(dp->dp_meta_objset,
 		    dp->dp_bptree_obj, B_TRUE, dsl_scan_free_block_cb, scn, tx);
 		VERIFY0(zio_wait(scn->scn_zio_root));
@@ -1644,7 +1644,7 @@ dsl_scan_sync(dsl_pool_t *dp, dmu_tx_t *tx)
 		    (longlong_t)scn->scn_phys.scn_bookmark.zb_blkid);
 	}
 
-	scn->scn_zio_root = zio_root(dp->dp_spa, NULL,
+	scn->scn_zio_root = zio_root(dp->dp_spa, (zio_done_func_t *)NULL,
 	    NULL, ZIO_FLAG_CANFAIL);
 	dsl_pool_config_enter(dp, FTAG);
 	dsl_scan_visit(scn, tx);

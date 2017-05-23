@@ -126,7 +126,7 @@ space_map_load(space_map_t *sm, range_tree_t *rt, maptype_t maptype)
 	if (error == 0)
 		VERIFY3U(range_tree_space(rt), ==, space);
 	else
-		range_tree_vacate(rt, NULL, NULL);
+		range_tree_vacate(rt, (range_tree_func_t *)NULL, NULL);
 
 	zio_buf_free(entry_map, bufsize);
 	return (error);

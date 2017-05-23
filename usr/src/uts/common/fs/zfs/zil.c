@@ -833,7 +833,7 @@ zil_flush_vdevs(zilog_t *zilog)
 
 	spa_config_enter(spa, SCL_STATE, FTAG, RW_READER);
 
-	zio = zio_root(spa, NULL, NULL, ZIO_FLAG_CANFAIL);
+	zio = zio_root(spa, (zio_done_func_t *)NULL, NULL, ZIO_FLAG_CANFAIL);
 
 	while ((zv = avl_destroy_nodes(t, &cookie)) != NULL) {
 		vdev_t *vd = vdev_lookup_top(spa, zv->zv_vdev);
@@ -906,8 +906,8 @@ zil_lwb_write_init(zilog_t *zilog, lwb_t *lwb)
 	    lwb->lwb_blk.blk_cksum.zc_word[ZIL_ZC_SEQ]);
 
 	if (zilog->zl_root_zio == NULL) {
-		zilog->zl_root_zio = zio_root(zilog->zl_spa, NULL, NULL,
-		    ZIO_FLAG_CANFAIL);
+		zilog->zl_root_zio = zio_root(zilog->zl_spa,
+		    (zio_done_func_t *)NULL, NULL, ZIO_FLAG_CANFAIL);
 	}
 	if (lwb->lwb_zio == NULL) {
 		abd_t *lwb_abd = abd_get_from_buf(lwb->lwb_buf,
@@ -1863,7 +1863,7 @@ zil_close(zilog_t *zilog)
 
 	taskq_destroy(zilog->zl_clean_taskq);
 	zilog->zl_clean_taskq = NULL;
-	zilog->zl_get_data = NULL;
+	zilog->zl_get_data = (zil_get_data_t *)NULL;
 
 	/*
 	 * We should have only one LWB left on the list; remove it now.

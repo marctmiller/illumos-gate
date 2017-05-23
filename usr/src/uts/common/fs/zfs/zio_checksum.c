@@ -141,40 +141,108 @@ abd_fletcher_4_byteswap(abd_t *abd, uint64_t size,
 }
 
 zio_checksum_info_t zio_checksum_table[ZIO_CHECKSUM_FUNCTIONS] = {
-	{{NULL, NULL}, NULL, NULL, 0, "inherit"},
-	{{NULL, NULL}, NULL, NULL, 0, "on"},
-	{{abd_checksum_off,		abd_checksum_off},
-	    NULL, NULL, 0, "off"},
-	{{abd_checksum_SHA256,		abd_checksum_SHA256},
-	    NULL, NULL, ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_EMBEDDED,
-	    "label"},
-	{{abd_checksum_SHA256,		abd_checksum_SHA256},
-	    NULL, NULL, ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_EMBEDDED,
-	    "gang_header"},
-	{{abd_fletcher_2_native,	abd_fletcher_2_byteswap},
-	    NULL, NULL, ZCHECKSUM_FLAG_EMBEDDED, "zilog"},
-	{{abd_fletcher_2_native,	abd_fletcher_2_byteswap},
-	    NULL, NULL, 0, "fletcher2"},
-	{{abd_fletcher_4_native,	abd_fletcher_4_byteswap},
-	    NULL, NULL, ZCHECKSUM_FLAG_METADATA, "fletcher4"},
-	{{abd_checksum_SHA256,		abd_checksum_SHA256},
-	    NULL, NULL, ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_DEDUP |
-	    ZCHECKSUM_FLAG_NOPWRITE, "sha256"},
-	{{abd_fletcher_4_native,	abd_fletcher_4_byteswap},
-	    NULL, NULL, ZCHECKSUM_FLAG_EMBEDDED, "zilog2"},
-	{{abd_checksum_off,		abd_checksum_off},
-	    NULL, NULL, 0, "noparity"},
-	{{abd_checksum_SHA512_native,	abd_checksum_SHA512_byteswap},
-	    NULL, NULL, ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_DEDUP |
-	    ZCHECKSUM_FLAG_NOPWRITE, "sha512"},
-	{{abd_checksum_skein_native,	abd_checksum_skein_byteswap},
-	    abd_checksum_skein_tmpl_init, abd_checksum_skein_tmpl_free,
-	    ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_DEDUP |
-	    ZCHECKSUM_FLAG_SALTED | ZCHECKSUM_FLAG_NOPWRITE, "skein"},
-	{{abd_checksum_edonr_native,	abd_checksum_edonr_byteswap},
-	    abd_checksum_edonr_tmpl_init, abd_checksum_edonr_tmpl_free,
-	    ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_SALTED |
-	    ZCHECKSUM_FLAG_NOPWRITE, "edonr"},
+	{
+		{(zio_checksum_t *)NULL, (zio_checksum_t *)NULL},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		0,
+		"inherit"
+	},
+	{
+		{(zio_checksum_t *)NULL, (zio_checksum_t *)NULL},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		0,
+		"on"
+	},
+	{
+		{abd_checksum_off, abd_checksum_off},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		0,
+		"off"
+	},
+	{
+		{abd_checksum_SHA256, abd_checksum_SHA256},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_EMBEDDED,
+		"label"
+	},
+	{
+		{abd_checksum_SHA256, abd_checksum_SHA256},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_EMBEDDED,
+		"gang_header"
+	},
+	{
+		{abd_fletcher_2_native,	abd_fletcher_2_byteswap},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		ZCHECKSUM_FLAG_EMBEDDED,
+		"zilog"
+	},
+	{
+		{abd_fletcher_2_native, abd_fletcher_2_byteswap},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		0,
+		"fletcher2"
+	},
+	{
+		{abd_fletcher_4_native, abd_fletcher_4_byteswap},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		ZCHECKSUM_FLAG_METADATA,
+		"fletcher4"
+	},
+	{
+		{abd_checksum_SHA256, abd_checksum_SHA256},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_DEDUP |
+		ZCHECKSUM_FLAG_NOPWRITE,
+		"sha256"
+	},
+	{
+		{abd_fletcher_4_native, abd_fletcher_4_byteswap},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		ZCHECKSUM_FLAG_EMBEDDED,
+		"zilog2"
+	},
+	{
+		{abd_checksum_off, abd_checksum_off},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		0,
+		"noparity"
+	},
+	{
+		{abd_checksum_SHA512_native, abd_checksum_SHA512_byteswap},
+		(zio_checksum_tmpl_init_t *)NULL,
+		(zio_checksum_tmpl_free_t *)NULL,
+		ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_DEDUP |
+		ZCHECKSUM_FLAG_NOPWRITE,
+		"sha512"
+	},
+	{
+		{abd_checksum_skein_native, abd_checksum_skein_byteswap},
+		abd_checksum_skein_tmpl_init,
+		abd_checksum_skein_tmpl_free,
+		ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_DEDUP |
+		ZCHECKSUM_FLAG_SALTED | ZCHECKSUM_FLAG_NOPWRITE,
+		"skein"
+	},
+	{
+		{abd_checksum_edonr_native, abd_checksum_edonr_byteswap},
+		abd_checksum_edonr_tmpl_init,
+		abd_checksum_edonr_tmpl_free,
+		ZCHECKSUM_FLAG_METADATA | ZCHECKSUM_FLAG_SALTED |
+		ZCHECKSUM_FLAG_NOPWRITE,
+		"edonr"
+	}
 };
 
 /*

@@ -1373,7 +1373,7 @@ void
 metaslab_unload(metaslab_t *msp)
 {
 	ASSERT(MUTEX_HELD(&msp->ms_lock));
-	range_tree_vacate(msp->ms_tree, NULL, NULL);
+	range_tree_vacate(msp->ms_tree, (range_tree_func_t *)NULL, NULL);
 	msp->ms_loaded = B_FALSE;
 	msp->ms_weight &= ~METASLAB_ACTIVE_MASK;
 	msp->ms_max_size = 0;
@@ -2164,7 +2164,7 @@ metaslab_condense(metaslab_t *msp, uint64_t txg, dmu_tx_t *tx)
 	 * compute.
 	 */
 	space_map_write(sm, condense_tree, SM_ALLOC, tx);
-	range_tree_vacate(condense_tree, NULL, NULL);
+	range_tree_vacate(condense_tree, (range_tree_func_t *)NULL, NULL);
 	range_tree_destroy(condense_tree);
 
 	space_map_write(sm, msp->ms_tree, SM_FREE, tx);
@@ -2313,7 +2313,7 @@ metaslab_sync(metaslab_t *msp, uint64_t txg)
 		range_tree_vacate(msp->ms_freeingtree,
 		    range_tree_add, msp->ms_freedtree);
 	}
-	range_tree_vacate(alloctree, NULL, NULL);
+	range_tree_vacate(alloctree, (range_tree_func_t *)NULL, NULL);
 
 	ASSERT0(range_tree_space(msp->ms_alloctree[txg & TXG_MASK]));
 	ASSERT0(range_tree_space(msp->ms_alloctree[TXG_CLEAN(txg) & TXG_MASK]));
@@ -2409,12 +2409,14 @@ metaslab_sync_done(metaslab_t *msp, uint64_t txg)
 	 * the defer_tree.
 	 */
 	range_tree_vacate(*defer_tree,
-	    msp->ms_loaded ? range_tree_add : NULL, msp->ms_tree);
+	    msp->ms_loaded ? range_tree_add : (range_tree_func_t *)NULL,
+	    msp->ms_tree);
 	if (defer_allowed) {
 		range_tree_swap(&msp->ms_freedtree, defer_tree);
 	} else {
 		range_tree_vacate(msp->ms_freedtree,
-		    msp->ms_loaded ? range_tree_add : NULL, msp->ms_tree);
+		    msp->ms_loaded ? range_tree_add : (range_tree_func_t *)NULL,
+		    msp->ms_tree);
 	}
 
 	space_map_update(msp->ms_sm);

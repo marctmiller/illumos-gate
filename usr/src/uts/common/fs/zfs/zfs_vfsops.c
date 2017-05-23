@@ -93,7 +93,7 @@ static const fs_operation_def_t zfs_vfsops_template[] = {
 	VFSNAME_SYNC,		{ .vfs_sync = zfs_sync },
 	VFSNAME_VGET,		{ .vfs_vget = zfs_vget },
 	VFSNAME_FREEVFS,	{ .vfs_freevfs = zfs_freevfs },
-	NULL,			NULL
+	NULL,			0
 };
 
 /*

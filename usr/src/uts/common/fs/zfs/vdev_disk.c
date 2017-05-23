@@ -179,7 +179,7 @@ vdev_disk_dgrd_finalize(ldi_handle_t lh, ldi_ev_cookie_t ecookie,
 
 static ldi_ev_callback_t vdev_disk_dgrd_callb = {
 	.cb_vers = LDI_EV_CB_VERS,
-	.cb_notify = NULL,
+	.cb_notify = (cb_notify_t)NULL,
 	.cb_finalize = vdev_disk_dgrd_finalize
 };
 
@@ -831,7 +831,7 @@ vdev_ops_t vdev_disk_ops = {
 	vdev_default_asize,
 	vdev_disk_io_start,
 	vdev_disk_io_done,
-	NULL,
+	(vdev_state_change_func_t *)NULL,
 	vdev_disk_hold,
 	vdev_disk_rele,
 	VDEV_TYPE_DISK,		/* name of this vdev type */

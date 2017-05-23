@@ -1135,8 +1135,8 @@ dnode_hold_impl(objset_t *os, uint64_t object, int flag,
 		for (i = 0; i < epb; i++) {
 			zrl_init(&dnh[i].dnh_zrlock);
 		}
-		dmu_buf_init_user(&children_dnodes->dnc_dbu, NULL,
-		    dnode_buf_evict_async, NULL);
+		dmu_buf_init_user(&children_dnodes->dnc_dbu,
+		    (dmu_buf_evict_func_t *)NULL, dnode_buf_evict_async, NULL);
 		winner = dmu_buf_set_user(&db->db, &children_dnodes->dnc_dbu);
 		if (winner != NULL) {
 

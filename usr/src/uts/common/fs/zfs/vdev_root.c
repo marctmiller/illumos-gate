@@ -112,11 +112,11 @@ vdev_ops_t vdev_root_ops = {
 	vdev_root_open,
 	vdev_root_close,
 	vdev_default_asize,
-	NULL,			/* io_start - not applicable to the root */
-	NULL,			/* io_done - not applicable to the root */
+	(vdev_io_start_func_t *)NULL,	/* not applicable to the root */
+	(vdev_io_done_func_t *)NULL,	/* not applicable to the root */
 	vdev_root_state_change,
-	NULL,
-	NULL,
+	(vdev_hold_func_t *)NULL,
+	(vdev_rele_func_t *)NULL,
 	VDEV_TYPE_ROOT,		/* name of this vdev type */
 	B_FALSE			/* not a leaf vdev */
 };

@@ -85,9 +85,9 @@ vdev_ops_t vdev_missing_ops = {
 	vdev_default_asize,
 	vdev_missing_io_start,
 	vdev_missing_io_done,
-	NULL,
-	NULL,
-	NULL,
+	(vdev_state_change_func_t *)NULL,
+	(vdev_hold_func_t *)NULL,
+	(vdev_rele_func_t *)NULL,
 	VDEV_TYPE_MISSING,	/* name of this vdev type */
 	B_TRUE			/* leaf vdev */
 };
@@ -98,9 +98,9 @@ vdev_ops_t vdev_hole_ops = {
 	vdev_default_asize,
 	vdev_missing_io_start,
 	vdev_missing_io_done,
-	NULL,
-	NULL,
-	NULL,
+	(vdev_state_change_func_t *)NULL,
+	(vdev_hold_func_t *)NULL,
+	(vdev_rele_func_t *)NULL,
 	VDEV_TYPE_HOLE,		/* name of this vdev type */
 	B_TRUE			/* leaf vdev */
 };

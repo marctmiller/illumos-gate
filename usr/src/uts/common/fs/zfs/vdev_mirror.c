@@ -437,7 +437,8 @@ vdev_mirror_io_done(zio_t *zio)
 			    zio->io_abd, zio->io_size,
 			    ZIO_TYPE_WRITE, ZIO_PRIORITY_ASYNC_WRITE,
 			    ZIO_FLAG_IO_REPAIR | (unexpected_errors ?
-			    ZIO_FLAG_SELF_HEAL : 0), NULL, NULL));
+			    ZIO_FLAG_SELF_HEAL : 0), (zio_done_func_t *)NULL,
+			    NULL));
 		}
 	}
 }
@@ -461,8 +462,8 @@ vdev_ops_t vdev_mirror_ops = {
 	vdev_mirror_io_start,
 	vdev_mirror_io_done,
 	vdev_mirror_state_change,
-	NULL,
-	NULL,
+	(vdev_hold_func_t *)NULL,
+	(vdev_rele_func_t *)NULL,
 	VDEV_TYPE_MIRROR,	/* name of this vdev type */
 	B_FALSE			/* not a leaf vdev */
 };
@@ -474,8 +475,8 @@ vdev_ops_t vdev_replacing_ops = {
 	vdev_mirror_io_start,
 	vdev_mirror_io_done,
 	vdev_mirror_state_change,
-	NULL,
-	NULL,
+	(vdev_hold_func_t *)NULL,
+	(vdev_rele_func_t *)NULL,
 	VDEV_TYPE_REPLACING,	/* name of this vdev type */
 	B_FALSE			/* not a leaf vdev */
 };
@@ -487,8 +488,8 @@ vdev_ops_t vdev_spare_ops = {
 	vdev_mirror_io_start,
 	vdev_mirror_io_done,
 	vdev_mirror_state_change,
-	NULL,
-	NULL,
+	(vdev_hold_func_t *)NULL,
+	(vdev_rele_func_t *)NULL,
 	VDEV_TYPE_SPARE,	/* name of this vdev type */
 	B_FALSE			/* not a leaf vdev */
 };

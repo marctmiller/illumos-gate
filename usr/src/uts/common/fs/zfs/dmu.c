@@ -476,7 +476,8 @@ dmu_buf_hold_array_by_dnode(dnode_t *dn, uint64_t offset, uint64_t length,
 	}
 	dbp = kmem_zalloc(sizeof (dmu_buf_t *) * nblks, KM_SLEEP);
 
-	zio = zio_root(dn->dn_objset->os_spa, NULL, NULL, ZIO_FLAG_CANFAIL);
+	zio = zio_root(dn->dn_objset->os_spa, (zio_done_func_t *)NULL, NULL,
+	    ZIO_FLAG_CANFAIL);
 	blkid = dbuf_whichblock(dn, 0, offset);
 	for (i = 0; i < nblks; i++) {
 		dmu_buf_impl_t *db = dbuf_hold(dn, blkid + i, tag);
@@ -1661,7 +1662,8 @@ dmu_sync_late_arrival(zio_t *pio, objset_t *os, dmu_sync_cb_t *done, zgd_t *zgd,
 	zio_nowait(zio_write(pio, os->os_spa, dmu_tx_get_txg(tx), zgd->zgd_bp,
 	    abd_get_from_buf(zgd->zgd_db->db_data, zgd->zgd_db->db_size),
 	    zgd->zgd_db->db_size, zgd->zgd_db->db_size, zp,
-	    dmu_sync_late_arrival_ready, NULL, NULL, dmu_sync_late_arrival_done,
+	    dmu_sync_late_arrival_ready, (zio_done_func_t *)NULL,
+	    (zio_done_func_t *)NULL, dmu_sync_late_arrival_done,
 	    dsa, ZIO_PRIORITY_SYNC_WRITE, ZIO_FLAG_CANFAIL, zb));
 
 	return (0);
@@ -1815,7 +1817,8 @@ dmu_sync(zio_t *pio, uint64_t txg, dmu_sync_cb_t *done, zgd_t *zgd)
 
 	zio_nowait(arc_write(pio, os->os_spa, txg,
 	    bp, dr->dt.dl.dr_data, DBUF_IS_L2CACHEABLE(db),
-	    &zp, dmu_sync_ready, NULL, NULL, dmu_sync_done, dsa,
+	    &zp, dmu_sync_ready, (arc_done_func_t *)NULL,
+	    (arc_done_func_t *)NULL, dmu_sync_done, dsa,
 	    ZIO_PRIORITY_SYNC_WRITE, ZIO_FLAG_CANFAIL, &zb));
 
 	return (0);

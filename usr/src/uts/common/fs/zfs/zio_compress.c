@@ -39,11 +39,15 @@
  * Compression vectors.
  */
 zio_compress_info_t zio_compress_table[ZIO_COMPRESS_FUNCTIONS] = {
-	{"inherit",		0,	NULL,		NULL},
-	{"on",			0,	NULL,		NULL},
-	{"uncompressed",	0,	NULL,		NULL},
+	{"inherit",		0,	(zio_compress_func_t *)NULL,
+		(zio_decompress_func_t *)NULL},
+	{"on",			0,	(zio_compress_func_t *)NULL,
+		(zio_decompress_func_t *)NULL},
+	{"uncompressed",	0,	(zio_compress_func_t *)NULL,
+		(zio_decompress_func_t *)NULL},
 	{"lzjb",		0,	lzjb_compress,	lzjb_decompress},
-	{"empty",		0,	NULL,		NULL},
+	{"empty",		0,	(zio_compress_func_t *)NULL,
+		(zio_decompress_func_t *)NULL},
 	{"gzip-1",		1,	gzip_compress,	gzip_decompress},
 	{"gzip-2",		2,	gzip_compress,	gzip_decompress},
 	{"gzip-3",		3,	gzip_compress,	gzip_decompress},

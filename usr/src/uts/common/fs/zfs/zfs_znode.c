@@ -656,21 +656,24 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz,
 
 	zfs_znode_sa_init(zfsvfs, zp, db, obj_type, hdl);
 
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MODE(zfsvfs), NULL, &mode, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_GEN(zfsvfs), NULL, &zp->z_gen, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_SIZE(zfsvfs), NULL,
-	    &zp->z_size, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_LINKS(zfsvfs), NULL,
-	    &zp->z_links, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_FLAGS(zfsvfs), NULL,
-	    &zp->z_pflags, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_PARENT(zfsvfs), NULL, &parent, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_ATIME(zfsvfs), NULL,
-	    &zp->z_atime, 16);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_UID(zfsvfs), NULL,
-	    &zp->z_uid, 8);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_GID(zfsvfs), NULL,
-	    &zp->z_gid, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MODE(zfsvfs),
+	    (sa_data_locator_t *)NULL, &mode, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_GEN(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_gen, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_SIZE(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_size, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_LINKS(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_links, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_FLAGS(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_pflags, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_PARENT(zfsvfs),
+	    (sa_data_locator_t *)NULL, &parent, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_ATIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_atime, 16);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_UID(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_uid, 8);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_GID(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_gid, 8);
 
 	if (sa_bulk_lookup(zp->z_sa_hdl, bulk, count) != 0 || zp->z_gen == 0) {
 		if (hdl == NULL)
@@ -902,71 +905,74 @@ zfs_mknode(znode_t *dzp, vattr_t *vap, dmu_tx_t *tx, cred_t *cr,
 
 	if (obj_type == DMU_OT_ZNODE) {
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_ATIME(zfsvfs),
-		    NULL, &atime, 16);
+		    (sa_data_locator_t *)NULL, &atime, 16);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_MTIME(zfsvfs),
-		    NULL, &mtime, 16);
+		    (sa_data_locator_t *)NULL, &mtime, 16);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_CTIME(zfsvfs),
-		    NULL, &ctime, 16);
+		    (sa_data_locator_t *)NULL, &ctime, 16);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_CRTIME(zfsvfs),
-		    NULL, &crtime, 16);
+		    (sa_data_locator_t *)NULL, &crtime, 16);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_GEN(zfsvfs),
-		    NULL, &gen, 8);
+		    (sa_data_locator_t *)NULL, &gen, 8);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_MODE(zfsvfs),
-		    NULL, &mode, 8);
+		    (sa_data_locator_t *)NULL, &mode, 8);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_SIZE(zfsvfs),
-		    NULL, &size, 8);
+		    (sa_data_locator_t *)NULL, &size, 8);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_PARENT(zfsvfs),
-		    NULL, &parent, 8);
+		    (sa_data_locator_t *)NULL, &parent, 8);
 	} else {
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_MODE(zfsvfs),
-		    NULL, &mode, 8);
+		    (sa_data_locator_t *)NULL, &mode, 8);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_SIZE(zfsvfs),
-		    NULL, &size, 8);
+		    (sa_data_locator_t *)NULL, &size, 8);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_GEN(zfsvfs),
-		    NULL, &gen, 8);
-		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_UID(zfsvfs), NULL,
-		    &acl_ids->z_fuid, 8);
-		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_GID(zfsvfs), NULL,
-		    &acl_ids->z_fgid, 8);
+		    (sa_data_locator_t *)NULL, &gen, 8);
+		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_UID(zfsvfs),
+		    (sa_data_locator_t *)NULL, &acl_ids->z_fuid, 8);
+		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_GID(zfsvfs),
+		    (sa_data_locator_t *)NULL, &acl_ids->z_fgid, 8);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_PARENT(zfsvfs),
-		    NULL, &parent, 8);
+		    (sa_data_locator_t *)NULL, &parent, 8);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_FLAGS(zfsvfs),
-		    NULL, &pflags, 8);
+		    (sa_data_locator_t *)NULL, &pflags, 8);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_ATIME(zfsvfs),
-		    NULL, &atime, 16);
+		    (sa_data_locator_t *)NULL, &atime, 16);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_MTIME(zfsvfs),
-		    NULL, &mtime, 16);
+		    (sa_data_locator_t *)NULL, &mtime, 16);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_CTIME(zfsvfs),
-		    NULL, &ctime, 16);
+		    (sa_data_locator_t *)NULL, &ctime, 16);
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_CRTIME(zfsvfs),
-		    NULL, &crtime, 16);
+		    (sa_data_locator_t *)NULL, &crtime, 16);
 	}
 
-	SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_LINKS(zfsvfs), NULL, &links, 8);
+	SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_LINKS(zfsvfs),
+	    (sa_data_locator_t *)NULL, &links, 8);
 
 	if (obj_type == DMU_OT_ZNODE) {
-		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_XATTR(zfsvfs), NULL,
-		    &empty_xattr, 8);
+		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_XATTR(zfsvfs),
+		    (sa_data_locator_t *)NULL, &empty_xattr, 8);
 	}
 	if (obj_type == DMU_OT_ZNODE ||
 	    (vap->va_type == VBLK || vap->va_type == VCHR)) {
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_RDEV(zfsvfs),
-		    NULL, &rdev, 8);
+		    (sa_data_locator_t *)NULL, &rdev, 8);
 
 	}
 	if (obj_type == DMU_OT_ZNODE) {
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_FLAGS(zfsvfs),
-		    NULL, &pflags, 8);
-		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_UID(zfsvfs), NULL,
-		    &acl_ids->z_fuid, 8);
-		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_GID(zfsvfs), NULL,
-		    &acl_ids->z_fgid, 8);
-		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_PAD(zfsvfs), NULL, pad,
-		    sizeof (uint64_t) * 4);
-		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_ZNODE_ACL(zfsvfs), NULL,
-		    &acl_phys, sizeof (zfs_acl_phys_t));
+		    (sa_data_locator_t *)NULL, &pflags, 8);
+		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_UID(zfsvfs),
+		    (sa_data_locator_t *)NULL, &acl_ids->z_fuid, 8);
+		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_GID(zfsvfs),
+		    (sa_data_locator_t *)NULL, &acl_ids->z_fgid, 8);
+		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_PAD(zfsvfs),
+		    (sa_data_locator_t *)NULL, pad, sizeof (uint64_t) * 4);
+		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_ZNODE_ACL(zfsvfs),
+		    (sa_data_locator_t *)NULL, &acl_phys,
+		    sizeof (zfs_acl_phys_t));
 	} else if (acl_ids->z_aclp->z_version >= ZFS_ACL_VERSION_FUID) {
-		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_DACL_COUNT(zfsvfs), NULL,
+		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_DACL_COUNT(zfsvfs),
+		    (sa_data_locator_t *)NULL,
 		    &acl_ids->z_aclp->z_acl_count, 8);
 		locate.cb_aclp = acl_ids->z_aclp;
 		SA_ADD_BULK_ATTR(sa_attrs, cnt, SA_ZPL_DACL_ACES(zfsvfs),
@@ -1220,22 +1226,22 @@ zfs_rezget(znode_t *zp)
 	zfs_znode_sa_init(zfsvfs, zp, db, doi.doi_bonus_type, NULL);
 
 	/* reload cached values */
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_GEN(zfsvfs), NULL,
-	    &gen, sizeof (gen));
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_SIZE(zfsvfs), NULL,
-	    &zp->z_size, sizeof (zp->z_size));
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_LINKS(zfsvfs), NULL,
-	    &zp->z_links, sizeof (zp->z_links));
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_FLAGS(zfsvfs), NULL,
-	    &zp->z_pflags, sizeof (zp->z_pflags));
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_ATIME(zfsvfs), NULL,
-	    &zp->z_atime, sizeof (zp->z_atime));
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_UID(zfsvfs), NULL,
-	    &zp->z_uid, sizeof (zp->z_uid));
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_GID(zfsvfs), NULL,
-	    &zp->z_gid, sizeof (zp->z_gid));
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MODE(zfsvfs), NULL,
-	    &mode, sizeof (mode));
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_GEN(zfsvfs),
+	    (sa_data_locator_t *)NULL, &gen, sizeof (gen));
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_SIZE(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_size, sizeof (zp->z_size));
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_LINKS(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_links, sizeof (zp->z_links));
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_FLAGS(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_pflags, sizeof (zp->z_pflags));
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_ATIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_atime, sizeof (zp->z_atime));
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_UID(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_uid, sizeof (zp->z_uid));
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_GID(zfsvfs),
+	    (sa_data_locator_t *)NULL, &zp->z_gid, sizeof (zp->z_gid));
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MODE(zfsvfs),
+	    (sa_data_locator_t *)NULL, &mode, sizeof (mode));
 
 	if (sa_bulk_lookup(zp->z_sa_hdl, bulk, count)) {
 		zfs_znode_dmu_fini(zp);
@@ -1603,12 +1609,12 @@ zfs_trunc(znode_t *zp, uint64_t end)
 
 	zp->z_size = end;
 	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_SIZE(zfsvfs),
-	    NULL, &zp->z_size, sizeof (zp->z_size));
+	    (sa_data_locator_t *)NULL, &zp->z_size, sizeof (zp->z_size));
 
 	if (end == 0) {
 		zp->z_pflags &= ~ZFS_SPARSE;
 		SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_FLAGS(zfsvfs),
-		    NULL, &zp->z_pflags, 8);
+		    (sa_data_locator_t *)NULL, &zp->z_pflags, 8);
 	}
 	VERIFY(sa_bulk_update(zp->z_sa_hdl, bulk, count, tx) == 0);
 
@@ -1708,10 +1714,12 @@ log:
 		return (error);
 	}
 
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MTIME(zfsvfs), NULL, mtime, 16);
-	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_CTIME(zfsvfs), NULL, ctime, 16);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MTIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, mtime, 16);
+	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_CTIME(zfsvfs),
+	    (sa_data_locator_t *)NULL, ctime, 16);
 	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_FLAGS(zfsvfs),
-	    NULL, &zp->z_pflags, 8);
+	    (sa_data_locator_t *)NULL, &zp->z_pflags, 8);
 	zfs_tstamp_update_setup(zp, CONTENT_MODIFIED, mtime, ctime, B_TRUE);
 	error = sa_bulk_update(zp->z_sa_hdl, bulk, count, tx);
 	ASSERT(error == 0);
@@ -1943,12 +1951,12 @@ zfs_obj_to_pobj(objset_t *osp, sa_handle_t *hdl, sa_attr_type_t *sa_table,
 	int count = 0;
 	int error;
 
-	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_PARENT], NULL,
-	    &parent, sizeof (parent));
-	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_FLAGS], NULL,
-	    &pflags, sizeof (pflags));
-	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_MODE], NULL,
-	    &mode, sizeof (mode));
+	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_PARENT],
+	    (sa_data_locator_t *)NULL, &parent, sizeof (parent));
+	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_FLAGS],
+	    (sa_data_locator_t *)NULL, &pflags, sizeof (pflags));
+	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_MODE],
+	    (sa_data_locator_t *)NULL, &mode, sizeof (mode));
 
 	if ((error = sa_bulk_lookup(hdl, bulk, count)) != 0)
 		return (error);
@@ -1992,14 +2000,14 @@ zfs_obj_to_stats_impl(sa_handle_t *hdl, sa_attr_type_t *sa_table,
 	sa_bulk_attr_t bulk[4];
 	int count = 0;
 
-	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_MODE], NULL,
-	    &sb->zs_mode, sizeof (sb->zs_mode));
-	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_GEN], NULL,
-	    &sb->zs_gen, sizeof (sb->zs_gen));
-	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_LINKS], NULL,
-	    &sb->zs_links, sizeof (sb->zs_links));
-	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_CTIME], NULL,
-	    &sb->zs_ctime, sizeof (sb->zs_ctime));
+	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_MODE],
+	    (sa_data_locator_t *)NULL, &sb->zs_mode, sizeof (sb->zs_mode));
+	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_GEN],
+	    (sa_data_locator_t *)NULL, &sb->zs_gen, sizeof (sb->zs_gen));
+	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_LINKS],
+	    (sa_data_locator_t *)NULL, &sb->zs_links, sizeof (sb->zs_links));
+	SA_ADD_BULK_ATTR(bulk, count, sa_table[ZPL_CTIME],
+	    (sa_data_locator_t *)NULL, &sb->zs_ctime, sizeof (sb->zs_ctime));
 
 	return (sa_bulk_lookup(hdl, bulk, count));
 }

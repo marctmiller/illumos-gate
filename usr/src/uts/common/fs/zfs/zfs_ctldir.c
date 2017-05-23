@@ -228,7 +228,8 @@ zfsctl_create(zfsvfs_t *zfsvfs)
 
 	vp = gfs_root_create(sizeof (zfsctl_node_t), zfsvfs->z_vfs,
 	    zfsctl_ops_root, ZFSCTL_INO_ROOT, zfsctl_root_entries,
-	    zfsctl_root_inode_cb, MAXNAMELEN, NULL, NULL);
+	    zfsctl_root_inode_cb, MAXNAMELEN, (gfs_readdir_cb)NULL,
+	    (gfs_lookup_cb)NULL);
 	zcp = vp->v_data;
 	zcp->zc_id = ZFSCTL_INO_ROOT;
 
@@ -1060,8 +1061,8 @@ zfsctl_mknode_snapdir(vnode_t *pvp)
 	zfsctl_snapdir_t *sdp;
 
 	vp = gfs_dir_create(sizeof (zfsctl_snapdir_t), pvp,
-	    zfsctl_ops_snapdir, NULL, NULL, MAXNAMELEN,
-	    zfsctl_snapdir_readdir_cb, NULL);
+	    zfsctl_ops_snapdir, NULL, (gfs_inode_cb)NULL, MAXNAMELEN,
+	    zfsctl_snapdir_readdir_cb, (gfs_lookup_cb)NULL);
 	sdp = vp->v_data;
 	sdp->sd_node.zc_id = ZFSCTL_INO_SNAPDIR;
 	sdp->sd_node.zc_cmtime = ((zfsctl_node_t *)pvp->v_data)->zc_cmtime;
@@ -1078,8 +1079,8 @@ zfsctl_mknode_shares(vnode_t *pvp)
 	zfsctl_node_t *sdp;
 
 	vp = gfs_dir_create(sizeof (zfsctl_node_t), pvp,
-	    zfsctl_ops_shares, NULL, NULL, MAXNAMELEN,
-	    NULL, NULL);
+	    zfsctl_ops_shares, NULL, (gfs_inode_cb)NULL, MAXNAMELEN,
+	    (gfs_readdir_cb)NULL, (gfs_lookup_cb)NULL);
 	sdp = vp->v_data;
 	sdp->zc_cmtime = ((zfsctl_node_t *)pvp->v_data)->zc_cmtime;
 	return (vp);
@@ -1189,7 +1190,8 @@ zfsctl_snapshot_mknode(vnode_t *pvp, uint64_t objset)
 	zfsctl_node_t *zcp;
 
 	vp = gfs_dir_create(sizeof (zfsctl_node_t), pvp,
-	    zfsctl_ops_snapshot, NULL, NULL, MAXNAMELEN, NULL, NULL);
+	    zfsctl_ops_snapshot, NULL, (gfs_inode_cb)NULL, MAXNAMELEN,
+	    (gfs_readdir_cb)NULL, (gfs_lookup_cb)NULL);
 	zcp = vp->v_data;
 	zcp->zc_id = objset;
 
@@ -1253,7 +1255,7 @@ zfsctl_snapshot_inactive(vnode_t *vp, cred_t *cr, caller_context_t *ct)
  */
 static const fs_operation_def_t zfsctl_tops_snapshot[] = {
 	VOPNAME_INACTIVE, { .vop_inactive =  zfsctl_snapshot_inactive },
-	NULL, NULL
+	NULL, 0
 };
 
 int

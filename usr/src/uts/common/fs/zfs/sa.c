@@ -1380,8 +1380,10 @@ sa_handle_get_from_db(objset_t *os, dmu_buf_t *db, void *userp,
 		sa_handle_t *winner = NULL;
 
 		handle = kmem_cache_alloc(sa_cache, KM_SLEEP);
-		handle->sa_dbu.dbu_evict_func_sync = NULL;
-		handle->sa_dbu.dbu_evict_func_async = NULL;
+		handle->sa_dbu.dbu_evict_func_sync =
+		    (dmu_buf_evict_func_t *)NULL;
+		handle->sa_dbu.dbu_evict_func_async =
+		    (dmu_buf_evict_func_t *)NULL;
 		handle->sa_userp = userp;
 		handle->sa_bonus = db;
 		handle->sa_os = os;
@@ -1392,7 +1394,8 @@ sa_handle_get_from_db(objset_t *os, dmu_buf_t *db, void *userp,
 		error = sa_build_index(handle, SA_BONUS);
 
 		if (hdl_type == SA_HDL_SHARED) {
-			dmu_buf_init_user(&handle->sa_dbu, sa_evict_sync, NULL,
+			dmu_buf_init_user(&handle->sa_dbu, sa_evict_sync,
+			    (dmu_buf_evict_func_t *)NULL,
 			    NULL);
 			winner = dmu_buf_set_user_ie(db, &handle->sa_dbu);
 		}
@@ -1450,7 +1453,7 @@ sa_lookup(sa_handle_t *hdl, sa_attr_type_t attr, void *buf, uint32_t buflen)
 	bulk.sa_attr = attr;
 	bulk.sa_data = buf;
 	bulk.sa_length = buflen;
-	bulk.sa_data_func = NULL;
+	bulk.sa_data_func = (sa_data_locator_t *)NULL;
 
 	ASSERT(hdl);
 	mutex_enter(&hdl->sa_lock);
@@ -1468,7 +1471,7 @@ sa_lookup_uio(sa_handle_t *hdl, sa_attr_type_t attr, uio_t *uio)
 
 	bulk.sa_data = NULL;
 	bulk.sa_attr = attr;
-	bulk.sa_data_func = NULL;
+	bulk.sa_data_func = (sa_data_locator_t *)NULL;
 
 	ASSERT(hdl);
 
@@ -1751,7 +1754,7 @@ sa_modify_attrs(sa_handle_t *hdl, sa_attr_type_t newattr,
 				    locator, datastart, buflen);
 			} else {
 				SA_ADD_BULK_ATTR(attr_desc, j, attr,
-				    NULL, (void *)
+				    (sa_data_locator_t *)NULL, (void *)
 				    (TOC_OFF(idx_tab->sa_idx_tab[attr]) +
 				    (uintptr_t)old_data[k]), length);
 			}
@@ -1818,7 +1821,7 @@ sa_update(sa_handle_t *hdl, sa_attr_type_t type,
 	sa_bulk_attr_t bulk;
 
 	bulk.sa_attr = type;
-	bulk.sa_data_func = NULL;
+	bulk.sa_data_func = (sa_data_locator_t *)NULL;
 	bulk.sa_length = buflen;
 	bulk.sa_data = buf;
 
@@ -1858,7 +1861,7 @@ sa_size(sa_handle_t *hdl, sa_attr_type_t attr, int *size)
 
 	bulk.sa_data = NULL;
 	bulk.sa_attr = attr;
-	bulk.sa_data_func = NULL;
+	bulk.sa_data_func = (sa_data_locator_t *)NULL;
 
 	ASSERT(hdl);
 	mutex_enter(&hdl->sa_lock);
@@ -1910,7 +1913,7 @@ sa_remove(sa_handle_t *hdl, sa_attr_type_t attr, dmu_tx_t *tx)
 	int error;
 
 	mutex_enter(&hdl->sa_lock);
-	error = sa_modify_attrs(hdl, attr, SA_REMOVE, NULL,
+	error = sa_modify_attrs(hdl, attr, SA_REMOVE, (sa_data_locator_t *)NULL,
 	    NULL, 0, tx);
 	mutex_exit(&hdl->sa_lock);
 	return (error);

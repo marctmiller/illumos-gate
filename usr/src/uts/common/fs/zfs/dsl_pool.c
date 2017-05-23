@@ -435,7 +435,8 @@ dsl_pool_mos_diduse_space(dsl_pool_t *dp,
 static void
 dsl_pool_sync_mos(dsl_pool_t *dp, dmu_tx_t *tx)
 {
-	zio_t *zio = zio_root(dp->dp_spa, NULL, NULL, ZIO_FLAG_MUSTSUCCEED);
+	zio_t *zio = zio_root(dp->dp_spa, (zio_done_func_t *)NULL, NULL,
+	    ZIO_FLAG_MUSTSUCCEED);
 	dmu_objset_sync(dp->dp_meta_objset, zio, tx);
 	VERIFY0(zio_wait(zio));
 	dprintf_bp(&dp->dp_meta_rootbp, "meta objset rootbp is %s", "");
@@ -478,7 +479,8 @@ dsl_pool_sync(dsl_pool_t *dp, uint64_t txg)
 	/*
 	 * Write out all dirty blocks of dirty datasets.
 	 */
-	zio = zio_root(dp->dp_spa, NULL, NULL, ZIO_FLAG_MUSTSUCCEED);
+	zio = zio_root(dp->dp_spa, (zio_done_func_t *)NULL, NULL,
+	    ZIO_FLAG_MUSTSUCCEED);
 	while ((ds = txg_list_remove(&dp->dp_dirty_datasets, txg)) != NULL) {
 		/*
 		 * We must not sync any non-MOS datasets twice, because
@@ -529,7 +531,8 @@ dsl_pool_sync(dsl_pool_t *dp, uint64_t txg)
 	 * user accounting information (and we won't get confused
 	 * about which blocks are part of the snapshot).
 	 */
-	zio = zio_root(dp->dp_spa, NULL, NULL, ZIO_FLAG_MUSTSUCCEED);
+	zio = zio_root(dp->dp_spa, (zio_done_func_t *)NULL, NULL,
+	    ZIO_FLAG_MUSTSUCCEED);
 	while ((ds = txg_list_remove(&dp->dp_dirty_datasets, txg)) != NULL) {
 		ASSERT(list_link_active(&ds->ds_synced_link));
 		dmu_buf_rele(ds->ds_dbuf, ds);

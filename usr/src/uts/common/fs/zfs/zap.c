@@ -82,7 +82,7 @@ fzap_upgrade(zap_t *zap, dmu_tx_t *tx, zap_flags_t flags)
 	zap->zap_ismicro = FALSE;
 
 	zap->zap_dbu.dbu_evict_func_sync = zap_evict_sync;
-	zap->zap_dbu.dbu_evict_func_async = NULL;
+	zap->zap_dbu.dbu_evict_func_async = (dmu_buf_evict_func_t *)NULL;
 
 	mutex_init(&zap->zap_f.zap_num_entries_mtx, 0, 0, 0);
 	zap->zap_f.zap_block_shift = highbit64(zap->zap_dbuf->db_size) - 1;
@@ -424,7 +424,8 @@ zap_create_leaf(zap_t *zap, dmu_tx_t *tx)
 	VERIFY(0 == dmu_buf_hold(zap->zap_objset, zap->zap_object,
 	    l->l_blkid << FZAP_BLOCK_SHIFT(zap), NULL, &l->l_dbuf,
 	    DMU_READ_NO_PREFETCH));
-	dmu_buf_init_user(&l->l_dbu, zap_leaf_evict_sync, NULL, &l->l_dbuf);
+	dmu_buf_init_user(&l->l_dbu, zap_leaf_evict_sync,
+	    (dmu_buf_evict_func_t *)NULL, &l->l_dbuf);
 	winner = dmu_buf_set_user(l->l_dbuf, &l->l_dbu);
 	ASSERT(winner == NULL);
 	dmu_buf_will_dirty(l->l_dbuf, tx);
@@ -471,7 +472,8 @@ zap_open_leaf(uint64_t blkid, dmu_buf_t *db)
 	l->l_bs = highbit64(db->db_size) - 1;
 	l->l_dbuf = db;
 
-	dmu_buf_init_user(&l->l_dbu, zap_leaf_evict_sync, NULL, &l->l_dbuf);
+	dmu_buf_init_user(&l->l_dbu, zap_leaf_evict_sync,
+	    (dmu_buf_evict_func_t *)NULL, &l->l_dbuf);
 	winner = dmu_buf_set_user(db, &l->l_dbu);
 
 	rw_exit(&l->l_rwlock);

@@ -1946,7 +1946,8 @@ vdev_raidz_io_start(zio_t *zio)
 			    rc->rc_offset + rc->rc_size, NULL,
 			    1 << tvd->vdev_ashift,
 			    zio->io_type, zio->io_priority,
-			    ZIO_FLAG_NODATA | ZIO_FLAG_OPTIONAL, NULL, NULL));
+			    ZIO_FLAG_NODATA | ZIO_FLAG_OPTIONAL,
+			    (zio_done_func_t *)NULL, NULL));
 		}
 
 		zio_execute(zio);
@@ -2538,7 +2539,8 @@ done:
 			    rc->rc_offset, rc->rc_abd, rc->rc_size,
 			    ZIO_TYPE_WRITE, ZIO_PRIORITY_ASYNC_WRITE,
 			    ZIO_FLAG_IO_REPAIR | (unexpected_errors ?
-			    ZIO_FLAG_SELF_HEAL : 0), NULL, NULL));
+			    ZIO_FLAG_SELF_HEAL : 0), (zio_done_func_t *)NULL,
+			    NULL));
 		}
 	}
 }
@@ -2562,8 +2564,8 @@ vdev_ops_t vdev_raidz_ops = {
 	vdev_raidz_io_start,
 	vdev_raidz_io_done,
 	vdev_raidz_state_change,
-	NULL,
-	NULL,
+	(vdev_hold_func_t *)NULL,
+	(vdev_rele_func_t *)NULL,
 	VDEV_TYPE_RAIDZ,	/* name of this vdev type */
 	B_FALSE			/* not a leaf vdev */
 };
