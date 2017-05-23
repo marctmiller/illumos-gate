@@ -608,13 +608,13 @@ struct sata_apt_sense_data {
 
 #define	SATA_PORT_DEACTIVATE_FUNC(sata_hba_inst) \
 	(sata_hba_inst->satahba_tran->sata_tran_hotplug_ops == NULL ? \
-	NULL : \
+	(sata_tran_port_func *)NULL : \
 	sata_hba_inst->satahba_tran->sata_tran_hotplug_ops->\
 	sata_tran_port_deactivate)
 
 #define	SATA_PORT_ACTIVATE_FUNC(sata_hba_inst) \
 	(sata_hba_inst->satahba_tran->sata_tran_hotplug_ops == NULL ? \
-	NULL : \
+	(sata_tran_port_func *)NULL : \
 	sata_hba_inst->satahba_tran->sata_tran_hotplug_ops->\
 	sata_tran_port_activate)
 

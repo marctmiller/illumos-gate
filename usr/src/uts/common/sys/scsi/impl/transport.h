@@ -58,6 +58,10 @@ typedef struct __scsi_tgtmap	scsi_hba_tgtmap_t;
 
 typedef struct scsi_hba_tran	scsi_hba_tran_t;
 
+typedef void (*scsi_callback)(caddr_t);
+typedef int (*scsi_tran_reset_notify)(struct scsi_address *, int,
+	scsi_callback, caddr_t);
+typedef	int (*scsi_tran_get_bus_addr)(struct scsi_device *, char *, int);
 typedef	int (*scsi_tran_get_eventcookie)(dev_info_t *, dev_info_t *,
 	char *, ddi_eventcookie_t *);
 typedef	void (*scsi_tran_event_callback)(dev_info_t *, ddi_eventcookie_t,
@@ -70,6 +74,8 @@ typedef	int (*scsi_tran_remove_eventcall)(dev_info_t *, ddi_callback_id_t);
 
 typedef	int (*scsi_tran_post_event)(dev_info_t *, dev_info_t *,
 	ddi_eventcookie_t, void *);
+typedef	int (*scsi_tran_quiesce)(dev_info_t *);
+typedef	int (*scsi_tran_unquiesce)(dev_info_t *);
 typedef	int (*scsi_tran_bus_reset)(dev_info_t *, int);
 
 struct scsi_hba_tran {
@@ -158,16 +164,8 @@ struct scsi_hba_tran {
 				struct scsi_address	*ap,
 				struct scsi_pkt		*pkt);
 
-	int		(*tran_reset_notify)(
-				struct scsi_address	*ap,
-				int			flag,
-				void			(*callback)(caddr_t),
-				caddr_t			arg);
-
-	int		(*tran_get_bus_addr)(
-				struct scsi_device	*sd,
-				char			*name,
-				int			len);
+	scsi_tran_reset_notify	tran_reset_notify;
+	scsi_tran_get_bus_addr	tran_get_bus_addr;
 
 	int		(*tran_get_name)(
 				struct scsi_device	*sd,
@@ -185,19 +183,11 @@ struct scsi_hba_tran {
 				struct scsi_pkt		*pkt);
 
 	scsi_tran_get_eventcookie	tran_get_eventcookie;
-
 	scsi_tran_add_eventcall		tran_add_eventcall;
-
 	scsi_tran_remove_eventcall	tran_remove_eventcall;
-
 	scsi_tran_post_event		tran_post_event;
-
-	int		(*tran_quiesce)(
-				dev_info_t		*hba_dip);
-
-	int		(*tran_unquiesce)(
-				dev_info_t		*hba_dip);
-
+	scsi_tran_quiesce		tran_quiesce;
+	scsi_tran_unquiesce		tran_unquiesce;
 	scsi_tran_bus_reset	tran_bus_reset;
 
 	/*

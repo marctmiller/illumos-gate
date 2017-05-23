@@ -475,6 +475,9 @@ _NOTE(SCHEME_PROTECTS_DATA("unshared data", sata_cmd))
 #define	SATA_PKT_REV_1	1
 #define	SATA_PKT_REV	SATA_PKT_REV_1
 
+struct sata_pkt;
+typedef	void satapkt_comp_t(struct sata_pkt *);
+
 struct sata_pkt {
 	int		satapkt_rev;		/* version */
 	struct sata_device satapkt_device;	/* Device address/type */
@@ -490,7 +493,7 @@ struct sata_pkt {
 
 	struct sata_cmd	satapkt_cmd;		/* composite sata command */
 	int		satapkt_time;		/* time allotted to command */
-	void		(*satapkt_comp)(struct sata_pkt *); /* callback */
+	satapkt_comp_t	*satapkt_comp;		/* callback */
 	int		satapkt_reason; 	/* completion reason */
 };
 
@@ -579,10 +582,11 @@ _NOTE(SCHEME_PROTECTS_DATA("unshared data", sata_pkt))
  */
 #define	SATA_TRAN_HOTPLUG_OPS_REV_1	1
 
+typedef int	sata_tran_port_func(dev_info_t  *, sata_device_t *);
 struct sata_tran_hotplug_ops {
 	int	sata_tran_hotplug_ops_rev; /* version */
-	int	(*sata_tran_port_activate)(dev_info_t  *, sata_device_t *);
-	int	(*sata_tran_port_deactivate)(dev_info_t  *, sata_device_t *);
+	sata_tran_port_func	*sata_tran_port_activate;
+	sata_tran_port_func	*sata_tran_port_deactivate;
 };
 
 typedef struct sata_tran_hotplug_ops sata_tran_hotplug_ops_t;
