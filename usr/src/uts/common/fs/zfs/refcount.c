@@ -42,10 +42,14 @@ void
 refcount_init(void)
 {
 	reference_cache = kmem_cache_create("reference_cache",
-	    sizeof (reference_t), 0, NULL, NULL, NULL, NULL, NULL, 0);
+	    sizeof (reference_t), 0, (kmem_cache_constructor_t *)NULL,
+	    (kmem_cache_destructor_t *)NULL, (kmem_cache_reclaim_t *)NULL,
+	    NULL, NULL, 0);
 
 	reference_history_cache = kmem_cache_create("reference_history_cache",
-	    sizeof (uint64_t), 0, NULL, NULL, NULL, NULL, NULL, 0);
+	    sizeof (uint64_t), 0, (kmem_cache_constructor_t *)NULL,
+	    (kmem_cache_destructor_t *)NULL, (kmem_cache_reclaim_t *)NULL,
+	    NULL, NULL, 0);
 }
 
 void

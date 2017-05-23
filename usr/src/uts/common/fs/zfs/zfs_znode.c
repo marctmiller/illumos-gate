@@ -355,7 +355,8 @@ zfs_znode_init(void)
 	ASSERT(znode_cache == NULL);
 	znode_cache = kmem_cache_create("zfs_znode_cache",
 	    sizeof (znode_t), 0, zfs_znode_cache_constructor,
-	    zfs_znode_cache_destructor, NULL, NULL, NULL, 0);
+	    zfs_znode_cache_destructor, (kmem_cache_reclaim_t *)NULL,
+	    NULL, NULL, 0);
 	kmem_cache_set_move(znode_cache, zfs_znode_move);
 }
 

@@ -603,8 +603,8 @@ retry:
 	}
 
 	dbuf_kmem_cache = kmem_cache_create("dmu_buf_impl_t",
-	    sizeof (dmu_buf_impl_t),
-	    0, dbuf_cons, dbuf_dest, NULL, NULL, NULL, 0);
+	    sizeof (dmu_buf_impl_t), 0,
+	    dbuf_cons, dbuf_dest, (kmem_cache_reclaim_t *)NULL, NULL, NULL, 0);
 
 	for (i = 0; i < DBUF_MUTEXES; i++)
 		mutex_init(&h->hash_mutexes[i], NULL, MUTEX_DEFAULT, NULL);

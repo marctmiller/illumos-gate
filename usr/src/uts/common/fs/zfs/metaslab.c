@@ -2496,8 +2496,9 @@ metaslab_alloc_trace_init(void)
 {
 	ASSERT(metaslab_alloc_trace_cache == NULL);
 	metaslab_alloc_trace_cache = kmem_cache_create(
-	    "metaslab_alloc_trace_cache", sizeof (metaslab_alloc_trace_t),
-	    0, NULL, NULL, NULL, NULL, NULL, 0);
+	    "metaslab_alloc_trace_cache", sizeof (metaslab_alloc_trace_t), 0,
+	    (kmem_cache_constructor_t *)NULL, (kmem_cache_destructor_t *)NULL,
+	    (kmem_cache_reclaim_t *)NULL, NULL, NULL, 0);
 	metaslab_trace_ksp = kstat_create("zfs", 0, "metaslab_trace_stats",
 	    "misc", KSTAT_TYPE_NAMED, 1, KSTAT_FLAG_VIRTUAL);
 	if (metaslab_trace_ksp != NULL) {

@@ -185,7 +185,8 @@ abd_init(void)
 	 * so that no allocator metadata is stored with the buffers.
 	 */
 	abd_chunk_cache = kmem_cache_create("abd_chunk", zfs_abd_chunk_size, 0,
-	    NULL, NULL, NULL, NULL, data_alloc_arena, KMC_NOTOUCH);
+	    (kmem_cache_constructor_t *)NULL, (kmem_cache_destructor_t *)NULL,
+	    (kmem_cache_reclaim_t *)NULL, NULL, data_alloc_arena, KMC_NOTOUCH);
 
 	abd_ksp = kstat_create("zfs", 0, "abdstats", "misc", KSTAT_TYPE_NAMED,
 	    sizeof (abd_stats) / sizeof (kstat_named_t), KSTAT_FLAG_VIRTUAL);

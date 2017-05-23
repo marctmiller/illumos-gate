@@ -116,10 +116,13 @@ zio_init(void)
 #ifdef _KERNEL
 	data_alloc_arena = zio_alloc_arena;
 #endif
-	zio_cache = kmem_cache_create("zio_cache",
-	    sizeof (zio_t), 0, NULL, NULL, NULL, NULL, NULL, 0);
+	zio_cache = kmem_cache_create("zio_cache", sizeof (zio_t), 0,
+	    (kmem_cache_constructor_t *)NULL, (kmem_cache_destructor_t *)NULL,
+	    (kmem_cache_reclaim_t *)NULL, NULL, NULL, 0);
 	zio_link_cache = kmem_cache_create("zio_link_cache",
-	    sizeof (zio_link_t), 0, NULL, NULL, NULL, NULL, NULL, 0);
+	    sizeof (zio_link_t), 0,
+	    (kmem_cache_constructor_t *)NULL, (kmem_cache_destructor_t *)NULL,
+	    (kmem_cache_reclaim_t *)NULL, NULL, NULL, 0);
 
 	/*
 	 * For small buffers, we want a cache for each multiple of
@@ -155,7 +158,9 @@ zio_init(void)
 			char name[36];
 			(void) sprintf(name, "zio_buf_%lu", (ulong_t)size);
 			zio_buf_cache[c] = kmem_cache_create(name, size,
-			    align, NULL, NULL, NULL, NULL, NULL, cflags);
+			    align, (kmem_cache_constructor_t *)NULL,
+			    (kmem_cache_destructor_t *)NULL,
+			    (kmem_cache_reclaim_t *)NULL, NULL, NULL, cflags);
 
 			/*
 			 * Since zio_data bufs do not appear in crash dumps, we
@@ -164,8 +169,10 @@ zio_init(void)
 			 */
 			(void) sprintf(name, "zio_data_buf_%lu", (ulong_t)size);
 			zio_data_buf_cache[c] = kmem_cache_create(name, size,
-			    align, NULL, NULL, NULL, NULL, data_alloc_arena,
-			    cflags | KMC_NOTOUCH);
+			    align, (kmem_cache_constructor_t *)NULL,
+			    (kmem_cache_destructor_t *)NULL,
+			    (kmem_cache_reclaim_t *)NULL, NULL,
+			    data_alloc_arena, cflags | KMC_NOTOUCH);
 		}
 	}
 

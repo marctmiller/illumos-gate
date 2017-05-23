@@ -1708,7 +1708,9 @@ void
 zil_init(void)
 {
 	zil_lwb_cache = kmem_cache_create("zil_lwb_cache",
-	    sizeof (struct lwb), 0, NULL, NULL, NULL, NULL, NULL, 0);
+	    sizeof (struct lwb), 0, (kmem_cache_constructor_t *)NULL,
+	    (kmem_cache_destructor_t *)NULL, (kmem_cache_reclaim_t *)NULL,
+	    NULL, NULL, 0);
 }
 
 void

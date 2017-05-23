@@ -1398,7 +1398,7 @@ retry:
 	    HDR_L2ONLY_SIZE, 0, hdr_l2only_cons, hdr_l2only_dest, hdr_recl,
 	    NULL, NULL, 0);
 	buf_cache = kmem_cache_create("arc_buf_t", sizeof (arc_buf_t),
-	    0, buf_cons, buf_dest, NULL, NULL, NULL, 0);
+	    0, buf_cons, buf_dest, (kmem_cache_reclaim_t *)NULL, NULL, NULL, 0);
 
 	for (i = 0; i < 256; i++)
 		for (ct = zfs_crc64_table + i, *ct = i, j = 8; j > 0; j--)
