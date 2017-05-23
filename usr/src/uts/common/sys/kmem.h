@@ -119,9 +119,13 @@ extern int kmem_debugging(void);
 extern size_t kmem_avail(void);
 extern size_t kmem_maxavail(void);
 
+typedef int kmem_cache_constructor_t(void *, void *, int);
+typedef void kmem_cache_destructor_t(void *, void *);
+typedef void kmem_cache_reclaim_t(void *);
+
 extern kmem_cache_t *kmem_cache_create(char *, size_t, size_t,
-	int (*)(void *, void *, int), void (*)(void *, void *),
-	void (*)(void *), void *, vmem_t *, int);
+	kmem_cache_constructor_t *, kmem_cache_destructor_t *,
+	kmem_cache_reclaim_t *, void *, vmem_t *, int);
 extern void kmem_cache_set_move(kmem_cache_t *,
 	kmem_cbrc_t (*)(void *, void *, size_t, void *));
 extern void kmem_cache_destroy(kmem_cache_t *);
