@@ -2321,7 +2321,7 @@ mptsas_cache_create(mptsas_t *mpt)
 	mpt->m_kmem_cache = kmem_cache_create(buf,
 	    sizeof (struct mptsas_cmd) + scsi_pkt_size(), 8,
 	    mptsas_kmem_cache_constructor, mptsas_kmem_cache_destructor,
-	    NULL, (void *)mpt, NULL, 0);
+	    (kmem_cache_reclaim_t *)NULL, (void *)mpt, NULL, 0);
 
 	if (mpt->m_kmem_cache == NULL) {
 		mptsas_log(mpt, CE_WARN, "creating kmem cache failed");
@@ -2336,7 +2336,7 @@ mptsas_cache_create(mptsas_t *mpt)
 	mpt->m_cache_frames = kmem_cache_create(buf,
 	    sizeof (mptsas_cache_frames_t), 8,
 	    mptsas_cache_frames_constructor, mptsas_cache_frames_destructor,
-	    NULL, (void *)mpt, NULL, 0);
+	    (kmem_cache_reclaim_t *)NULL, (void *)mpt, NULL, 0);
 
 	if (mpt->m_cache_frames == NULL) {
 		mptsas_log(mpt, CE_WARN, "creating cache for frames failed");
