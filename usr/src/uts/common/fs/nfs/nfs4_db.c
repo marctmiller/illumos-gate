@@ -309,7 +309,7 @@ rfs4_table_create(rfs4_database_t *db, char *tabname, time_t max_cache_time,
 	    0,
 	    rfs4_dbe_kmem_constructor,
 	    rfs4_dbe_kmem_destructor,
-	    NULL,
+	    (kmem_cache_reclaim_t *)NULL,
 	    table,
 	    NULL,
 	    0);

@@ -185,8 +185,8 @@ nfsauth_init(void)
 	 * Allocate nfsauth cache handle
 	 */
 	exi_cache_handle = kmem_cache_create("exi_cache_handle",
-	    sizeof (struct auth_cache), 0, NULL, NULL,
-	    exi_cache_reclaim, NULL, NULL, 0);
+	    sizeof (struct auth_cache), 0, (kmem_cache_constructor_t *)NULL,
+	    (kmem_cache_destructor_t *)NULL, exi_cache_reclaim, NULL, NULL, 0);
 
 	refreshq_thread_state = REFRESHQ_THREAD_RUNNING;
 	(void) zthread_create(NULL, 0, nfsauth_refresh_thread,

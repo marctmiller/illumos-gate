@@ -150,7 +150,9 @@ _init(void)
 	/* initialize the copy reduction caches */
 
 	nfs_xuio_cache = kmem_cache_create("nfs_xuio_cache",
-	    sizeof (nfs_xuio_t), 0, NULL, NULL, NULL, NULL, NULL, 0);
+	    sizeof (nfs_xuio_t), 0, (kmem_cache_constructor_t *)NULL,
+	    (kmem_cache_destructor_t *)NULL, (kmem_cache_reclaim_t *)NULL,
+	    NULL, NULL, 0);
 
 	return (status);
 }
