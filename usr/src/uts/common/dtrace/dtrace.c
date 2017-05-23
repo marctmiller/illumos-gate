@@ -15970,7 +15970,8 @@ dtrace_attach(dev_info_t *devi, ddi_attach_cmd_t cmd)
 
 	dtrace_state_cache = kmem_cache_create("dtrace_state_cache",
 	    sizeof (dtrace_dstate_percpu_t) * NCPU, DTRACE_STATE_ALIGN,
-	    NULL, NULL, NULL, NULL, NULL, 0);
+	    (kmem_cache_constructor_t *)NULL, (kmem_cache_destructor_t *)NULL,
+	    (kmem_cache_reclaim_t *)NULL, NULL, NULL, 0);
 
 	ASSERT(MUTEX_HELD(&cpu_lock));
 	dtrace_bymod = dtrace_hash_create(offsetof(dtrace_probe_t, dtpr_mod),
