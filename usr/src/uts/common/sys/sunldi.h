@@ -71,10 +71,14 @@ typedef struct __ldi_ev_cookie		*ldi_ev_cookie_t;
 #define	LDI_EV_CB_VERS_1	1
 #define	LDI_EV_CB_VERS		LDI_EV_CB_VERS_1
 
+typedef	int (*cb_notify_t)(ldi_handle_t, ldi_ev_cookie_t, void *, void *);
+typedef	void (*cb_finalize_t)(ldi_handle_t, ldi_ev_cookie_t, int, void *,
+	void *);
+
 typedef struct ldi_ev_callback {
-	uint_t cb_vers;
-	int (*cb_notify)(ldi_handle_t, ldi_ev_cookie_t, void *, void *);
-	void (*cb_finalize)(ldi_handle_t, ldi_ev_cookie_t, int, void *, void *);
+	uint_t		cb_vers;
+	cb_notify_t	cb_notify;
+	cb_finalize_t	cb_finalize;
 } ldi_ev_callback_t;
 
 /*
