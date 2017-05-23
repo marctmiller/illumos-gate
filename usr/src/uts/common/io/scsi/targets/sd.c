@@ -8317,10 +8317,9 @@ sd_unit_attach(dev_info_t *devi)
 			    ddi_driver_name(SD_DEVINFO(un)),
 			    ddi_get_instance(SD_DEVINFO(un)));
 			un->un_wm_cache = kmem_cache_create(
-			    name_str, sizeof (struct sd_w_map),
-			    8, sd_wm_cache_constructor,
-			    sd_wm_cache_destructor, NULL,
-			    (void *)un, NULL, 0);
+			    name_str, sizeof (struct sd_w_map), 8,
+			    sd_wm_cache_constructor, sd_wm_cache_destructor,
+			    (kmem_cache_reclaim_t *)NULL, (void *)un, NULL, 0);
 			if (!(un->un_wm_cache)) {
 				goto wm_cache_failed;
 			}
@@ -10731,10 +10730,9 @@ sd_ready_and_valid(sd_ssc_t *ssc, int part)
 			    ddi_driver_name(SD_DEVINFO(un)),
 			    ddi_get_instance(SD_DEVINFO(un)));
 			un->un_wm_cache = kmem_cache_create(
-			    name_str, sizeof (struct sd_w_map),
-			    8, sd_wm_cache_constructor,
-			    sd_wm_cache_destructor, NULL,
-			    (void *)un, NULL, 0);
+			    name_str, sizeof (struct sd_w_map), 8,
+			    sd_wm_cache_constructor, sd_wm_cache_destructor,
+			    (kmem_cache_reclaim_t *)NULL, (void *)un, NULL, 0);
 			if (!(un->un_wm_cache)) {
 				rval = ENOMEM;
 				goto done;
