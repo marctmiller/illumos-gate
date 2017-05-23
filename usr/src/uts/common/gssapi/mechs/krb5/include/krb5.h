@@ -340,7 +340,7 @@ typedef const krb5_principal_data *krb5_const_principal;
 #define	krb5_princ_component(context, princ,i)		\
 	    (((i) < krb5_princ_size(context, princ))	\
 	     ? (princ)->data + (i)			\
-	     : NULL)
+	     : (krb5_data *)NULL)
 
 /*
  * Constants for realm referrals.

@@ -811,25 +811,18 @@ struct krb5_hash_provider {
 	krb5_data *output);
 };
 
+typedef krb5_error_code krb5_hash_t(krb5_context, krb5_const krb5_keyblock *,
+	krb5_keyusage, krb5_const krb5_data *, krb5_const krb5_data *,
+	krb5_data *);
+typedef krb5_error_code krb5_verify_t(krb5_context, krb5_const krb5_keyblock *,
+	krb5_keyusage, krb5_const krb5_data *, krb5_const krb5_data *,
+	krb5_const krb5_data *, krb5_boolean *);
+
 struct krb5_keyhash_provider {
     size_t hashsize;
 
-    krb5_error_code (*hash) (
-	krb5_context context,
-	krb5_const krb5_keyblock *key,
-	krb5_keyusage keyusage,
-	krb5_const krb5_data *ivec,
-	krb5_const krb5_data *input, krb5_data *output);
-
-    krb5_error_code (*verify) (
-	krb5_context context,
-	krb5_const krb5_keyblock *key,
-	krb5_keyusage keyusage,
-	krb5_const krb5_data *ivec,
-	krb5_const krb5_data *input,
-	krb5_const krb5_data *hash,
-	krb5_boolean *valid);
-
+    krb5_hash_t *hash;
+    krb5_verify_t *verify;
 };
 
 typedef void (*krb5_encrypt_length_func) (const struct krb5_enc_provider *enc,

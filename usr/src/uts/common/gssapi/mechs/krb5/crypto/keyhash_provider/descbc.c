@@ -70,5 +70,5 @@ k5_descbc_hash(krb5_context context,
 const struct krb5_keyhash_provider krb5int_keyhash_descbc = {
     MIT_DES_BLOCK_LENGTH,
     k5_descbc_hash,
-    NULL
+    (krb5_verify_t *)NULL
 };

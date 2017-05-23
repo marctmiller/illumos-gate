@@ -146,6 +146,6 @@ cleanup:
 krb5int_keyhash_hmac_md5 = {
                 	MD5_CKSUM_LENGTH,
 			k5_hmac_md5_hash,
-			NULL /*checksum  again*/
+			(krb5_verify_t *)NULL /*checksum  again*/
 			};
 
