@@ -50,11 +50,11 @@
  * Must be sorted by font size in descending order
  */
 struct fontlist fonts[] = {
-	{  &font_data_12x22,	NULL  },
-	{  &font_data_8x16,	NULL  },
-	{  &font_data_7x14,	NULL  },
-	{  &font_data_6x10,	NULL  },
-	{  NULL, NULL  }
+	{  &font_data_12x22, (font_load_cb_t *)NULL },
+	{  &font_data_8x16, (font_load_cb_t *)NULL },
+	{  &font_data_7x14, (font_load_cb_t *)NULL },
+	{  &font_data_6x10, (font_load_cb_t *)NULL },
+	{  NULL, (font_load_cb_t *)NULL }
 };
 
 void

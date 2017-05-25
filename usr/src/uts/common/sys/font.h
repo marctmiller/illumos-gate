@@ -53,9 +53,10 @@ typedef	struct  bitmap_data {
 	unsigned char	**encoding;
 } bitmap_data_t;
 
+typedef	bitmap_data_t   *font_load_cb_t(char *);
 struct fontlist {
 	bitmap_data_t	*data;
-	bitmap_data_t   *(*fontload)(char *);
+	font_load_cb_t	*fontload;
 };
 
 extern struct fontlist fonts[];
