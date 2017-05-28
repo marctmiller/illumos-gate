@@ -253,7 +253,6 @@ net_getparams(int sock)
 {
 	char buf[MAXHOSTNAMELEN];
 	n_long rootaddr, smask;
-	extern struct in_addr servip;
 
 #ifdef	SUPPORT_BOOTP
 	/*
