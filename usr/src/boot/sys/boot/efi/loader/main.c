@@ -281,18 +281,27 @@ main(int argc, CHAR16 *argv[])
 				case 'S':
 					if (argv[i][j + 1] == 0) {
 						if (i + 1 == argc) {
-							setenv("comconsole_speed", "115200", 1);
+							setenv("ttya-mode",
+							    "115200,8,n,1,-",
+							    1);
 						} else {
-							cpy16to8(&argv[i + 1][0], var,
+							CHAR16 *ptr;
+							ptr = &argv[i + 1][0];
+							cpy16to8(ptr, var,
 							    sizeof(var));
-							setenv("comconsole_speedspeed", var, 1);
+							strncat(var, ",8,n,1,-",
+							    sizeof(var));
+							setenv("ttya-mode",
+							    var, 1);
 						}
 						i++;
 						break;
 					} else {
 						cpy16to8(&argv[i][j + 1], var,
 						    sizeof(var));
-						setenv("comconsole_speed", var, 1);
+						strncat(var, ",8,n,1,-",
+						    sizeof(var));
+						setenv("ttya-mode", var, 1);
 						break;
 					}
 				case 'v':
