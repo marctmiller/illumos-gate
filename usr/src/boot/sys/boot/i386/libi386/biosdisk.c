@@ -55,8 +55,10 @@ CTASSERT(sizeof(struct i386_devdesc) >= sizeof(struct disk_devdesc));
 #define BIOSDISK_SECSIZE	512
 #define BUFSIZE			(1 * BIOSDISK_SECSIZE)
 
-#define DT_ATAPI		0x10		/* disk type for ATAPI floppies */
-#define WDMAJOR			0		/* major numbers for devices we frontend for */
+#define DT_ATAPI		0x10	/* disk type for ATAPI floppies */
+
+/* major numbers for devices we frontend for */
+#define WDMAJOR			0
 #define WFDMAJOR		1
 #define FDMAJOR			2
 #define DAMAJOR			4
@@ -108,16 +110,42 @@ static int bd_close(struct open_file *f);
 static int bd_ioctl(struct open_file *f, u_long cmd, void *data);
 static int bd_print(int verbose);
 
+struct devsw biosfd = {
+	.dv_name = "fd",
+	.dv_type = DEVT_FD,
+	.dv_init = bd_init,
+	.dv_strategy = bd_strategy,
+	.dv_open = bd_open,
+	.dv_close = bd_close,
+	.dv_ioctl = bd_ioctl,
+	.dv_print = bd_print,
+	.dv_cleanup = NULL
+};
+
+#if 0
+struct devsw bioscd = {
+	.dv_name = "cd",
+	.dv_type = DEVT_CD,
+	.dv_init = bd_init,
+	.dv_strategy = bd_strategy,
+	.dv_open = bd_open,
+	.dv_close = bd_close,
+	.dv_ioctl = bd_ioctl,
+	.dv_print = bd_print,
+	.dv_cleanup = NULL
+};
+#endif
+
 struct devsw biosdisk = {
-	"disk",
-	DEVT_DISK,
-	bd_init,
-	bd_strategy,
-	bd_open,
-	bd_close,
-	bd_ioctl,
-	bd_print,
-	NULL
+	.dv_name = "disk",
+	.dv_type = DEVT_DISK,
+	.dv_init = bd_init,
+	.dv_strategy = bd_strategy,
+	.dv_open = bd_open,
+	.dv_close = bd_close,
+	.dv_ioctl = bd_ioctl,
+	.dv_print = bd_print,
+	.dv_cleanup = NULL
 };
 
 /*
