@@ -15,10 +15,6 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef lint
-static const char rcsid[] = "$Id: ns_print.c,v 1.12 2009/03/03 05:29:58 each Exp $";
-#endif
-
 /* Import. */
 
 #include "port_before.h"
@@ -901,6 +897,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 				T(addstr(" )", 2, &buf, &buflen));
 		}
 	}
+	/* FALLTHROUGH */
 
 	case ns_t_ipseckey: {
 		int n;
@@ -992,6 +989,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 				T(addstr(" )", 2, &buf, &buflen));
 		}
 	}
+	/* FALLTHROUGH */
 
 	case ns_t_hip: {
 		unsigned int i, hip_len, algorithm, key_len;
