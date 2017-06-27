@@ -164,6 +164,7 @@ VGATEXT_OBJS += vgatext.o
 KRTLD_OBJS +=		\
 	bootfsops.o	\
 	bootrd.o	\
+	bootrd_cpio.o	\
 	ufsops.o	\
 	hsfs.o		\
 	doreloc.o	\
