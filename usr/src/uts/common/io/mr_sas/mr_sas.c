@@ -5225,7 +5225,8 @@ build_cmd(struct mrsas_instance *instance, struct scsi_address *ap,
 
 			break;
 		}
-		/* fall through For all non-rd/wr and physical disk cmds */
+		/* For all non-rd/wr and physical disk cmds */
+		/* FALLTHROUGH */
 	default:
 
 		switch (pkt->pkt_cdbp[0]) {
