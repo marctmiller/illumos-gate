@@ -3451,7 +3451,8 @@ build_cmd(struct megasas_instance *instance, struct scsi_address *ap,
 
 			break;
 		}
-		/* fall through For all non-rd/wr cmds */
+		/* For all non-rd/wr cmds */
+		/* FALLTHROUGH */
 	default:
 		pthru	= (struct megasas_pthru_frame *)cmd->frame;
 
