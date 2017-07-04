@@ -17,7 +17,7 @@
 
 include $(SRC)/Makefile.master
 
-SUBDIRS = libefi libstand libficl libzfsboot boot1 loader
+SUBDIRS = libefi libstand libficl libzfsboot libcrypto boot1 loader
 
 #.if ${MACHINE_CPUARCH} == "aarch64" || ${MACHINE_CPUARCH} == "arm"
 #.if ${MK_FDT} != "no"
