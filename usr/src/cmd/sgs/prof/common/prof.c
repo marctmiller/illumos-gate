@@ -28,8 +28,6 @@
 /*	  All Rights Reserved  	*/
 
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 /*
  *	Program profiling report generator.
  *
@@ -352,7 +350,7 @@ main(int argc, char **argv)
 			/*	i(pc) = ((pc - pc_l) * sf)/bias. */
 
 	/* LINTED: set but not used */
-	long s_inv;	/* Inverse: i_inv(i) = */
+	long __attribute__((unused)) s_inv;	/* Inverse: i_inv(i) = */
 			/*		{pc00, pc00+1, ... pc00+s_inv-1}. */
 
 	unsigned pc_m;	/* Range of PCs profiled: pc_m = pc_h - pc_l */
