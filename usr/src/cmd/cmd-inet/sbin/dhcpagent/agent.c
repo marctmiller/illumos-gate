@@ -1014,6 +1014,7 @@ load_option:
 			break;
 		}
 	}
+	/* FALLTHROUGH */
 
 	case DHCP_STATUS: {
 		dhcp_status_t	status;
