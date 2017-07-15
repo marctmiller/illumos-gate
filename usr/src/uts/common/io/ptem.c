@@ -28,8 +28,6 @@
  * Use is subject to license terms.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI" /* from S5R4 1.13 */
-
 /*
  * Description:
  *
@@ -421,6 +419,7 @@ ptemrput(queue_t *q, mblk_t *mp)
 				qenable(WR(q));
 			}
 		}
+		/* FALLTHROUGH */
 	default:
 		putnext(q, mp);
 		break;
@@ -866,6 +865,7 @@ out:
 		}
 		if (ntp->state & OFLOW_CTL)
 			return (0);
+		/* FALLTHROUGH */
 
 	default:
 		putnext(q, mp);
