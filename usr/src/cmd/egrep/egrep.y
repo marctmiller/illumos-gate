@@ -281,6 +281,7 @@ yylex(void)
 		
 		case '\\':
 			if ((c = nextch()) == '\0') synerror();
+			/* FALLTHROUGH */
 		defchar:
 		default:
 			if (c <= 0177) {
