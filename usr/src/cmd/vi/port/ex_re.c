@@ -327,7 +327,7 @@ gettext("Missing regular expression for substitute"));
 
 	case '~':
 		uselastre = 1;
-		/* fall into ... */
+		/* FALLTHROUGH */
 	case '&':
 	redo:
 		if (re == NULL || re->Expbuf[1] == 0)
@@ -474,6 +474,7 @@ gettext("Replacement pattern too long - limit 256 characters"));
 				ungetchar(c);
 				goto endrhs;
 			}
+			/* FALLTHROUGH */
 
 		case '~':
 		case '&':
@@ -850,8 +851,8 @@ complex:
 			case '>':
 #ifdef XPG4
 				regcomp_flags = REG_WORDS;
-				/*FALLTHRU*/
 #endif /* XPG4 */
+				/* FALLTHROUGH */
 			case '(':
 			case ')':
 			case '{':
@@ -986,6 +987,7 @@ cerror(value(vi_TERSE) ? (unsigned char *)gettext("No newlines in re's") :
 			}
 cerror(value(vi_TERSE) ? (unsigned char *)gettext("Badly formed re") :
 (unsigned char *)gettext("Missing closing delimiter for regular expression"));
+			/* FALLTHROUGH */
 
 		case '.':
 		case '~':
@@ -995,6 +997,7 @@ cerror(value(vi_TERSE) ? (unsigned char *)gettext("Badly formed re") :
 				goto magic;
 			if(c != '~')
 				*gp++ = '\\';
+			/* FALLTHROUGH */
 defchar:
 		default:
 			*gp++ = (value(vi_IGNORECASE) ? tolower(c) : c);
@@ -1043,6 +1046,7 @@ out:
 	
 		case 42:
 cerror((unsigned char *)gettext("\\( \\) Imbalance"));
+			/* FALLTHROUGH */
 		case 43:
 cerror(value(vi_TERSE) ? (unsigned char *)gettext("Awash in \\('s!") :
 (unsigned char *)
